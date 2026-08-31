@@ -26,8 +26,6 @@
     color:var(--off-white);
     min-height:100vh;
   }
-
-  /* ===== Shop landing (context) ===== */
   .site{
     max-width:760px;
     margin:0 auto;
@@ -79,7 +77,6 @@
     line-height:1.9;
   }
   .loc-line b{color:var(--off-white);}
-
   .rent-table{
     margin-top:32px;
   }
@@ -121,7 +118,6 @@
     font-size:13.5px;
     white-space:nowrap;
   }
-
   .other-services{
     margin-top:30px;
     display:flex;
@@ -136,7 +132,6 @@
     font-size:13px;
     color:var(--off-white);
   }
-
   .hours-box{
     margin-top:30px;
     background:var(--asphalt-2);
@@ -148,8 +143,6 @@
     border:1px solid var(--line);
   }
   .hours-box b{color:var(--amber);}
-
-  /* ===== Chat launcher ===== */
   .launcher{
     position:fixed;
     bottom:20px;
@@ -170,8 +163,6 @@
     z-index:40;
   }
   .launcher .bolt{font-size:16px;}
-
-  /* ===== Chat panel ===== */
   .chat-wrap{
     position:fixed;
     bottom:20px;
@@ -188,7 +179,6 @@
     border:1px solid var(--steel);
   }
   .chat-wrap.open{display:flex;}
-
   .chat-head{
     background:var(--asphalt);
     color:var(--off-white);
@@ -213,7 +203,6 @@
     background:none;border:none;color:var(--off-white);
     font-size:18px;cursor:pointer;opacity:0.7;
   }
-
   .chat-body{
     flex:1;
     overflow-y:auto;
@@ -229,7 +218,6 @@
     border-radius:10px;
     font-size:13.5px;
     line-height:1.7;
-    white-space:pre-wrap;
   }
   .msg.bot{
     align-self:flex-start;
@@ -259,7 +247,6 @@
   .msg.typing span:nth-child(2){animation-delay:.2s;}
   .msg.typing span:nth-child(3){animation-delay:.4s;}
   @keyframes blink{0%,80%,100%{opacity:0.25;}40%{opacity:1;}}
-
   .quick-row{
     display:flex;
     gap:8px;
@@ -278,7 +265,6 @@
     white-space:nowrap;
   }
   .quick-btn:active{background:var(--amber);color:var(--asphalt);}
-
   .chat-input{
     display:flex;
     gap:8px;
@@ -388,10 +374,20 @@ const userInput = document.getElementById('userInput');
 const sendBtn = document.getElementById('sendBtn');
 const quickRow = document.getElementById('quickRow');
 
+function escapeHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function formatText(text){
+  let safe = escapeHtml(text);
+  safe = safe.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  safe = safe.replace(/\n/g, '<br>');
+  return safe;
+}
+
 function addMsg(text, who){
   const div = document.createElement('div');
   div.className = 'msg ' + who;
-  div.textContent = text;
+  div.innerHTML = formatText(text);
   chatBody.appendChild(div);
   chatBody.scrollTop = chatBody.scrollHeight;
   return div;
@@ -459,3 +455,4 @@ quickRow.addEventListener('click', (e) => {
 
 </body>
 </html>
+
