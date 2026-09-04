@@ -210,31 +210,21 @@
 <script>
 async function loadDashboard(){
 
-  const status =
-    document.getElementById("status");
-
-  const dailyTable =
-    document.getElementById("dailyTable");
+  const status = document.getElementById("status");
+  const dailyTable = document.getElementById("dailyTable");
 
   try{
 
-    const response =
-      await fetch("/api/dashboard");
+    const response = await fetch("/api/dashboard");
 
     if(!response.ok){
       throw new Error("Dashboard API failed");
     }
 
-    const data =
-      await response.json();
+    const data = await response.json();
 
-    const summary =
-      data.summary || {};
-
-    const daily =
-      Array.isArray(data.daily)
-        ? data.daily
-        : [];
+    const summary = data.summary || {};
+    const daily = Array.isArray(data.daily) ? data.daily : [];
 
     document.getElementById("totalConversations").textContent =
       summary.total_conversations ?? 0;
@@ -277,8 +267,7 @@ async function loadDashboard(){
 
       daily.forEach(row=>{
 
-        const tr =
-          document.createElement("tr");
+        const tr = document.createElement("tr");
 
         tr.innerHTML = `
           <td>${row.day ?? "-"}</td>
@@ -292,14 +281,11 @@ async function loadDashboard(){
       });
     }
 
-    status.textContent =
-      "تم تحديث البيانات بنجاح";
+    status.textContent = "تم تحديث البيانات بنجاح";
 
   }catch(error){
 
-    status.textContent =
-      "تعذر تحميل بيانات لوحة الإحصائيات";
-
+    status.textContent = "تعذر تحميل بيانات لوحة الإحصائيات";
     status.classList.add("error");
 
     dailyTable.innerHTML = `
