@@ -16,7 +16,7 @@ async function supabaseRequest(path) {
   const text = await response.text();
 
   if (!response.ok) {
-    throw new Error(text);
+    throw new Error(`Supabase ${response.status}: ${text}`);
   }
 
   return text ? JSON.parse(text) : [];
@@ -46,7 +46,8 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const clientId = summaryRows[0].client_id;
+    const summary = summaryRows[0];
+    const clientId = summary.client_id;
 
     const dailyRows = await supabaseRequest(
       `daily_dashboard_stats?client_id=eq.${clientId}&select=*&order=day.desc&limit=30`
@@ -64,6 +65,11 @@ module.exports = async function handler(req, res) {
       `ai_resolution_dashboard_stats?client_id=eq.${clientId}&select=*`
     );
 
+    const unanswered =
+      Array.isArray(unansweredRows) && unansweredRows.length > 0
+        ? unansweredRows[0]
+        : {};
+
     const aiResolution =
       Array.isArray(aiResolutionRows) && aiResolutionRows.length > 0
         ? aiResolutionRows[0]
@@ -71,36 +77,41 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       summary: {
-        ...summaryRows[0],
+        ...summary,
 
         total_unanswered_questions:
-          unansweredRows[0]?.total_unanswered_questions ?? 0,
+          unanswered.total_unanswered_questions || 0,
 
         unresolved_unanswered_questions:
-          unansweredRows[0]?.unresolved_unanswered_questions ?? 0,
+          unanswered.unresolved_unanswered_questions || 0,
 
         evaluated_conversations:
-          aiResolution.evaluated_conversations ?? 0,
+          aiResolution.evaluated_conversations || 0,
 
         ai_resolved_conversations:
-          aiResolution.ai_resolved_conversations ?? 0,
+          aiResolution.ai_resolved_conversations || 0,
 
         not_ai_resolved_conversations:
-          aiResolution.not_ai_resolved_conversations ?? 0,
+          aiResolution.not_ai_resolved_conversations || 0,
 
         ai_resolution_rate_percent:
-          aiResolution.ai_resolution_rate_percent ?? 0
+          aiResolution.ai_resolution_rate_percent || 0
       },
 
-      daily: dailyRows,
+      daily: Array.isArray(dailyRows) ? dailyRows : [],
 
-      recent_unanswered_questions: recentUnanswered
+      recent_unanswered_questions:
+        Array.isArray(recentUnanswered)
+          ? recentUnanswered
+          : []
     });
 
   } catch (error) {
     console.error("DASHBOARD API ERROR:", error);
 
-  return res.status(500).json({
-  error: "Unable to load dashboard statistics",
-  details: error.message
-});
+    return res.status(500).json({
+      error: "Unable to load dashboard statistics",
+      details: error.message
+    });
+  }
+};
