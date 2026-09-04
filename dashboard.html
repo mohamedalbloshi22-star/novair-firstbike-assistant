@@ -14,7 +14,6 @@
       --gold:#f2a93b;
       --text:#f5f1e8;
       --muted:#b9b2a7;
-      --red:#bf4936;
     }
 
     *{
@@ -129,15 +128,13 @@
     }
 
     .status-unresolved{
-      background:rgba(191,73,54,.18);
       color:#ff8d7a;
-      border:1px solid rgba(191,73,54,.5);
+      border:1px solid #7c3b31;
     }
 
     .status-resolved{
-      background:rgba(78,159,109,.18);
       color:#82d39f;
-      border:1px solid rgba(78,159,109,.5);
+      border:1px solid #37634a;
     }
 
     .status{
@@ -189,6 +186,12 @@
     </div>
 
     <div class="card">
+      <div class="label">نسبة الحل بالذكاء الاصطناعي</div>
+      <div class="value" id="aiResolutionRate">-</div>
+      <div class="small" id="aiResolutionDetails">-</div>
+    </div>
+
+    <div class="card">
       <div class="label">إجمالي طلبات التواصل</div>
       <div class="value" id="totalContactRequests">-</div>
     </div>
@@ -218,9 +221,7 @@
   </div>
 
   <div class="table-wrap">
-
     <table>
-
       <thead>
         <tr>
           <th>التاريخ</th>
@@ -232,17 +233,11 @@
       </thead>
 
       <tbody id="dailyTable">
-
         <tr>
-          <td colspan="5">
-            جاري تحميل البيانات...
-          </td>
+          <td colspan="5">جاري تحميل البيانات...</td>
         </tr>
-
       </tbody>
-
     </table>
-
   </div>
 
   <div class="section-title">
@@ -250,9 +245,7 @@
   </div>
 
   <div class="table-wrap">
-
     <table>
-
       <thead>
         <tr>
           <th>السؤال</th>
@@ -262,17 +255,11 @@
       </thead>
 
       <tbody id="unansweredTable">
-
         <tr>
-          <td colspan="3">
-            جاري تحميل البيانات...
-          </td>
+          <td colspan="3">جاري تحميل البيانات...</td>
         </tr>
-
       </tbody>
-
     </table>
-
   </div>
 
   <div class="status" id="status">
@@ -284,13 +271,11 @@
 <script>
 
 function formatDate(value){
-
   if(!value){
     return "-";
   }
 
-  const date =
-    new Date(value);
+  const date = new Date(value);
 
   if(Number.isNaN(date.getTime())){
     return value;
@@ -337,9 +322,7 @@ async function loadDashboard(){
         : [];
 
     const unanswered =
-      Array.isArray(
-        data.recent_unanswered_questions
-      )
+      Array.isArray(data.recent_unanswered_questions)
         ? data.recent_unanswered_questions
         : [];
 
@@ -348,6 +331,15 @@ async function loadDashboard(){
 
     document.getElementById("totalMessages").textContent =
       summary.total_messages ?? 0;
+
+    document.getElementById("aiResolutionRate").textContent =
+      (summary.ai_resolution_rate_percent ?? 0) + "%";
+
+    document.getElementById("aiResolutionDetails").textContent =
+      "حُلّت بالذكاء الاصطناعي: " +
+      (summary.ai_resolved_conversations ?? 0) +
+      " من " +
+      (summary.evaluated_conversations ?? 0);
 
     document.getElementById("totalContactRequests").textContent =
       summary.total_contact_requests ?? 0;
@@ -394,18 +386,22 @@ async function loadDashboard(){
         const tr =
           document.createElement("tr");
 
-        tr.innerHTML = `
-          <td>${row.day ?? "-"}</td>
-          <td>${row.conversations ?? 0}</td>
-          <td>${row.messages ?? 0}</td>
-          <td>${row.callback_conversations ?? 0}</td>
-          <td>${row.human_handoff_conversations ?? 0}</td>
-        `;
+        const cells = [
+          row.day ?? "-",
+          row.conversations ?? 0,
+          row.messages ?? 0,
+          row.callback_conversations ?? 0,
+          row.human_handoff_conversations ?? 0
+        ];
+
+        cells.forEach(value => {
+          const td = document.createElement("td");
+          td.textContent = value;
+          tr.appendChild(td);
+        });
 
         dailyTable.appendChild(tr);
-
       });
-
     }
 
     unansweredTable.innerHTML = "";
@@ -427,21 +423,45 @@ async function loadDashboard(){
         const tr =
           document.createElement("tr");
 
-        const badge =
-          row.resolved
-            ? `<span class="status-badge status-resolved">تمت المعالجة</span>`
-            : `<span class="status-badge status-unresolved">غير محلول</span>`;
+        const questionTd =
+          document.createElement("td");
 
-        tr.innerHTML = `
-          <td class="question-cell">${row.question ?? "-"}</td>
-          <td>${badge}</td>
-          <td>${formatDate(row.created_at)}</td>
-        `;
+        questionTd.className =
+          "question-cell";
+
+        questionTd.textContent =
+          row.question ?? "-";
+
+        const statusTd =
+          document.createElement("td");
+
+        const badge =
+          document.createElement("span");
+
+        badge.className =
+          row.resolved
+            ? "status-badge status-resolved"
+            : "status-badge status-unresolved";
+
+        badge.textContent =
+          row.resolved
+            ? "تمت المعالجة"
+            : "غير محلول";
+
+        statusTd.appendChild(badge);
+
+        const dateTd =
+          document.createElement("td");
+
+        dateTd.textContent =
+          formatDate(row.created_at);
+
+        tr.appendChild(questionTd);
+        tr.appendChild(statusTd);
+        tr.appendChild(dateTd);
 
         unansweredTable.appendChild(tr);
-
       });
-
     }
 
     status.textContent =
@@ -471,9 +491,7 @@ async function loadDashboard(){
         </td>
       </tr>
     `;
-
   }
-
 }
 
 loadDashboard();
