@@ -136,9 +136,10 @@ module.exports = async function handler(req, res) {
         headers: {
           Prefer: "return=minimal"
         },
-        body: JSON.stringify({
-          [updateField]: true
-        })
+       body: JSON.stringify({
+  [updateField]: true,
+  resolved_by_ai: false
+})
       }
     );
 
