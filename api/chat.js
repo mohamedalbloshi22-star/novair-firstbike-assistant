@@ -55,10 +55,8 @@ async function getOrCreateConversation(
 ) {
   const existing = await supabaseRequest(
     `conversations?client_id=eq.${clientId}` +
-    `&session_id=eq.${encodeURIComponent(
-      sessionId
-    )}` +
-    `&select=id,client_id,session_id` +
+    `&session_id=eq.${encodeURIComponent(sessionId)}` +
+    `&select=id,client_id,session_id,resolved_by_ai,human_handoff,callback_requested` +
     `&limit=1`
   );
 
@@ -78,6 +76,7 @@ async function getOrCreateConversation(
         client_id: clientId,
         session_id: sessionId,
         status: "open",
+        resolved_by_ai: null,
         human_handoff: false,
         callback_requested: false
       }
@@ -137,6 +136,35 @@ async function saveUnansweredQuestion(
       }
     }
   );
+}
+
+async function updateResolutionStatus(
+  conversation,
+  isUnanswered
+) {
+  let resolvedByAi = true;
+
+  if (
+    isUnanswered ||
+    conversation.resolved_by_ai === false ||
+    conversation.human_handoff === true ||
+    conversation.callback_requested === true
+  ) {
+    resolvedByAi = false;
+  }
+
+  await supabaseRequest(
+    `conversations?id=eq.${conversation.id}`,
+    {
+      method: "PATCH",
+      prefer: "return=minimal",
+      body: {
+        resolved_by_ai: resolvedByAi
+      }
+    }
+  );
+
+  return resolvedByAi;
 }
 
 function getLatestUserMessage(messages) {
@@ -327,10 +355,8 @@ ${language === "en" ? "English" : "Arabic"}
       conversation.id,
       "assistant",
       cleanAnswer,
-      anthropicData.usage?.input_tokens ??
-        null,
-      anthropicData.usage?.output_tokens ??
-        null
+      anthropicData.usage?.input_tokens ?? null,
+      anthropicData.usage?.output_tokens ?? null
     );
 
     if (isUnanswered) {
@@ -348,6 +374,12 @@ ${language === "en" ? "English" : "Arabic"}
       }
     }
 
+    const resolvedByAi =
+      await updateResolutionStatus(
+        conversation,
+        isUnanswered
+      );
+
     if (
       anthropicData.content &&
       anthropicData.content[0]
@@ -361,10 +393,10 @@ ${language === "en" ? "English" : "Arabic"}
 
       novaire: {
         client_id: client.id,
-        conversation_id:
-          conversation.id,
+        conversation_id: conversation.id,
         session_id,
-        unanswered: isUnanswered
+        unanswered: isUnanswered,
+        resolved_by_ai: resolvedByAi
       }
     });
 
