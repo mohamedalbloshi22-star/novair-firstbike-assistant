@@ -180,7 +180,6 @@
       padding:14px 17px;
       cursor:pointer;
       font-weight:bold;
-      box-shadow:0 8px 30px rgba(0,0,0,.4);
       z-index:20;
     }
 
@@ -193,8 +192,8 @@
       position:fixed;
       left:20px;
       bottom:20px;
-      width:min(370px,calc(100vw - 32px));
-      height:min(570px,calc(100vh - 70px));
+      width:min(390px,calc(100vw - 32px));
+      height:min(650px,calc(100vh - 40px));
       background:var(--card);
       border:1px solid var(--line);
       border-radius:13px;
@@ -281,7 +280,7 @@
     }
 
     .quick-area{
-      padding:10px 12px;
+      padding:8px 12px;
       background:var(--bg);
       display:flex;
       flex-wrap:wrap;
@@ -296,6 +295,94 @@
       padding:7px 10px;
       cursor:pointer;
       font-size:12px;
+    }
+
+    .contact-actions{
+      padding:8px 12px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:7px;
+      background:var(--bg);
+    }
+
+    .contact-action-btn{
+      border:1px solid var(--line);
+      background:var(--card);
+      color:var(--text);
+      border-radius:8px;
+      padding:9px 7px;
+      cursor:pointer;
+      font-size:12px;
+      font-weight:bold;
+    }
+
+    .contact-form{
+      margin:0 12px 8px;
+      padding:12px;
+      background:#191919;
+      border:1px solid var(--line);
+      border-radius:9px;
+    }
+
+    .contact-form-title{
+      font-size:13px;
+      font-weight:bold;
+      margin-bottom:9px;
+    }
+
+    .contact-form input{
+      width:100%;
+      background:var(--bg);
+      border:1px solid var(--line);
+      color:var(--text);
+      border-radius:7px;
+      padding:9px 10px;
+      margin-bottom:7px;
+      outline:none;
+    }
+
+    .privacy-note{
+      color:var(--muted);
+      font-size:10px;
+      line-height:1.5;
+      margin:2px 0 9px;
+    }
+
+    .contact-form-buttons{
+      display:flex;
+      gap:7px;
+    }
+
+    .contact-form-buttons button{
+      flex:1;
+      border:0;
+      border-radius:7px;
+      padding:9px;
+      cursor:pointer;
+      font-weight:bold;
+    }
+
+    .submit-contact{
+      background:var(--gold);
+      color:#111;
+    }
+
+    .cancel-contact{
+      background:#333;
+      color:var(--text);
+    }
+
+    .contact-message{
+      margin-top:8px;
+      font-size:12px;
+    }
+
+    .contact-message.success{
+      color:#76c893;
+    }
+
+    .contact-message.error{
+      color:#ff8170;
     }
 
     .input-area{
@@ -325,20 +412,8 @@
       cursor:pointer;
     }
 
-    .input-area button:disabled{opacity:.5}
-
-    @media(max-width:500px){
-      .chat{
-        left:16px;
-        bottom:16px;
-        width:calc(100vw - 32px);
-        height:calc(100vh - 60px);
-      }
-
-      html[dir="ltr"] .chat{
-        right:16px;
-        left:auto;
-      }
+    .input-area button:disabled{
+      opacity:.5;
     }
   </style>
 </head>
@@ -359,6 +434,7 @@
     <header class="header">
       <div class="brand">
         <div class="logo">FB</div>
+
         <div>
           <h1>First Bike</h1>
           <div class="subtitle" id="subtitle"></div>
@@ -424,6 +500,28 @@
 
     <div class="quick-area" id="quickArea"></div>
 
+    <div class="contact-actions">
+      <button id="humanBtn" class="contact-action-btn" type="button"></button>
+      <button id="callbackBtn" class="contact-action-btn" type="button"></button>
+    </div>
+
+    <div class="contact-form" id="contactForm" style="display:none;">
+      <div class="contact-form-title" id="contactFormTitle"></div>
+
+      <input id="customerName" type="text">
+      <input id="customerPhone" type="tel">
+      <input id="contactReason" type="text">
+
+      <div class="privacy-note" id="privacyNote"></div>
+
+      <div class="contact-form-buttons">
+        <button id="submitContactBtn" class="submit-contact" type="button"></button>
+        <button id="cancelContactBtn" class="cancel-contact" type="button"></button>
+      </div>
+
+      <div class="contact-message" id="contactMessage"></div>
+    </div>
+
     <div class="input-area">
       <input id="messageInput" type="text" autocomplete="off">
       <button id="sendBtn">➤</button>
@@ -443,27 +541,31 @@
         repair:"🔧 تصليح الدراجات",
         parts:"⚙️ قطع الغيار",
         rental:"🏍️ تأجير الدراجات",
-        note:"<strong>ملاحظة:</strong> أسعار التصليح وقطع الغيار تختلف حسب نوع القطعة والعطل والتركيب. يمكنك سؤال المساعد للحصول على المزيد من التفاصيل.",
+        note:"<strong>ملاحظة:</strong> أسعار التصليح وقطع الغيار تختلف حسب نوع القطعة والعطل والتركيب.",
         launcher:"⚡ تحدث مع مساعد المحل",
         chatName:"مساعد First Bike",
         chatStatus:"متصل الآن",
         placeholder:"اكتب سؤالك هنا...",
         welcome:"هلا فيك 🏍️ أنا مساعد First Bike. اسألني عن أسعار الإيجار أو التصليح أو موقع المحل.",
-        error:"عذرًا، حدث خطأ بسيط. حاول مرة أخرى.",
+        error:"عذرًا، حدث خطأ. حاول مرة أخرى.",
         typing:"يكتب...",
+        humanBtn:"👤 التحدث مع مسؤول",
+        callbackBtn:"📞 طلب اتصال",
+        humanTitle:"طلب التحدث مع مسؤول",
+        callbackTitle:"طلب اتصال من First Bike",
+        namePlaceholder:"الاسم",
+        phonePlaceholder:"رقم الهاتف",
+        reasonPlaceholder:"سبب التواصل (اختياري)",
+        privacy:"سيتم استخدام بيانات التواصل فقط لمعالجة طلبك والتواصل معك.",
+        submit:"إرسال الطلب",
+        cancel:"إلغاء",
+        required:"يرجى إدخال الاسم ورقم الهاتف.",
+        contactSuccess:"تم تسجيل طلبك بنجاح ✓",
+        contactError:"تعذر تسجيل الطلب. حاول مرة أخرى.",
         quickQuestions:[
-          {
-            label:"سعر 220 سي سي؟",
-            message:"كم سعر إيجار دراجة 220 سي سي؟"
-          },
-          {
-            label:"كم تكلفة التصليح؟",
-            message:"كم تكلفة تصليح الدراجة؟"
-          },
-          {
-            label:"وين موقعكم؟",
-            message:"وين موقع First Bike بالضبط؟"
-          }
+          {label:"سعر 220 سي سي؟",message:"كم سعر إيجار دراجة 220 سي سي؟"},
+          {label:"كم تكلفة التصليح؟",message:"كم تكلفة تصليح الدراجة؟"},
+          {label:"وين موقعكم؟",message:"وين موقع First Bike بالضبط؟"}
         ]
       },
 
@@ -477,7 +579,7 @@
         repair:"🔧 Motorcycle Repair",
         parts:"⚙️ Spare Parts",
         rental:"🏍️ Motorcycle Rental",
-        note:"<strong>Note:</strong> Repair and spare-part prices depend on the fault, part type and installation. Ask the assistant for more information.",
+        note:"<strong>Note:</strong> Repair and spare-part prices vary by fault, part and installation.",
         launcher:"⚡ Chat with First Bike",
         chatName:"First Bike Assistant",
         chatStatus:"Online now",
@@ -485,47 +587,43 @@
         welcome:"Hi 🏍️ I'm the First Bike assistant. Ask me about rental prices, repairs or our location.",
         error:"Sorry, something went wrong. Please try again.",
         typing:"Typing...",
+        humanBtn:"👤 Talk to a person",
+        callbackBtn:"📞 Request a callback",
+        humanTitle:"Talk to a First Bike representative",
+        callbackTitle:"Request a callback from First Bike",
+        namePlaceholder:"Your name",
+        phonePlaceholder:"Phone number",
+        reasonPlaceholder:"Reason for contact (optional)",
+        privacy:"Your contact details will only be used to process this request and contact you.",
+        submit:"Send request",
+        cancel:"Cancel",
+        required:"Please enter your name and phone number.",
+        contactSuccess:"Your request has been recorded successfully ✓",
+        contactError:"We couldn't record your request. Please try again.",
         quickQuestions:[
-          {
-            label:"220cc price?",
-            message:"How much is the 220cc motorcycle rental?"
-          },
-          {
-            label:"Repair cost?",
-            message:"How much does motorcycle repair cost?"
-          },
-          {
-            label:"Your location?",
-            message:"Where exactly is First Bike located?"
-          }
+          {label:"220cc price?",message:"How much is the 220cc motorcycle rental?"},
+          {label:"Repair cost?",message:"How much does motorcycle repair cost?"},
+          {label:"Your location?",message:"Where exactly is First Bike located?"}
         ]
       }
     };
 
-    let language =
-      localStorage.getItem("novaire_language") || "ar";
+    let language = localStorage.getItem("novaire_language") || "ar";
 
-    let sessionId =
-      localStorage.getItem("novaire_firstbike_session_id");
+    let sessionId = localStorage.getItem("novaire_firstbike_session_id");
 
     if(!sessionId){
       if(window.crypto && typeof window.crypto.randomUUID === "function"){
         sessionId = "firstbike-" + window.crypto.randomUUID();
       }else{
-        sessionId =
-          "firstbike-" +
-          Date.now() +
-          "-" +
-          Math.random().toString(36).substring(2,10);
+        sessionId = "firstbike-" + Date.now() + "-" + Math.random().toString(36).substring(2,10);
       }
 
-      localStorage.setItem(
-        "novaire_firstbike_session_id",
-        sessionId
-      );
+      localStorage.setItem("novaire_firstbike_session_id", sessionId);
     }
 
     let history = [];
+    let selectedContactType = null;
 
     const chat = document.getElementById("chat");
     const chatBody = document.getElementById("chatBody");
@@ -533,6 +631,13 @@
     const messageInput = document.getElementById("messageInput");
     const sendBtn = document.getElementById("sendBtn");
     const quickArea = document.getElementById("quickArea");
+
+    const contactForm = document.getElementById("contactForm");
+    const customerName = document.getElementById("customerName");
+    const customerPhone = document.getElementById("customerPhone");
+    const contactReason = document.getElementById("contactReason");
+    const contactMessage = document.getElementById("contactMessage");
+    const submitContactBtn = document.getElementById("submitContactBtn");
 
     function escapeHtml(text){
       return String(text)
@@ -583,7 +688,7 @@
         button.type = "button";
         button.textContent = item.label;
 
-        button.addEventListener("click",()=>{
+        button.addEventListener("click", ()=>{
           sendMessage(item.message);
         });
 
@@ -620,15 +725,26 @@
 
       messageInput.placeholder = t.placeholder;
 
-      document.getElementById("arabicBtn").classList.toggle(
-        "active",
-        language === "ar"
-      );
+      document.getElementById("humanBtn").textContent = t.humanBtn;
+      document.getElementById("callbackBtn").textContent = t.callbackBtn;
 
-      document.getElementById("englishBtn").classList.toggle(
-        "active",
-        language === "en"
-      );
+      customerName.placeholder = t.namePlaceholder;
+      customerPhone.placeholder = t.phonePlaceholder;
+      contactReason.placeholder = t.reasonPlaceholder;
+
+      document.getElementById("privacyNote").textContent = t.privacy;
+      submitContactBtn.textContent = t.submit;
+      document.getElementById("cancelContactBtn").textContent = t.cancel;
+
+      document.getElementById("arabicBtn").classList.toggle("active", language === "ar");
+      document.getElementById("englishBtn").classList.toggle("active", language === "en");
+
+      if(selectedContactType){
+        document.getElementById("contactFormTitle").textContent =
+          selectedContactType === "human_handoff"
+            ? t.humanTitle
+            : t.callbackTitle;
+      }
 
       renderQuickQuestions();
     }
@@ -637,14 +753,83 @@
       if(newLanguage !== "ar" && newLanguage !== "en") return;
 
       language = newLanguage;
-
-      localStorage.setItem(
-        "novaire_language",
-        language
-      );
+      localStorage.setItem("novaire_language", language);
 
       renderLanguage();
-      messageInput.focus();
+    }
+
+    function openContactForm(type){
+      selectedContactType = type;
+
+      const t = translations[language];
+
+      document.getElementById("contactFormTitle").textContent =
+        type === "human_handoff"
+          ? t.humanTitle
+          : t.callbackTitle;
+
+      contactMessage.textContent = "";
+      contactMessage.className = "contact-message";
+
+      contactForm.style.display = "block";
+      customerName.focus();
+    }
+
+    function closeContactForm(){
+      contactForm.style.display = "none";
+      selectedContactType = null;
+      contactMessage.textContent = "";
+    }
+
+    async function submitContactRequest(){
+      const t = translations[language];
+
+      const name = customerName.value.trim();
+      const phone = customerPhone.value.trim();
+      const reason = contactReason.value.trim();
+
+      if(!name || !phone){
+        contactMessage.textContent = t.required;
+        contactMessage.className = "contact-message error";
+        return;
+      }
+
+      if(!selectedContactType) return;
+
+      submitContactBtn.disabled = true;
+
+      try{
+        const response = await fetch("/api/contact",{
+          method:"POST",
+          headers:{
+            "Content-Type":"application/json"
+          },
+          body:JSON.stringify({
+            session_id:sessionId,
+            request_type:selectedContactType,
+            customer_name:name,
+            phone:phone,
+            reason:reason
+          })
+        });
+
+        if(!response.ok){
+          throw new Error("Contact request failed");
+        }
+
+        contactMessage.textContent = t.contactSuccess;
+        contactMessage.className = "contact-message success";
+
+        customerName.value = "";
+        customerPhone.value = "";
+        contactReason.value = "";
+
+      }catch(error){
+        contactMessage.textContent = t.contactError;
+        contactMessage.className = "contact-message error";
+      }finally{
+        submitContactBtn.disabled = false;
+      }
     }
 
     async function sendMessage(text){
@@ -709,43 +894,47 @@
       }
     }
 
-    document.getElementById("arabicBtn").addEventListener(
-      "click",
-      ()=>changeLanguage("ar")
-    );
+    document.getElementById("arabicBtn").addEventListener("click", ()=>{
+      changeLanguage("ar");
+    });
 
-    document.getElementById("englishBtn").addEventListener(
-      "click",
-      ()=>changeLanguage("en")
-    );
+    document.getElementById("englishBtn").addEventListener("click", ()=>{
+      changeLanguage("en");
+    });
 
-    launcher.addEventListener("click",()=>{
+    document.getElementById("humanBtn").addEventListener("click", ()=>{
+      openContactForm("human_handoff");
+    });
+
+    document.getElementById("callbackBtn").addEventListener("click", ()=>{
+      openContactForm("callback");
+    });
+
+    submitContactBtn.addEventListener("click", submitContactRequest);
+
+    document.getElementById("cancelContactBtn").addEventListener("click", closeContactForm);
+
+    launcher.addEventListener("click", ()=>{
       chat.classList.add("open");
       launcher.style.display = "none";
 
       if(chatBody.children.length === 0){
-        addMessage(
-          translations[language].welcome,
-          "bot"
-        );
+        addMessage(translations[language].welcome,"bot");
       }
 
       messageInput.focus();
     });
 
-    document.getElementById("closeBtn").addEventListener(
-      "click",
-      ()=>{
-        chat.classList.remove("open");
-        launcher.style.display = "block";
-      }
-    );
+    document.getElementById("closeBtn").addEventListener("click", ()=>{
+      chat.classList.remove("open");
+      launcher.style.display = "block";
+    });
 
-    sendBtn.addEventListener("click",()=>{
+    sendBtn.addEventListener("click", ()=>{
       sendMessage(messageInput.value);
     });
 
-    messageInput.addEventListener("keydown",event=>{
+    messageInput.addEventListener("keydown", event=>{
       if(event.key === "Enter"){
         event.preventDefault();
         sendMessage(messageInput.value);
