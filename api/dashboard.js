@@ -52,9 +52,24 @@ module.exports = async function handler(req, res) {
       `daily_dashboard_stats?client_id=eq.${clientId}&select=*&order=day.desc&limit=30`
     );
 
+    const unansweredRows = await supabaseRequest(
+      `unanswered_dashboard_stats?client_id=eq.${clientId}&select=*`
+    );
+
+    const recentUnanswered = await supabaseRequest(
+      `unanswered_questions?client_id=eq.${clientId}&select=id,question,resolved,created_at&order=created_at.desc&limit=10`
+    );
+
     return res.status(200).json({
-      summary: summaryRows[0],
-      daily: dailyRows
+      summary: {
+        ...summaryRows[0],
+        total_unanswered_questions:
+          unansweredRows[0]?.total_unanswered_questions ?? 0,
+        unresolved_unanswered_questions:
+          unansweredRows[0]?.unresolved_unanswered_questions ?? 0
+      },
+      daily: dailyRows,
+      recent_unanswered_questions: recentUnanswered
     });
 
   } catch (error) {
