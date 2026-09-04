@@ -1,1092 +1,986 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>First Bike — Al Ain | Motorcycle Rental & Repair</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <title>First Bike — Al Ain</title>
 
-<style>
-:root{
-  --asphalt:#1A1A1A;
-  --asphalt-2:#242424;
-  --steel:#3A3A3A;
-  --amber:#F2A93B;
-  --amber-deep:#D48F24;
-  --off-white:#F4F0E6;
-  --grey-text:#B8B2A6;
-  --line:rgba(244,240,230,0.12);
-  --red-tag:#C4432E;
-}
+  <style>
+    :root {
+      --bg: #171717;
+      --card: #232323;
+      --line: #3a3a3a;
+      --gold: #f2a93b;
+      --text: #f5f1e8;
+      --muted: #b9b2a7;
+      --red: #bf4936;
+    }
 
-*{box-sizing:border-box;}
+    * {
+      box-sizing: border-box;
+    }
 
-html,body{
-  margin:0;
-  padding:0;
-}
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Arial, Tahoma, sans-serif;
+    }
 
-body{
-  font-family:'Tajawal','Tahoma',sans-serif;
-  background:var(--asphalt);
-  color:var(--off-white);
-  min-height:100vh;
-}
+    button,
+    input {
+      font-family: inherit;
+    }
 
-.site{
-  max-width:760px;
-  margin:0 auto;
-  padding:0 20px 130px;
-}
+    .topbar {
+      background: var(--gold);
+      color: #161616;
+      text-align: center;
+      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: bold;
+    }
 
-.top-strip{
-  background:var(--amber);
-  color:var(--asphalt);
-  text-align:center;
-  font-size:12.5px;
-  font-weight:700;
-  padding:8px 12px;
-}
+    .container {
+      width: min(760px, calc(100% - 32px));
+      margin: auto;
+      padding-bottom: 120px;
+    }
 
-.language-bar{
-  max-width:760px;
-  margin:14px auto 0;
-  padding:0 20px;
-  display:flex;
-  justify-content:flex-end;
-}
+    .language-area {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
 
-.language-switch{
-  display:flex;
-  border:1px solid var(--steel);
-  border-radius:8px;
-  overflow:hidden;
-  background:var(--asphalt-2);
-}
+    html[dir="ltr"] .language-area {
+      justify-content: flex-start;
+    }
 
-.lang-btn{
-  border:0;
-  background:transparent;
-  color:var(--grey-text);
-  padding:8px 14px;
-  cursor:pointer;
-  font-family:inherit;
-  font-weight:700;
-}
+    .language-switch {
+      display: flex;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
 
-.lang-btn.active{
-  background:var(--amber);
-  color:var(--asphalt);
-}
+    .lang-btn {
+      border: 0;
+      padding: 9px 14px;
+      cursor: pointer;
+      background: var(--card);
+      color: var(--muted);
+      font-weight: bold;
+    }
 
-.site-header{
-  padding:24px 0 22px;
-  border-bottom:2px solid var(--steel);
-}
+    .lang-btn.active {
+      background: var(--gold);
+      color: #161616;
+    }
 
-.brand-row{
-  display:flex;
-  align-items:center;
-  gap:12px;
-  margin-bottom:14px;
-}
+    .header {
+      padding: 24px 0;
+      border-bottom: 2px solid var(--line);
+    }
 
-.brand-badge{
-  width:46px;
-  height:46px;
-  background:var(--amber);
-  border-radius:6px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:900;
-  font-size:20px;
-  color:var(--asphalt);
-  flex:none;
-  transform:skewX(-6deg);
-}
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 13px;
+    }
 
-.site-header h1{
-  font-size:30px;
-  margin:0;
-  font-weight:900;
-}
+    .logo {
+      width: 48px;
+      height: 48px;
+      border-radius: 8px;
+      background: var(--gold);
+      color: #111;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 19px;
+    }
 
-.site-header .tag{
-  color:var(--amber);
-  font-size:13px;
-  font-weight:700;
-}
+    h1 {
+      margin: 0;
+      font-size: 29px;
+    }
 
-.loc-line{
-  margin-top:14px;
-  font-size:13.5px;
-  color:var(--grey-text);
-  line-height:1.9;
-}
+    .subtitle {
+      color: var(--gold);
+      font-size: 14px;
+      margin-top: 5px;
+    }
 
-.loc-line b{
-  color:var(--off-white);
-}
+    .info {
+      color: var(--muted);
+      font-size: 14px;
+      margin-top: 18px;
+      line-height: 1.8;
+    }
 
-.rent-table{
-  margin-top:32px;
-}
+    .info strong {
+      color: var(--text);
+    }
 
-.rent-table h2{
-  font-size:18px;
-  font-weight:700;
-  margin-bottom:14px;
-  display:flex;
-  align-items:center;
-  gap:8px;
-}
+    .section {
+      margin-top: 30px;
+    }
 
-.rent-table h2::before{
-  content:"";
-  width:4px;
-  height:18px;
-  background:var(--amber);
-  display:inline-block;
-  border-radius:2px;
-}
+    .section h2 {
+      font-size: 19px;
+      margin-bottom: 14px;
+    }
 
-.cc-row{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:13px 14px;
-  background:var(--asphalt-2);
-  border-radius:8px;
-  margin-bottom:8px;
-  border:1px solid var(--line);
-}
+    .price-row {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 9px;
+      padding: 13px 14px;
+      margin-bottom: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-.cc-row .cc{
-  font-weight:700;
-  font-size:14.5px;
-}
+    .price {
+      background: var(--red);
+      padding: 6px 11px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: bold;
+    }
 
-.cc-row .price{
-  background:var(--red-tag);
-  color:var(--off-white);
-  padding:5px 12px;
-  border-radius:5px;
-  font-weight:700;
-  font-size:13.5px;
-  white-space:nowrap;
-}
+    .services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 9px;
+      margin-top: 28px;
+    }
 
-.other-services{
-  margin-top:30px;
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-}
+    .service {
+      border: 1px solid var(--line);
+      background: var(--card);
+      border-radius: 20px;
+      padding: 9px 14px;
+      font-size: 13px;
+    }
 
-.svc-chip{
-  background:var(--asphalt-2);
-  border:1px solid var(--steel);
-  border-radius:20px;
-  padding:9px 16px;
-  font-size:13px;
-  color:var(--off-white);
-}
+    .note {
+      margin-top: 28px;
+      border: 1px solid var(--line);
+      background: var(--card);
+      padding: 16px;
+      border-radius: 9px;
+      line-height: 1.7;
+      color: var(--muted);
+      font-size: 14px;
+    }
 
-.hours-box{
-  margin-top:30px;
-  background:var(--asphalt-2);
-  border-radius:8px;
-  padding:16px 18px;
-  font-size:13.5px;
-  line-height:2;
-  color:var(--grey-text);
-  border:1px solid var(--line);
-}
+    .chat-launcher {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      background: var(--gold);
+      color: #111;
+      border: 0;
+      border-radius: 10px;
+      padding: 14px 17px;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+      z-index: 20;
+    }
 
-.hours-box b{
-  color:var(--amber);
-}
+    html[dir="ltr"] .chat-launcher {
+      left: auto;
+      right: 20px;
+    }
 
-.launcher{
-  position:fixed;
-  bottom:20px;
-  left:20px;
-  background:var(--amber);
-  color:var(--asphalt);
-  border:none;
-  border-radius:8px;
-  padding:14px 20px;
-  font-size:14px;
-  font-weight:700;
-  display:flex;
-  align-items:center;
-  gap:9px;
-  cursor:pointer;
-  box-shadow:0 10px 26px rgba(0,0,0,0.5);
-  font-family:'Tajawal',sans-serif;
-  z-index:40;
-}
+    .chat {
+      position: fixed;
+      left: 20px;
+      bottom: 20px;
+      width: min(370px, calc(100vw - 32px));
+      height: min(570px, calc(100vh - 70px));
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      z-index: 30;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    }
 
-.chat-wrap{
-  position:fixed;
-  bottom:20px;
-  left:20px;
-  width:min(360px, calc(100vw - 32px));
-  height:min(560px, calc(100vh - 100px));
-  background:var(--asphalt-2);
-  border-radius:12px;
-  box-shadow:0 24px 60px rgba(0,0,0,0.55);
-  display:none;
-  flex-direction:column;
-  overflow:hidden;
-  z-index:50;
-  border:1px solid var(--steel);
-}
+    html[dir="ltr"] .chat {
+      left: auto;
+      right: 20px;
+    }
 
-.chat-wrap.open{
-  display:flex;
-}
+    .chat.open {
+      display: flex;
+    }
 
-.chat-head{
-  background:var(--asphalt);
-  color:var(--off-white);
-  padding:15px 16px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  border-bottom:2px solid var(--amber);
-}
+    .chat-header {
+      background: #191919;
+      border-bottom: 2px solid var(--gold);
+      padding: 13px 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
 
-.chat-head .who{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
+    .chat-header-title {
+      font-weight: bold;
+      font-size: 14px;
+    }
 
-.avatar{
-  width:34px;
-  height:34px;
-  border-radius:6px;
-  background:var(--amber);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:900;
-  font-size:15px;
-  color:var(--asphalt);
-  flex:none;
-  transform:skewX(-6deg);
-}
+    .status {
+      color: var(--muted);
+      font-size: 11px;
+      margin-top: 4px;
+    }
 
-.chat-head .name{
-  font-size:14px;
-  font-weight:700;
-}
+    .close-btn {
+      background: transparent;
+      border: 0;
+      color: var(--text);
+      font-size: 20px;
+      cursor: pointer;
+    }
 
-.chat-head .status{
-  font-size:11px;
-  color:var(--grey-text);
-}
+    .chat-body {
+      flex: 1;
+      padding: 14px;
+      overflow-y: auto;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+    }
 
-.chat-head button{
-  background:none;
-  border:none;
-  color:var(--off-white);
-  font-size:18px;
-  cursor:pointer;
-  opacity:0.7;
-}
+    .msg {
+      max-width: 85%;
+      border-radius: 10px;
+      padding: 10px 12px;
+      line-height: 1.6;
+      font-size: 14px;
+      white-space: normal;
+    }
 
-.chat-body{
-  flex:1;
-  overflow-y:auto;
-  padding:16px;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  background:var(--asphalt);
-}
+    .msg.bot {
+      align-self: flex-start;
+      background: var(--card);
+      border: 1px solid var(--line);
+    }
 
-.msg{
-  max-width:84%;
-  padding:10px 13px;
-  border-radius:10px;
-  font-size:13.5px;
-  line-height:1.7;
-}
+    .msg.user {
+      align-self: flex-end;
+      background: var(--gold);
+      color: #111;
+    }
 
-.msg.bot{
-  align-self:flex-start;
-  background:var(--asphalt-2);
-  border:1px solid var(--line);
-  color:var(--off-white);
-}
+    .quick-area {
+      padding: 10px 12px;
+      background: var(--bg);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
 
-.msg.user{
-  align-self:flex-end;
-  background:var(--amber);
-  color:var(--asphalt);
-  font-weight:500;
-}
+    .quick-btn {
+      background: transparent;
+      border: 1px solid var(--gold);
+      color: var(--gold);
+      border-radius: 20px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 12px;
+    }
 
-.msg.typing{
-  align-self:flex-start;
-  background:var(--asphalt-2);
-  border:1px solid var(--line);
-  display:flex;
-  gap:4px;
-  padding:12px 14px;
-}
+    .input-area {
+      padding: 11px;
+      border-top: 1px solid var(--line);
+      display: flex;
+      gap: 8px;
+    }
 
-.msg.typing span{
-  width:6px;
-  height:6px;
-  border-radius:50%;
-  background:var(--grey-text);
-  animation:blink 1.2s infinite;
-}
+    .input-area input {
+      flex: 1;
+      border: 1px solid var(--line);
+      background: var(--bg);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 10px 12px;
+      outline: none;
+    }
 
-.msg.typing span:nth-child(2){animation-delay:.2s;}
-.msg.typing span:nth-child(3){animation-delay:.4s;}
+    .input-area button {
+      border: 0;
+      width: 42px;
+      border-radius: 8px;
+      background: var(--gold);
+      color: #111;
+      font-size: 18px;
+      cursor: pointer;
+    }
 
-@keyframes blink{
-  0%,80%,100%{opacity:0.25;}
-  40%{opacity:1;}
-}
+    .input-area button:disabled {
+      opacity: 0.5;
+    }
 
-.quick-row{
-  display:flex;
-  gap:8px;
-  flex-wrap:wrap;
-  padding:0 16px 12px;
-  background:var(--asphalt);
-}
-
-.quick-btn{
-  border:1px solid var(--amber);
-  color:var(--amber);
-  background:transparent;
-  border-radius:16px;
-  padding:6px 12px;
-  font-size:12px;
-  cursor:pointer;
-  white-space:nowrap;
-  font-family:inherit;
-}
-
-.chat-input{
-  display:flex;
-  gap:8px;
-  padding:12px;
-  border-top:1px solid var(--line);
-  background:var(--asphalt-2);
-}
-
-.chat-input input{
-  flex:1;
-  border:1px solid var(--steel);
-  border-radius:8px;
-  padding:10px 14px;
-  font-size:13.5px;
-  outline:none;
-  font-family:inherit;
-  background:var(--asphalt);
-  color:var(--off-white);
-}
-
-.chat-input input::placeholder{
-  color:var(--grey-text);
-}
-
-.chat-input input:focus{
-  border-color:var(--amber);
-}
-
-.chat-input button{
-  background:var(--amber);
-  color:var(--asphalt);
-  border:none;
-  border-radius:8px;
-  width:38px;
-  height:38px;
-  cursor:pointer;
-  font-size:15px;
-  flex:none;
-  font-weight:700;
-}
-
-.chat-input button:disabled{
-  opacity:0.5;
-  cursor:not-allowed;
-}
-
-html[dir="ltr"] .language-bar{
-  justify-content:flex-start;
-}
-
-html[dir="ltr"] .launcher,
-html[dir="ltr"] .chat-wrap{
-  left:auto;
-  right:20px;
-}
-</style>
+    .typing {
+      align-self: flex-start;
+      color: var(--muted);
+      background: var(--card);
+      border: 1px solid var(--line);
+      padding: 9px 12px;
+      border-radius: 9px;
+      font-size: 13px;
+    }
+  </style>
 </head>
 
 <body>
 
-<div class="top-strip" id="topStrip"></div>
+  <div class="topbar" id="topbar"></div>
 
-<div class="language-bar">
-  <div class="language-switch">
-    <button class="lang-btn" id="arBtn">العربية</button>
-    <button class="lang-btn" id="enBtn">English</button>
-  </div>
-</div>
+  <main class="container">
 
-<div class="site">
-  <div class="site-header">
-    <div class="brand-row">
-      <div class="brand-badge">FB</div>
-      <div>
-        <h1>First Bike</h1>
-        <div class="tag" id="tag"></div>
+    <div class="language-area">
+      <div class="language-switch">
+        <button id="arabicBtn" class="lang-btn">العربية</button>
+        <button id="englishBtn" class="lang-btn">English</button>
       </div>
     </div>
 
-    <div class="loc-line" id="locationInfo"></div>
-  </div>
+    <header class="header">
+      <div class="brand">
+        <div class="logo">FB</div>
 
-  <div class="rent-table">
-    <h2 id="rentTitle"></h2>
-
-    <div class="cc-row">
-      <span class="cc">50 cc</span>
-      <span class="price" id="price50"></span>
-    </div>
-
-    <div class="cc-row">
-      <span class="cc">90 cc</span>
-      <span class="price" id="price90"></span>
-    </div>
-
-    <div class="cc-row">
-      <span class="cc">220 cc</span>
-      <span class="price" id="price220"></span>
-    </div>
-
-    <div class="cc-row">
-      <span class="cc">400 cc</span>
-      <span class="price" id="price400"></span>
-    </div>
-
-    <div class="cc-row">
-      <span class="cc">800 cc+</span>
-      <span class="price" id="price800"></span>
-    </div>
-  </div>
-
-  <div class="other-services">
-    <span class="svc-chip" id="serviceRepair"></span>
-    <span class="svc-chip" id="serviceParts"></span>
-    <span class="svc-chip" id="serviceRental"></span>
-  </div>
-
-  <div class="hours-box" id="noteBox"></div>
-</div>
-
-<button class="launcher" id="launcher">
-  <span>⚡</span>
-  <span id="launcherText"></span>
-</button>
-
-<div class="chat-wrap" id="chatWrap">
-  <div class="chat-head">
-    <div class="who">
-      <div class="avatar">FB</div>
-      <div>
-        <div class="name" id="assistantName"></div>
-        <div class="status" id="assistantStatus"></div>
+        <div>
+          <h1>First Bike</h1>
+          <div class="subtitle" id="subtitle"></div>
+        </div>
       </div>
+
+      <div class="info" id="info"></div>
+    </header>
+
+    <section class="section">
+      <h2 id="pricesTitle"></h2>
+
+      <div class="price-row">
+        <strong>50 cc</strong>
+        <span class="price" id="p50"></span>
+      </div>
+
+      <div class="price-row">
+        <strong>90 cc</strong>
+        <span class="price" id="p90"></span>
+      </div>
+
+      <div class="price-row">
+        <strong>220 cc</strong>
+        <span class="price" id="p220"></span>
+      </div>
+
+      <div class="price-row">
+        <strong>400 cc</strong>
+        <span class="price" id="p400"></span>
+      </div>
+
+      <div class="price-row">
+        <strong>800 cc+</strong>
+        <span class="price" id="p800"></span>
+      </div>
+    </section>
+
+    <div class="services">
+      <span class="service" id="repair"></span>
+      <span class="service" id="parts"></span>
+      <span class="service" id="rental"></span>
     </div>
 
-    <button id="closeChat">✕</button>
-  </div>
+    <div class="note" id="note"></div>
 
-  <div class="chat-body" id="chatBody"></div>
+  </main>
 
-  <div class="quick-row" id="quickRow"></div>
+  <button class="chat-launcher" id="launcher"></button>
 
-  <div class="chat-input">
-    <input type="text" id="userInput">
-    <button id="sendBtn">➤</button>
-  </div>
-</div>
+  <section class="chat" id="chat">
+
+    <div class="chat-header">
+      <div>
+        <div class="chat-header-title" id="chatName"></div>
+        <div class="status" id="chatStatus"></div>
+      </div>
+
+      <button class="close-btn" id="closeBtn">×</button>
+    </div>
+
+    <div class="chat-body" id="chatBody"></div>
+
+    <div class="quick-area" id="quickArea"></div>
+
+    <div class="input-area">
+      <input id="messageInput" type="text" autocomplete="off" />
+      <button id="sendBtn">➤</button>
+    </div>
+
+  </section>
 
 <script>
-let history = [];
+  const translations = {
 
-let language =
-  localStorage.getItem('novaire_language') || 'ar';
+    ar: {
+      dir: "rtl",
 
-let sessionId =
-  localStorage.getItem('novaire_session_id');
+      topbar:
+        "تجربة NOVAIRE — المساعد الذكي لـ First Bike",
 
-if (!sessionId) {
-  sessionId =
-    'fb-' +
-    Date.now() +
-    '-' +
-    Math.random().toString(36).slice(2);
+      subtitle:
+        "تأجير وتصليح الدراجات النارية",
 
-  localStorage.setItem(
-    'novaire_session_id',
-    sessionId
-  );
-}
+      info:
+        "<strong>الموقع:</strong> العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون<br>" +
+        "<strong>الدوام:</strong> يوميًا من 3 العصر حتى 12 منتصف الليل",
 
-const translations = {
-  ar: {
-    dir: 'rtl',
+      pricesTitle:
+        "أسعار تأجير الدراجات بالساعة",
 
-    topStrip:
-      'تجربة NOVAIRE — مساعد ذكي فعلي لمحل First Bike',
+      currency:
+        "درهم / ساعة",
 
-    tag:
-      'تأجير وتصليح الدراجات النارية',
+      repair:
+        "🔧 تصليح الدراجات",
 
-    location:
-      '<b>الموقع:</b> العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون<br><b>الدوام:</b> يوميًا من 3 العصر حتى 12 منتصف الليل',
+      parts:
+        "⚙️ قطع الغيار",
 
-    rentTitle:
-      'أسعار تأجير الدراجات بالساعة',
+      rental:
+        "🏍️ تأجير الدراجات",
 
-    hour:
-      'درهم / ساعة',
+      note:
+        "<strong>ملاحظة:</strong> أسعار التصليح وقطع الغيار تختلف حسب نوع القطعة والعطل والتركيب. يمكنك سؤال المساعد للحصول على المزيد من التفاصيل.",
 
-    serviceRepair:
-      '🔧 تصليح دراجات',
+      launcher:
+        "⚡ تحدث مع مساعد المحل",
 
-    serviceParts:
-      '⚙️ قطع غيار أصلية وبديلة',
+      chatName:
+        "مساعد First Bike",
 
-    serviceRental:
-      '🏍️ إيجار من المحل إلى منطقة الرمل القريبة',
+      chatStatus:
+        "متصل الآن",
 
-    note:
-      '<b>ملاحظة:</b> أسعار قطع الغيار والتصليح تختلف حسب نوع القطعة والجودة والتركيب. اسأل المساعد للحصول على التفاصيل.',
+      placeholder:
+        "اكتب سؤالك هنا...",
 
-    launcher:
-      'تحدث مع مساعد المحل',
+      welcome:
+        "هلا فيك 🏍️ أنا مساعد First Bike. اسألني عن أسعار الإيجار أو التصليح أو موقع المحل.",
 
-    assistantName:
-      'مساعد First Bike',
+      error:
+        "عذرًا، حدث خطأ بسيط. حاول مرة أخرى.",
 
-    status:
-      'متصل الآن',
+      quickQuestions: [
+        {
+          label: "سعر 220 سي سي؟",
+          message: "كم سعر إيجار دراجة 220 سي سي؟"
+        },
+        {
+          label: "كم تكلفة التصليح؟",
+          message: "كم تكلفة تصليح الدراجة؟"
+        },
+        {
+          label: "وين موقعكم؟",
+          message: "وين موقع First Bike بالضبط؟"
+        }
+      ]
+    },
 
-    placeholder:
-      'اكتب سؤالك هنا...',
+    en: {
+      dir: "ltr",
 
-    welcome:
-      'هلا فيك 🏍️ أنا مساعد First Bike. تقدر تسألني عن أسعار الإيجار، التصليح، أو موقع المحل.',
+      topbar:
+        "NOVAIRE Demo — Smart Assistant for First Bike",
 
-    error:
-      'عذرًا، صار خلل بسيط. جرب مرة ثانية.',
+      subtitle:
+        "Motorcycle Rental & Repair",
 
-    offline:
-      'عذرًا، ما قدرت أوصل للخدمة الآن. جرب بعد قليل.',
+      info:
+        "<strong>Location:</strong> Al Ain, Al Salamat, Al Heeba Street, next to 1 Million Cafe<br>" +
+        "<strong>Hours:</strong> Daily from 3 PM until midnight",
 
-    quick: [
-      {
-        label:'سعر إيجار 220 سي سي؟',
-        q:'كم سعر إيجار دراجة 220 سي سي؟'
-      },
-      {
-        label:'كم تكلفة التصليح؟',
-        q:'عندي عطل بالدراجة، كم تكلفة التصليح؟'
-      },
-      {
-        label:'وينكم بالضبط؟',
-        q:'وينكم بالضبط؟'
-      }
-    ]
-  },
+      pricesTitle:
+        "Hourly Motorcycle Rental Prices",
 
-  en: {
-    dir: 'ltr',
+      currency:
+        "AED / hour",
 
-    topStrip:
-      'NOVAIRE Demo — Live AI Assistant for First Bike',
+      repair:
+        "🔧 Motorcycle Repair",
 
-    tag:
-      'Motorcycle Rental & Repair',
+      parts:
+        "⚙️ Spare Parts",
 
-    location:
-      '<b>Location:</b> Al Ain, Al Salamat, Al Heeba Street, next to 1 Million Cafe<br><b>Hours:</b> Daily from 3 PM to midnight',
+      rental:
+        "🏍️ Motorcycle Rental",
 
-    rentTitle:
-      'Hourly Motorcycle Rental Prices',
+      note:
+        "<strong>Note:</strong> Repair and spare-part prices depend on the fault, part type and installation. Ask the assistant for more information.",
 
-    hour:
-      'AED / hour',
+      launcher:
+        "⚡ Chat with First Bike",
 
-    serviceRepair:
-      '🔧 Motorcycle Repair',
-
-    serviceParts:
-      '⚙️ Original & Alternative Spare Parts',
-
-    serviceRental:
-      '🏍️ Rental from the shop to the nearby sand area',
-
-    note:
-      '<b>Note:</b> Repair and spare-part prices vary by part type, quality and installation. Ask the assistant for details.',
-
-    launcher:
-      'Chat with First Bike',
-
-    assistantName:
-      'First Bike Assistant',
-
-    status:
-      'Online now',
-
-    placeholder:
-      'Type your question here...',
-
-    welcome:
-      'Hi 🏍️ I am the First Bike assistant. Ask me about rental prices, repairs, or our location.',
-
-    error:
-      'Sorry, something went wrong. Please try again.',
-
-    offline:
-      'Sorry, I cannot reach the service right now. Please try again shortly.',
-
-    quick: [
-      {
-        label:'220cc rental price?',
-        q:'How much is the 220cc motorcycle rental?'
-      },
-      {
-        label:'Repair cost?',
-        q:'How much does motorcycle repair cost?'
-      },
-      {
-        label:'Where are you?',
-        q:'Where exactly are you located?'
-      }
-    ]
-  }
-};
-
-const chatBody =
-  document.getElementById('chatBody');
-
-const chatWrap =
-  document.getElementById('chatWrap');
-
-const launcher =
-  document.getElementById('launcher');
-
-const userInput =
-  document.getElementById('userInput');
-
-const sendBtn =
-  document.getElementById('sendBtn');
-
-const quickRow =
-  document.getElementById('quickRow');
-
-function escapeHtml(str){
-  return String(str)
-    .replace(/&/g,'&amp;')
-    .replace(/</g,'&lt;')
-    .replace(/>/g,'&gt;');
-}
-
-function formatText(text){
-  let safe = escapeHtml(text);
-
-  safe = safe.replace(
-    /\*\*(.+?)\*\*/g,
-    '<strong>$1</strong>'
-  );
-
-  safe = safe.replace(
-    /\n/g,
-    '<br>'
-  );
-
-  return safe;
-}
-
-function addMsg(text, who){
-  const div =
-    document.createElement('div');
-
-  div.className =
-    'msg ' + who;
-
-  div.innerHTML =
-    formatText(text);
-
-  chatBody.appendChild(div);
-
-  chatBody.scrollTop =
-    chatBody.scrollHeight;
-
-  return div;
-}
-
-function addTyping(){
-  const div =
-    document.createElement('div');
-
-  div.className =
-    'msg typing';
-
-  div.innerHTML =
-    '<span></span><span></span><span></span>';
-
-  chatBody.appendChild(div);
-
-  chatBody.scrollTop =
-    chatBody.scrollHeight;
-
-  return div;
-}
-
-function renderLanguage(){
-  const t =
-    translations[language];
-
-  document.documentElement.lang =
-    language;
-
-  document.documentElement.dir =
-    t.dir;
-
-  document.getElementById(
-    'topStrip'
-  ).textContent =
-    t.topStrip;
-
-  document.getElementById(
-    'tag'
-  ).textContent =
-    t.tag;
-
-  document.getElementById(
-    'locationInfo'
-  ).innerHTML =
-    t.location;
-
-  document.getElementById(
-    'rentTitle'
-  ).textContent =
-    t.rentTitle;
-
-  document.getElementById(
-    'price50'
-  ).textContent =
-    '80 ' + t.hour;
-
-  document.getElementById(
-    'price90'
-  ).textContent =
-    '150 ' + t.hour;
-
-  document.getElementById(
-    'price220'
-  ).textContent =
-    '200 ' + t.hour;
-
-  document.getElementById(
-    'price400'
-  ).textContent =
-    '250 ' + t.hour;
-
-  document.getElementById(
-    'price800'
-  ).textContent =
-    '300 ' + t.hour;
-
-  document.getElementById(
-    'serviceRepair'
-  ).textContent =
-    t.serviceRepair;
-
-  document.getElementById(
-    'serviceParts'
-  ).textContent =
-    t.serviceParts;
-
-  document.getElementById(
-    'serviceRental'
-  ).textContent =
-    t.serviceRental;
-
-  document.getElementById(
-    'noteBox'
-  ).innerHTML =
-    t.note;
-
-  document.getElementById(
-    'launcherText'
-  ).textContent =
-    t.launcher;
-
-  document.getElementById(
-    'assistantName'
-  ).textContent =
-    t.assistantName;
-
-  document.getElementById(
-    'assistantStatus'
-  ).textContent =
-    t.status;
-
-  userInput.placeholder =
-    t.placeholder;
-
-  document.getElementById(
-    'arBtn'
-  ).classList.toggle(
-    'active',
-    language === 'ar'
-  );
-
-  document.getElementById(
-    'enBtn'
-  ).classList.toggle(
-    'active',
-    language === 'en'
-  );
-
-  quickRow.innerHTML = '';
-
-  t.quick.forEach(item => {
-    const button =
-      document.createElement('button');
-
-    button.className =
-      'quick-btn';
-
-    button.textContent =
-      item.label;
-
-    button.dataset.q =
-      item.q;
-
-    quickRow.appendChild(button);
-  });
-}
-
-function switchLanguage(newLanguage){
-  if (
-    newLanguage !== 'ar' &&
-    newLanguage !== 'en'
-  ) return;
-
-  language =
-    newLanguage;
-
-  localStorage.setItem(
-    'novaire_language',
-    language
-  );
-
-  history = [];
-  chatBody.innerHTML = '';
-
-  renderLanguage();
-
-  if (
-    chatWrap.classList.contains('open')
-  ) {
-    addMsg(
-      translations[language].welcome,
-      'bot'
+      chatName:
+        "First Bike Assistant",
+
+      chatStatus:
+        "Online now",
+
+      placeholder:
+        "Type your question here...",
+
+      welcome:
+        "Hi 🏍️ I'm the First Bike assistant. Ask me about rental prices, repairs or our location.",
+
+      error:
+        "Sorry, something went wrong. Please try again.",
+
+      quickQuestions: [
+        {
+          label: "220cc price?",
+          message: "How much is the 220cc motorcycle rental?"
+        },
+        {
+          label: "Repair cost?",
+          message: "How much does motorcycle repair cost?"
+        },
+        {
+          label: "Your location?",
+          message: "Where exactly is First Bike located?"
+        }
+      ]
+    }
+  };
+
+
+  let language =
+    localStorage.getItem("novaire_language") || "ar";
+
+  let sessionId =
+    localStorage.getItem("novaire_firstbike_session_id");
+
+  if (!sessionId) {
+    sessionId =
+      "firstbike-" +
+      Date.now() +
+      "-" +
+      Math.random().toString(36).substring(2, 10);
+
+    localStorage.setItem(
+      "novaire_firstbike_session_id",
+      sessionId
     );
   }
-}
 
-async function sendMessage(text){
-  if (!text.trim()) return;
+  let history = [];
 
-  const userText =
-    text.trim();
 
-  addMsg(
-    userText,
-    'user'
-  );
+  const chat =
+    document.getElementById("chat");
 
-  history.push({
-    role:'user',
-    content:userText
-  });
+  const chatBody =
+    document.getElementById("chatBody");
 
-  userInput.value = '';
+  const launcher =
+    document.getElementById("launcher");
 
-  sendBtn.disabled = true;
+  const messageInput =
+    document.getElementById("messageInput");
 
-  const typingEl =
-    addTyping();
+  const sendBtn =
+    document.getElementById("sendBtn");
 
-  try{
-    const response =
-      await fetch(
-        '/api/chat',
-        {
-          method:'POST',
+  const quickArea =
+    document.getElementById("quickArea");
 
-          headers:{
-            'Content-Type':
-              'application/json'
-          },
 
-          body:JSON.stringify({
-            messages:history,
-            language,
-            session_id:sessionId
-          })
-        }
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
+
+
+  function formatMessage(text) {
+    return escapeHtml(text)
+      .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+      .replace(/\n/g, "<br>");
+  }
+
+
+  function addMessage(text, sender) {
+    const message =
+      document.createElement("div");
+
+    message.className =
+      "msg " + sender;
+
+    message.innerHTML =
+      formatMessage(text);
+
+    chatBody.appendChild(message);
+
+    chatBody.scrollTop =
+      chatBody.scrollHeight;
+  }
+
+
+  function showTyping() {
+    const typing =
+      document.createElement("div");
+
+    typing.className =
+      "typing";
+
+    typing.id =
+      "typing";
+
+    typing.textContent =
+      language === "ar"
+        ? "يكتب..."
+        : "Typing...";
+
+    chatBody.appendChild(typing);
+
+    chatBody.scrollTop =
+      chatBody.scrollHeight;
+  }
+
+
+  function removeTyping() {
+    const typing =
+      document.getElementById("typing");
+
+    if (typing) {
+      typing.remove();
+    }
+  }
+
+
+  function renderQuickQuestions() {
+    quickArea.innerHTML = "";
+
+    translations[language]
+      .quickQuestions
+      .forEach(item => {
+
+        const button =
+          document.createElement("button");
+
+        button.className =
+          "quick-btn";
+
+        button.textContent =
+          item.label;
+
+        button.onclick =
+          () => sendMessage(item.message);
+
+        quickArea.appendChild(button);
+      });
+  }
+
+
+  function renderLanguage() {
+
+    const t =
+      translations[language];
+
+    document.documentElement.lang =
+      language;
+
+    document.documentElement.dir =
+      t.dir;
+
+    document.getElementById("topbar").textContent =
+      t.topbar;
+
+    document.getElementById("subtitle").textContent =
+      t.subtitle;
+
+    document.getElementById("info").innerHTML =
+      t.info;
+
+    document.getElementById("pricesTitle").textContent =
+      t.pricesTitle;
+
+    document.getElementById("p50").textContent =
+      "80 " + t.currency;
+
+    document.getElementById("p90").textContent =
+      "150 " + t.currency;
+
+    document.getElementById("p220").textContent =
+      "200 " + t.currency;
+
+    document.getElementById("p400").textContent =
+      "250 " + t.currency;
+
+    document.getElementById("p800").textContent =
+      "300 " + t.currency;
+
+    document.getElementById("repair").textContent =
+      t.repair;
+
+    document.getElementById("parts").textContent =
+      t.parts;
+
+    document.getElementById("rental").textContent =
+      t.rental;
+
+    document.getElementById("note").innerHTML =
+      t.note;
+
+    launcher.textContent =
+      t.launcher;
+
+    document.getElementById("chatName").textContent =
+      t.chatName;
+
+    document.getElementById("chatStatus").textContent =
+      t.chatStatus;
+
+    messageInput.placeholder =
+      t.placeholder;
+
+    document
+      .getElementById("arabicBtn")
+      .classList.toggle(
+        "active",
+        language === "ar"
       );
 
-    const data =
-      await response.json();
+    document
+      .getElementById("englishBtn")
+      .classList.toggle(
+        "active",
+        language === "en"
+      );
 
-    typingEl.remove();
+    renderQuickQuestions();
+  }
 
-    let reply =
-      translations[language].error;
+
+  function changeLanguage(newLanguage) {
 
     if (
-      data &&
-      Array.isArray(data.content)
+      newLanguage !== "ar" &&
+      newLanguage !== "en"
     ) {
-      reply =
-        data.content
-          .map(
-            block =>
-              block.text || ''
-          )
-          .join('\n')
-          .trim() ||
-        reply;
+      return;
     }
 
-    addMsg(
-      reply,
-      'bot'
+    language =
+      newLanguage;
+
+    localStorage.setItem(
+      "novaire_language",
+      language
+    );
+
+    renderLanguage();
+  }
+
+
+  async function sendMessage(text) {
+
+    const cleanText =
+      text.trim();
+
+    if (!cleanText) {
+      return;
+    }
+
+    addMessage(
+      cleanText,
+      "user"
     );
 
     history.push({
-      role:'assistant',
-      content:reply
+      role: "user",
+      content: cleanText
     });
 
-  }catch(error){
+    messageInput.value = "";
 
-    typingEl.remove();
+    sendBtn.disabled = true;
 
-    addMsg(
-      translations[language].offline,
-      'bot'
+    showTyping();
+
+    try {
+
+      const response =
+        await fetch("/api/chat", {
+          method: "POST",
+
+          headers: {
+            "Content-Type": "application/json"
+          },
+
+          body: JSON.stringify({
+            messages: history,
+            language: language,
+            session_id: sessionId
+          })
+        });
+
+
+      const data =
+        await response.json();
+
+
+      removeTyping();
+
+
+      if (!response.ok) {
+        throw new Error(
+          data?.error || "Request failed"
+        );
+      }
+
+
+      let reply =
+        translations[language].error;
+
+
+      if (
+        data &&
+        Array.isArray(data.content)
+      ) {
+
+        const combinedText =
+          data.content
+            .filter(block => block.type === "text")
+            .map(block => block.text || "")
+            .join("\n")
+            .trim();
+
+        if (combinedText) {
+          reply = combinedText;
+        }
+      }
+
+
+      addMessage(
+        reply,
+        "bot"
+      );
+
+
+      history.push({
+        role: "assistant",
+        content: reply
+      });
+
+
+    } catch (error) {
+
+      console.error(error);
+
+      removeTyping();
+
+      addMessage(
+        translations[language].error,
+        "bot"
+      );
+
+    } finally {
+
+      sendBtn.disabled = false;
+
+      messageInput.focus();
+    }
+  }
+
+
+  document
+    .getElementById("arabicBtn")
+    .addEventListener(
+      "click",
+      () => changeLanguage("ar")
     );
-  }
 
-  sendBtn.disabled = false;
-}
 
-document.getElementById(
-  'arBtn'
-).addEventListener(
-  'click',
-  () => switchLanguage('ar')
-);
+  document
+    .getElementById("englishBtn")
+    .addEventListener(
+      "click",
+      () => changeLanguage("en")
+    );
 
-document.getElementById(
-  'enBtn'
-).addEventListener(
-  'click',
-  () => switchLanguage('en')
-);
 
-launcher.addEventListener(
-  'click',
-  () => {
-    chatWrap.classList.add('open');
+  launcher.addEventListener(
+    "click",
+    () => {
 
-    launcher.style.display =
-      'none';
+      chat.classList.add("open");
 
-    if (
-      chatBody.children.length === 0
-    ) {
-      addMsg(
-        translations[language].welcome,
-        'bot'
-      );
+      launcher.style.display =
+        "none";
+
+      if (
+        chatBody.children.length === 0
+      ) {
+
+        addMessage(
+          translations[language].welcome,
+          "bot"
+        );
+      }
+
+      messageInput.focus();
     }
-  }
-);
+  );
 
-document.getElementById(
-  'closeChat'
-).addEventListener(
-  'click',
-  () => {
-    chatWrap.classList.remove('open');
 
-    launcher.style.display =
-      'flex';
-  }
-);
+  document
+    .getElementById("closeBtn")
+    .addEventListener(
+      "click",
+      () => {
 
-sendBtn.addEventListener(
-  'click',
-  () =>
-    sendMessage(
-      userInput.value
-    )
-);
+        chat.classList.remove("open");
 
-userInput.addEventListener(
-  'keydown',
-  event => {
-    if (
-      event.key === 'Enter'
-    ) {
-      sendMessage(
-        userInput.value
-      );
+        launcher.style.display =
+          "block";
+      }
+    );
+
+
+  sendBtn.addEventListener(
+    "click",
+    () => sendMessage(messageInput.value)
+  );
+
+
+  messageInput.addEventListener(
+    "keydown",
+    event => {
+
+      if (event.key === "Enter") {
+        sendMessage(messageInput.value);
+      }
     }
-  }
-);
+  );
 
-quickRow.addEventListener(
-  'click',
-  event => {
-    const button =
-      event.target.closest(
-        '.quick-btn'
-      );
 
-    if (button) {
-      sendMessage(
-        button.dataset.q
-      );
-    }
-  }
-);
-
-renderLanguage();
+  renderLanguage();
 </script>
 
 </body>
