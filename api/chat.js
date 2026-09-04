@@ -1,341 +1,1536 @@
-const { randomUUID } = require("crypto");
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+<title>First Bike — NOVAIRE Smart Response</title>
 
-const CLIENT_SLUG = "first-bike";
-
-const SYSTEM_AR = `
-أنت المساعد الذكي لخدمة عملاء First Bike في العين.
-
-معلومات المحل:
-- النشاط: تأجير وتصليح الدراجات النارية وقطع الغيار.
-- الموقع: العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون.
-- ساعات العمل: يوميًا من الساعة 3 عصرًا حتى 12 منتصف الليل.
-
-أسعار التأجير بالساعة:
-- 50cc: 80 درهم.
-- 90cc: 150 درهم.
-- 220cc: 200 درهم.
-- 400cc: 250 درهم.
-- 800cc فأعلى: 300 درهم.
-
-أسعار التصليح وقطع الغيار تختلف حسب نوع العطل والقطعة والتركيب.
-
-قواعد مهمة:
-- أجب بالعربية بشكل واضح ومختصر.
-- لا تخترع معلومات غير موجودة.
-- إذا لم تعرف معلومة، أخبر العميل بوضوح أن المعلومة غير متوفرة حاليًا.
-- لا تعطِ سعرًا للتصليح أو قطع الغيار إذا لم يكن السعر معروفًا.
-`;
-
-const SYSTEM_EN = `
-You are the smart customer service assistant for First Bike in Al Ain.
-
-Business information:
-- Services: motorcycle rental, motorcycle repair and spare parts.
-- Location: Al Ain, Al Salamat, Al Heeba Street, next to 1 Million Cafe.
-- Opening hours: daily from 3 PM until midnight.
-
-Hourly motorcycle rental prices:
-- 50cc: AED 80.
-- 90cc: AED 150.
-- 220cc: AED 200.
-- 400cc: AED 250.
-- 800cc and above: AED 300.
-
-Repair and spare-part prices depend on the fault, part and installation.
-
-Important rules:
-- Reply clearly and concisely in English.
-- Do not invent information.
-- If information is unavailable, tell the customer clearly.
-- Do not invent repair or spare-part prices.
-`;
-
-async function supabaseRequest(path, options = {}) {
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    throw new Error("Supabase environment variables are missing");
-  }
-
-  const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/${path}`,
-    {
-      ...options,
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        ...(options.headers || {})
-      }
-    }
-  );
-
-  const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(
-      `Supabase ${response.status}: ${text}`
-    );
-  }
-
-  if (!text) {
-    return null;
-  }
-
-  try {
-    return JSON.parse(text);
-  } catch {
-    return text;
-  }
+<style>
+:root{
+  --bg:#171717;
+  --card:#232323;
+  --line:#3a3a3a;
+  --gold:#f2a93b;
+  --text:#f5f1e8;
+  --muted:#b9b2a7;
+  --red:#bf4936;
+  --green:#4e9f6d;
 }
 
-async function getClientId() {
-  const result = await supabaseRequest(
-    `clients?slug=eq.${encodeURIComponent(CLIENT_SLUG)}&select=id&limit=1`,
-    {
-      method: "GET"
-    }
-  );
+*{box-sizing:border-box}
 
-  if (!Array.isArray(result) || !result[0]?.id) {
-    throw new Error("First Bike client was not found");
-  }
-
-  return result[0].id;
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font-family:Arial,Tahoma,sans-serif;
 }
 
-async function createOrGetConversation(
-  clientId,
-  sessionId
-) {
-  const existing = await supabaseRequest(
-    `conversations?client_id=eq.${clientId}&session_id=eq.${encodeURIComponent(sessionId)}&select=id&limit=1`,
-    {
-      method: "GET"
-    }
-  );
+button,input{font-family:inherit}
 
-  if (Array.isArray(existing) && existing[0]?.id) {
-    return existing[0].id;
-  }
-
-  const created = await supabaseRequest(
-    "conversations",
-    {
-      method: "POST",
-      headers: {
-        Prefer: "return=representation"
-      },
-      body: JSON.stringify({
-        client_id: clientId,
-        session_id: sessionId,
-        status: "active",
-        resolved_by_ai: false,
-        human_handoff: false,
-        callback_requested: false
-      })
-    }
-  );
-
-  if (!Array.isArray(created) || !created[0]?.id) {
-    throw new Error("Conversation could not be created");
-  }
-
-  return created[0].id;
+.topbar{
+  background:var(--gold);
+  color:#161616;
+  text-align:center;
+  padding:8px 12px;
+  font-size:13px;
+  font-weight:bold;
 }
 
-async function saveMessage(
-  conversationId,
-  sender,
-  content,
-  inputTokens = null,
-  outputTokens = null
-) {
-  await supabaseRequest(
-    "messages",
-    {
-      method: "POST",
-      headers: {
-        Prefer: "return=minimal"
-      },
-      body: JSON.stringify({
-        conversation_id: conversationId,
-        sender,
-        content,
-        input_tokens: inputTokens,
-        output_tokens: outputTokens
-      })
-    }
-  );
-
-  console.log(
-    `Saved ${sender} message for conversation ${conversationId}`
-  );
+.container{
+  width:min(760px,calc(100% - 32px));
+  margin:auto;
+  padding-bottom:120px;
 }
 
-module.exports = async function handler(req, res) {
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
+.language-area{
+  display:flex;
+  justify-content:flex-end;
+  margin-top:16px;
+}
+
+html[dir="ltr"] .language-area{
+  justify-content:flex-start;
+}
+
+.language-switch{
+  display:flex;
+  border:1px solid var(--line);
+  border-radius:8px;
+  overflow:hidden;
+}
+
+.lang-btn{
+  border:0;
+  padding:9px 14px;
+  cursor:pointer;
+  background:var(--card);
+  color:var(--muted);
+  font-weight:bold;
+}
+
+.lang-btn.active{
+  background:var(--gold);
+  color:#161616;
+}
+
+.header{
+  padding:24px 0;
+  border-bottom:2px solid var(--line);
+}
+
+.brand{
+  display:flex;
+  align-items:center;
+  gap:13px;
+}
+
+.logo{
+  width:48px;
+  height:48px;
+  border-radius:8px;
+  background:var(--gold);
+  color:#111;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  font-size:19px;
+}
+
+h1{
+  margin:0;
+  font-size:29px;
+}
+
+.subtitle{
+  color:var(--gold);
+  font-size:14px;
+  margin-top:5px;
+}
+
+.info{
+  color:var(--muted);
+  font-size:14px;
+  margin-top:18px;
+  line-height:1.8;
+}
+
+.info strong{color:var(--text)}
+
+.section{margin-top:30px}
+
+.section h2{
+  font-size:19px;
+  margin-bottom:14px;
+}
+
+.price-row{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:9px;
+  padding:13px 14px;
+  margin-bottom:9px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+
+.price{
+  background:var(--red);
+  padding:6px 11px;
+  border-radius:6px;
+  font-size:13px;
+  font-weight:bold;
+}
+
+.services{
+  display:flex;
+  flex-wrap:wrap;
+  gap:9px;
+  margin-top:28px;
+}
+
+.service{
+  border:1px solid var(--line);
+  background:var(--card);
+  border-radius:20px;
+  padding:9px 14px;
+  font-size:13px;
+}
+
+.note{
+  margin-top:28px;
+  border:1px solid var(--line);
+  background:var(--card);
+  padding:16px;
+  border-radius:9px;
+  line-height:1.7;
+  color:var(--muted);
+  font-size:14px;
+}
+
+.chat-launcher{
+  position:fixed;
+  left:20px;
+  bottom:20px;
+  background:var(--gold);
+  color:#111;
+  border:0;
+  border-radius:10px;
+  padding:14px 17px;
+  cursor:pointer;
+  font-weight:bold;
+  box-shadow:0 8px 30px rgba(0,0,0,.4);
+  z-index:20;
+}
+
+html[dir="ltr"] .chat-launcher{
+  left:auto;
+  right:20px;
+}
+
+.chat{
+  position:fixed;
+  left:20px;
+  bottom:20px;
+  width:min(390px,calc(100vw - 32px));
+  height:min(650px,calc(100vh - 40px));
+  background:var(--card);
+  border:1px solid var(--line);
+  border-radius:13px;
+  overflow:hidden;
+  display:none;
+  flex-direction:column;
+  z-index:30;
+  box-shadow:0 20px 60px rgba(0,0,0,.6);
+}
+
+html[dir="ltr"] .chat{
+  left:auto;
+  right:20px;
+}
+
+.chat.open{display:flex}
+
+.chat-header{
+  background:#191919;
+  border-bottom:2px solid var(--gold);
+  padding:13px 14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+
+.chat-header-title{
+  font-weight:bold;
+  font-size:14px;
+}
+
+.status{
+  color:var(--muted);
+  font-size:11px;
+  margin-top:4px;
+}
+
+.close-btn{
+  background:transparent;
+  border:0;
+  color:var(--text);
+  font-size:20px;
+  cursor:pointer;
+}
+
+.chat-body{
+  flex:1;
+  padding:14px;
+  overflow-y:auto;
+  background:var(--bg);
+  display:flex;
+  flex-direction:column;
+  gap:9px;
+}
+
+.msg{
+  max-width:85%;
+  border-radius:10px;
+  padding:10px 12px;
+  line-height:1.6;
+  font-size:14px;
+}
+
+.msg.bot{
+  align-self:flex-start;
+  background:var(--card);
+  border:1px solid var(--line);
+}
+
+.msg.user{
+  align-self:flex-end;
+  background:var(--gold);
+  color:#111;
+}
+
+.typing{
+  align-self:flex-start;
+  color:var(--muted);
+  background:var(--card);
+  border:1px solid var(--line);
+  padding:9px 12px;
+  border-radius:9px;
+  font-size:13px;
+}
+
+.quick-area{
+  padding:8px 12px;
+  background:var(--bg);
+  display:flex;
+  flex-wrap:wrap;
+  gap:7px;
+}
+
+.quick-btn{
+  background:transparent;
+  border:1px solid var(--gold);
+  color:var(--gold);
+  border-radius:20px;
+  padding:7px 10px;
+  cursor:pointer;
+  font-size:12px;
+}
+
+/* Human contact actions */
+
+.contact-actions{
+  padding:8px 12px;
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:7px;
+  background:var(--bg);
+}
+
+.contact-action-btn{
+  border:1px solid var(--line);
+  background:var(--card);
+  color:var(--text);
+  border-radius:8px;
+  padding:9px 7px;
+  cursor:pointer;
+  font-size:12px;
+  font-weight:bold;
+}
+
+.contact-action-btn:hover{
+  border-color:var(--gold);
+}
+
+.contact-form{
+  margin:0 12px 8px;
+  padding:12px;
+  background:#191919;
+  border:1px solid var(--line);
+  border-radius:9px;
+}
+
+.contact-form-title{
+  font-size:13px;
+  font-weight:bold;
+  margin-bottom:9px;
+}
+
+.contact-form input{
+  width:100%;
+  background:var(--bg);
+  border:1px solid var(--line);
+  color:var(--text);
+  border-radius:7px;
+  padding:9px 10px;
+  margin-bottom:7px;
+  outline:none;
+}
+
+.privacy-note{
+  color:var(--muted);
+  font-size:10px;
+  line-height:1.5;
+  margin:2px 0 9px;
+}
+
+.contact-form-buttons{
+  display:flex;
+  gap:7px;
+}
+
+.contact-form-buttons button{
+  flex:1;
+  border:0;
+  border-radius:7px;
+  padding:9px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.submit-contact{
+  background:var(--gold);
+  color:#111;
+}
+
+.cancel-contact{
+  background:#333;
+  color:var(--text);
+}
+
+.contact-message{
+  margin-top:8px;
+  font-size:12px;
+  line-height:1.5;
+}
+
+.contact-message.success{
+  color:#76c893;
+}
+
+.contact-message.error{
+  color:#ff8170;
+}
+
+.input-area{
+  padding:11px;
+  border-top:1px solid var(--line);
+  display:flex;
+  gap:8px;
+}
+
+.input-area input{
+  flex:1;
+  border:1px solid var(--line);
+  background:var(--bg);
+  color:var(--text);
+  border-radius:8px;
+  padding:10px 12px;
+  outline:none;
+}
+
+.input-area button{
+  border:0;
+  width:42px;
+  border-radius:8px;
+  background:var(--gold);
+  color:#111;
+  font-size:18px;
+  cursor:pointer;
+}
+
+.input-area button:disabled{opacity:.5}
+
+@media(max-width:500px){
+  .chat{
+    left:16px;
+    bottom:16px;
+    width:calc(100vw - 32px);
+    height:calc(100vh - 32px);
   }
 
-  try {
-    if (!ANTHROPIC_API_KEY) {
-      throw new Error(
-        "ANTHROPIC_API_KEY is missing"
-      );
-    }
+  html[dir="ltr"] .chat{
+    right:16px;
+    left:auto;
+  }
+}
+</style>
+</head>
 
-    const {
-      messages,
-      language = "ar",
-      session_id
-    } = req.body || {};
+<body>
 
-    if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({
-        error: "Messages are required"
-      });
-    }
+<div class="topbar" id="topbar"></div>
 
-    const selectedLanguage =
-      language === "en" ? "en" : "ar";
+<main class="container">
 
-    const sessionId =
-      session_id ||
-      `firstbike-${randomUUID()}`;
+  <div class="language-area">
+    <div class="language-switch">
+      <button id="arabicBtn" class="lang-btn">العربية</button>
+      <button id="englishBtn" class="lang-btn">English</button>
+    </div>
+  </div>
 
-    let clientId = null;
-    let conversationId = null;
-    let userLogged = false;
-    let assistantLogged = false;
+  <header class="header">
+    <div class="brand">
+      <div class="logo">FB</div>
 
-    const latestUserMessage =
-      [...messages]
-        .reverse()
-        .find(message => message.role === "user");
+      <div>
+        <h1>First Bike</h1>
+        <div class="subtitle" id="subtitle"></div>
+      </div>
+    </div>
 
-    try {
-      clientId = await getClientId();
+    <div class="info" id="info"></div>
+  </header>
 
-      conversationId =
-        await createOrGetConversation(
-          clientId,
-          sessionId
-        );
+  <section class="section">
+    <h2 id="pricesTitle"></h2>
 
-      if (
-        conversationId &&
-        latestUserMessage?.content
-      ) {
-        await saveMessage(
-          conversationId,
-          "user",
-          String(latestUserMessage.content)
-        );
+    <div class="price-row">
+      <strong>50 cc</strong>
+      <span class="price" id="p50"></span>
+    </div>
 
-        userLogged = true;
-      }
-    } catch (dbError) {
-      console.error(
-        "SUPABASE USER LOGGING ERROR:",
-        dbError
-      );
-    }
+    <div class="price-row">
+      <strong>90 cc</strong>
+      <span class="price" id="p90"></span>
+    </div>
 
-    const anthropicResponse = await fetch(
-      "https://api.anthropic.com/v1/messages",
+    <div class="price-row">
+      <strong>220 cc</strong>
+      <span class="price" id="p220"></span>
+    </div>
+
+    <div class="price-row">
+      <strong>400 cc</strong>
+      <span class="price" id="p400"></span>
+    </div>
+
+    <div class="price-row">
+      <strong>800 cc+</strong>
+      <span class="price" id="p800"></span>
+    </div>
+  </section>
+
+  <div class="services">
+    <span class="service" id="repair"></span>
+    <span class="service" id="parts"></span>
+    <span class="service" id="rental"></span>
+  </div>
+
+  <div class="note" id="note"></div>
+
+</main>
+
+<button class="chat-launcher" id="launcher"></button>
+
+<section class="chat" id="chat">
+
+  <div class="chat-header">
+    <div>
+      <div class="chat-header-title" id="chatName"></div>
+      <div class="status" id="chatStatus"></div>
+    </div>
+
+    <button class="close-btn" id="closeBtn">×</button>
+  </div>
+
+  <div class="chat-body" id="chatBody"></div>
+
+  <div class="quick-area" id="quickArea"></div>
+
+  <div class="contact-actions">
+    <button
+      id="humanBtn"
+      class="contact-action-btn"
+      type="button">
+    </button>
+
+    <button
+      id="callbackBtn"
+      class="contact-action-btn"
+      type="button">
+    </button>
+  </div>
+
+  <div
+    class="contact-form"
+    id="contactForm"
+    style="display:none;">
+
+    <div
+      class="contact-form-title"
+      id="contactFormTitle">
+    </div>
+
+    <input
+      id="customerName"
+      type="text">
+
+    <input
+      id="customerPhone"
+      type="tel">
+
+    <input
+      id="contactReason"
+      type="text">
+
+    <div
+      class="privacy-note"
+      id="privacyNote">
+    </div>
+
+    <div class="contact-form-buttons">
+      <button
+        id="submitContactBtn"
+        class="submit-contact"
+        type="button">
+      </button>
+
+      <button
+        id="cancelContactBtn"
+        class="cancel-contact"
+        type="button">
+      </button>
+    </div>
+
+    <div
+      class="contact-message"
+      id="contactMessage">
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input
+      id="messageInput"
+      type="text"
+      autocomplete="off">
+
+    <button id="sendBtn">➤</button>
+  </div>
+
+</section>
+
+<script>
+const translations = {
+
+  ar:{
+    dir:"rtl",
+
+    topbar:
+      "تجربة NOVAIRE — المساعد الذكي لـ First Bike",
+
+    subtitle:
+      "تأجير وتصليح الدراجات النارية",
+
+    info:
+      "<strong>الموقع:</strong> العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون<br>" +
+      "<strong>الدوام:</strong> يوميًا من 3 العصر حتى 12 منتصف الليل",
+
+    pricesTitle:
+      "أسعار تأجير الدراجات بالساعة",
+
+    currency:
+      "درهم / ساعة",
+
+    repair:
+      "🔧 تصليح الدراجات",
+
+    parts:
+      "⚙️ قطع الغيار",
+
+    rental:
+      "🏍️ تأجير الدراجات",
+
+    note:
+      "<strong>ملاحظة:</strong> أسعار التصليح وقطع الغيار تختلف حسب نوع القطعة والعطل والتركيب. يمكنك سؤال المساعد للحصول على المزيد من التفاصيل.",
+
+    launcher:
+      "⚡ تحدث مع مساعد المحل",
+
+    chatName:
+      "مساعد First Bike",
+
+    chatStatus:
+      "متصل الآن",
+
+    placeholder:
+      "اكتب سؤالك هنا...",
+
+    welcome:
+      "هلا فيك 🏍️ أنا مساعد First Bike. اسألني عن أسعار الإيجار أو التصليح أو موقع المحل.",
+
+    error:
+      "عذرًا، حدث خطأ بسيط. حاول مرة أخرى.",
+
+    typing:
+      "يكتب...",
+
+    humanBtn:
+      "👤 التحدث مع مسؤول",
+
+    callbackBtn:
+      "📞 طلب اتصال",
+
+    humanTitle:
+      "طلب التحدث مع مسؤول",
+
+    callbackTitle:
+      "طلب اتصال من First Bike",
+
+    namePlaceholder:
+      "الاسم",
+
+    phonePlaceholder:
+      "رقم الهاتف",
+
+    reasonPlaceholder:
+      "سبب التواصل (اختياري)",
+
+    privacy:
+      "سيتم استخدام بيانات التواصل فقط لمعالجة طلبك والتواصل معك.",
+
+    submit:
+      "إرسال الطلب",
+
+    cancel:
+      "إلغاء",
+
+    required:
+      "يرجى إدخال الاسم ورقم الهاتف.",
+
+    contactSuccess:
+      "تم تسجيل طلبك بنجاح ✓",
+
+    contactError:
+      "تعذر تسجيل الطلب. حاول مرة أخرى.",
+
+    quickQuestions:[
       {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": ANTHROPIC_API_KEY,
-          "anthropic-version": "2023-06-01"
-        },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 500,
-          system:
-            selectedLanguage === "en"
-              ? SYSTEM_EN
-              : SYSTEM_AR,
-          messages: messages.map(message => ({
-            role: message.role,
-            content: message.content
-          }))
-        })
+        label:"سعر 220 سي سي؟",
+        message:"كم سعر إيجار دراجة 220 سي سي؟"
+      },
+      {
+        label:"كم تكلفة التصليح؟",
+        message:"كم تكلفة تصليح الدراجة؟"
+      },
+      {
+        label:"وين موقعكم؟",
+        message:"وين موقع First Bike بالضبط؟"
       }
-    );
+    ]
+  },
 
-    const anthropicText =
-      await anthropicResponse.text();
+  en:{
+    dir:"ltr",
 
-    if (!anthropicResponse.ok) {
-      console.error(
-        "ANTHROPIC ERROR:",
-        anthropicResponse.status,
-        anthropicText
+    topbar:
+      "NOVAIRE Demo — Smart Assistant for First Bike",
+
+    subtitle:
+      "Motorcycle Rental & Repair",
+
+    info:
+      "<strong>Location:</strong> Al Ain, Al Salamat, Al Heeba Street, next to 1 Million Cafe<br>" +
+      "<strong>Hours:</strong> Daily from 3 PM until midnight",
+
+    pricesTitle:
+      "Hourly Motorcycle Rental Prices",
+
+    currency:
+      "AED / hour",
+
+    repair:
+      "🔧 Motorcycle Repair",
+
+    parts:
+      "⚙️ Spare Parts",
+
+    rental:
+      "🏍️ Motorcycle Rental",
+
+    note:
+      "<strong>Note:</strong> Repair and spare-part prices depend on the fault, part type and installation. Ask the assistant for more information.",
+
+    launcher:
+      "⚡ Chat with First Bike",
+
+    chatName:
+      "First Bike Assistant",
+
+    chatStatus:
+      "Online now",
+
+    placeholder:
+      "Type your question here...",
+
+    welcome:
+      "Hi 🏍️ I'm the First Bike assistant. Ask me about rental prices, repairs or our location.",
+
+    error:
+      "Sorry, something went wrong. Please try again.",
+
+    typing:
+      "Typing...",
+
+    humanBtn:
+      "👤 Talk to a person",
+
+    callbackBtn:
+      "📞 Request a callback",
+
+    humanTitle:
+      "Talk to a First Bike representative",
+
+    callbackTitle:
+      "Request a callback from First Bike",
+
+    namePlaceholder:
+      "Your name",
+
+    phonePlaceholder:
+      "Phone number",
+
+    reasonPlaceholder:
+      "Reason for contact (optional)",
+
+    privacy:
+      "Your contact details will only be used to process this request and contact you.",
+
+    submit:
+      "Send request",
+
+    cancel:
+      "Cancel",
+
+    required:
+      "Please enter your name and phone number.",
+
+    contactSuccess:
+      "Your request has been recorded successfully ✓",
+
+    contactError:
+      "We couldn't record your request. Please try again.",
+
+    quickQuestions:[
+      {
+        label:"220cc price?",
+        message:"How much is the 220cc motorcycle rental?"
+      },
+      {
+        label:"Repair cost?",
+        message:"How much does motorcycle repair cost?"
+      },
+      {
+        label:"Your location?",
+        message:"Where exactly is First Bike located?"
+      }
+    ]
+  }
+};
+
+
+/* LANGUAGE */
+
+let language =
+  localStorage.getItem("novaire_language") || "ar";
+
+
+/* STABLE SESSION */
+
+let sessionId =
+  localStorage.getItem(
+    "novaire_firstbike_session_id"
+  );
+
+if(!sessionId){
+
+  if(
+    window.crypto &&
+    typeof window.crypto.randomUUID === "function"
+  ){
+    sessionId =
+      "firstbike-" +
+      window.crypto.randomUUID();
+  }else{
+    sessionId =
+      "firstbike-" +
+      Date.now() +
+      "-" +
+      Math.random()
+        .toString(36)
+        .substring(2,10);
+  }
+
+  localStorage.setItem(
+    "novaire_firstbike_session_id",
+    sessionId
+  );
+}
+
+
+/* CHAT */
+
+let history = [];
+let selectedContactType = null;
+
+
+/* ELEMENTS */
+
+const chat =
+  document.getElementById("chat");
+
+const chatBody =
+  document.getElementById("chatBody");
+
+const launcher =
+  document.getElementById("launcher");
+
+const messageInput =
+  document.getElementById("messageInput");
+
+const sendBtn =
+  document.getElementById("sendBtn");
+
+const quickArea =
+  document.getElementById("quickArea");
+
+const contactForm =
+  document.getElementById("contactForm");
+
+const customerName =
+  document.getElementById("customerName");
+
+const customerPhone =
+  document.getElementById("customerPhone");
+
+const contactReason =
+  document.getElementById("contactReason");
+
+const contactMessage =
+  document.getElementById("contactMessage");
+
+const submitContactBtn =
+  document.getElementById("submitContactBtn");
+
+
+/* SAFE TEXT */
+
+function escapeHtml(text){
+  return String(text)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+function formatMessage(text){
+  return escapeHtml(text)
+    .replace(
+      /\*\*(.*?)\*\*/g,
+      "<strong>$1</strong>"
+    )
+    .replace(/\n/g,"<br>");
+}
+
+
+/* MESSAGE */
+
+function addMessage(text,sender){
+
+  const message =
+    document.createElement("div");
+
+  message.className =
+    "msg " + sender;
+
+  message.innerHTML =
+    formatMessage(text);
+
+  chatBody.appendChild(message);
+
+  chatBody.scrollTop =
+    chatBody.scrollHeight;
+}
+
+
+/* TYPING */
+
+function showTyping(){
+
+  removeTyping();
+
+  const typing =
+    document.createElement("div");
+
+  typing.className =
+    "typing";
+
+  typing.id =
+    "typing";
+
+  typing.textContent =
+    translations[language].typing;
+
+  chatBody.appendChild(typing);
+
+  chatBody.scrollTop =
+    chatBody.scrollHeight;
+}
+
+function removeTyping(){
+
+  const typing =
+    document.getElementById("typing");
+
+  if(typing){
+    typing.remove();
+  }
+}
+
+
+/* QUICK QUESTIONS */
+
+function renderQuickQuestions(){
+
+  quickArea.innerHTML = "";
+
+  translations[language]
+    .quickQuestions
+    .forEach(item=>{
+
+      const button =
+        document.createElement("button");
+
+      button.className =
+        "quick-btn";
+
+      button.type =
+        "button";
+
+      button.textContent =
+        item.label;
+
+      button.addEventListener(
+        "click",
+        ()=>{
+          sendMessage(item.message);
+        }
       );
 
-      return res.status(anthropicResponse.status).json({
-        error: "Anthropic request failed"
-      });
+      quickArea.appendChild(button);
+    });
+}
+
+
+/* LANGUAGE RENDER */
+
+function renderLanguage(){
+
+  const t =
+    translations[language];
+
+  document.documentElement.lang =
+    language;
+
+  document.documentElement.dir =
+    t.dir;
+
+  document.getElementById(
+    "topbar"
+  ).textContent =
+    t.topbar;
+
+  document.getElementById(
+    "subtitle"
+  ).textContent =
+    t.subtitle;
+
+  document.getElementById(
+    "info"
+  ).innerHTML =
+    t.info;
+
+  document.getElementById(
+    "pricesTitle"
+  ).textContent =
+    t.pricesTitle;
+
+  document.getElementById(
+    "p50"
+  ).textContent =
+    "80 " + t.currency;
+
+  document.getElementById(
+    "p90"
+  ).textContent =
+    "150 " + t.currency;
+
+  document.getElementById(
+    "p220"
+  ).textContent =
+    "200 " + t.currency;
+
+  document.getElementById(
+    "p400"
+  ).textContent =
+    "250 " + t.currency;
+
+  document.getElementById(
+    "p800"
+  ).textContent =
+    "300 " + t.currency;
+
+  document.getElementById(
+    "repair"
+  ).textContent =
+    t.repair;
+
+  document.getElementById(
+    "parts"
+  ).textContent =
+    t.parts;
+
+  document.getElementById(
+    "rental"
+  ).textContent =
+    t.rental;
+
+  document.getElementById(
+    "note"
+  ).innerHTML =
+    t.note;
+
+  launcher.textContent =
+    t.launcher;
+
+  document.getElementById(
+    "chatName"
+  ).textContent =
+    t.chatName;
+
+  document.getElementById(
+    "chatStatus"
+  ).textContent =
+    t.chatStatus;
+
+  messageInput.placeholder =
+    t.placeholder;
+
+  document.getElementById(
+    "humanBtn"
+  ).textContent =
+    t.humanBtn;
+
+  document.getElementById(
+    "callbackBtn"
+  ).textContent =
+    t.callbackBtn;
+
+  customerName.placeholder =
+    t.namePlaceholder;
+
+  customerPhone.placeholder =
+    t.phonePlaceholder;
+
+  contactReason.placeholder =
+    t.reasonPlaceholder;
+
+  document.getElementById(
+    "privacyNote"
+  ).textContent =
+    t.privacy;
+
+  submitContactBtn.textContent =
+    t.submit;
+
+  document.getElementById(
+    "cancelContactBtn"
+  ).textContent =
+    t.cancel;
+
+  document.getElementById(
+    "arabicBtn"
+  ).classList.toggle(
+    "active",
+    language === "ar"
+  );
+
+  document.getElementById(
+    "englishBtn"
+  ).classList.toggle(
+    "active",
+    language === "en"
+  );
+
+  if(selectedContactType){
+    document.getElementById(
+      "contactFormTitle"
+    ).textContent =
+      selectedContactType === "human_handoff"
+        ? t.humanTitle
+        : t.callbackTitle;
+  }
+
+  renderQuickQuestions();
+}
+
+
+/* CHANGE LANGUAGE */
+
+function changeLanguage(newLanguage){
+
+  if(
+    newLanguage !== "ar" &&
+    newLanguage !== "en"
+  ){
+    return;
+  }
+
+  language =
+    newLanguage;
+
+  localStorage.setItem(
+    "novaire_language",
+    language
+  );
+
+  renderLanguage();
+}
+
+
+/* OPEN CONTACT FORM */
+
+function openContactForm(type){
+
+  selectedContactType = type;
+
+  const t =
+    translations[language];
+
+  document.getElementById(
+    "contactFormTitle"
+  ).textContent =
+    type === "human_handoff"
+      ? t.humanTitle
+      : t.callbackTitle;
+
+  contactMessage.textContent = "";
+  contactMessage.className =
+    "contact-message";
+
+  contactForm.style.display =
+    "block";
+
+  customerName.focus();
+}
+
+
+/* CLOSE CONTACT FORM */
+
+function closeContactForm(){
+
+  contactForm.style.display =
+    "none";
+
+  selectedContactType =
+    null;
+
+  contactMessage.textContent =
+    "";
+}
+
+
+/* SUBMIT CONTACT */
+
+async function submitContactRequest(){
+
+  const t =
+    translations[language];
+
+  const name =
+    customerName.value.trim();
+
+  const phone =
+    customerPhone.value.trim();
+
+  const reason =
+    contactReason.value.trim();
+
+  if(!name || !phone){
+
+    contactMessage.textContent =
+      t.required;
+
+    contactMessage.className =
+      "contact-message error";
+
+    return;
+  }
+
+  if(!selectedContactType){
+    return;
+  }
+
+  submitContactBtn.disabled =
+    true;
+
+  contactMessage.textContent =
+    "";
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/contact",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            session_id:sessionId,
+            request_type:
+              selectedContactType,
+            customer_name:name,
+            phone:phone,
+            reason:reason
+          })
+        }
+      );
+
+    if(!response.ok){
+      throw new Error(
+        "Contact request failed"
+      );
+    }
+
+    contactMessage.textContent =
+      t.contactSuccess;
+
+    contactMessage.className =
+      "contact-message success";
+
+    customerName.value = "";
+    customerPhone.value = "";
+    contactReason.value = "";
+
+    setTimeout(()=>{
+      closeContactForm();
+    },1800);
+
+  }catch(error){
+
+    contactMessage.textContent =
+      t.contactError;
+
+    contactMessage.className =
+      "contact-message error";
+
+  }finally{
+
+    submitContactBtn.disabled =
+      false;
+  }
+}
+
+
+/* SEND CHAT MESSAGE */
+
+async function sendMessage(text){
+
+  const cleanText =
+    String(text || "").trim();
+
+  if(
+    !cleanText ||
+    sendBtn.disabled
+  ){
+    return;
+  }
+
+  addMessage(
+    cleanText,
+    "user"
+  );
+
+  history.push({
+    role:"user",
+    content:cleanText
+  });
+
+  messageInput.value = "";
+
+  sendBtn.disabled = true;
+
+  showTyping();
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/chat",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          body:JSON.stringify({
+            messages:history,
+            language:language,
+            session_id:sessionId
+          })
+        }
+      );
+
+    if(!response.ok){
+      throw new Error(
+        "Request failed"
+      );
     }
 
     const data =
-      JSON.parse(anthropicText);
+      await response.json();
 
-    const assistantText =
-      data?.content?.[0]?.text || "";
+    const answer =
+      data &&
+      data.content &&
+      data.content[0] &&
+      data.content[0].text
+        ? data.content[0].text
+        : translations[language].error;
 
-    try {
-      if (
-        conversationId &&
-        assistantText
-      ) {
-        await saveMessage(
-          conversationId,
-          "assistant",
-          assistantText,
-          data?.usage?.input_tokens ?? null,
-          data?.usage?.output_tokens ?? null
-        );
+    removeTyping();
 
-        assistantLogged = true;
-      }
-    } catch (dbError) {
-      console.error(
-        "SUPABASE ASSISTANT LOGGING ERROR:",
-        dbError
+    addMessage(
+      answer,
+      "bot"
+    );
+
+    history.push({
+      role:"assistant",
+      content:answer
+    });
+
+  }catch(error){
+
+    removeTyping();
+
+    addMessage(
+      translations[language].error,
+      "bot"
+    );
+
+  }finally{
+
+    sendBtn.disabled = false;
+
+    messageInput.focus();
+  }
+}
+
+
+/* EVENTS */
+
+document.getElementById(
+  "arabicBtn"
+).addEventListener(
+  "click",
+  ()=>changeLanguage("ar")
+);
+
+document.getElementById(
+  "englishBtn"
+).addEventListener(
+  "click",
+  ()=>changeLanguage("en")
+);
+
+document.getElementById(
+  "humanBtn"
+).addEventListener(
+  "click",
+  ()=>openContactForm(
+    "human_handoff"
+  )
+);
+
+document.getElementById(
+  "callbackBtn"
+).addEventListener(
+  "click",
+  ()=>openContactForm(
+    "callback"
+  )
+);
+
+submitContactBtn.addEventListener(
+  "click",
+  submitContactRequest
+);
+
+document.getElementById(
+  "cancelContactBtn"
+).addEventListener(
+  "click",
+  closeContactForm
+);
+
+launcher.addEventListener(
+  "click",
+  ()=>{
+
+    chat.classList.add("open");
+
+    launcher.style.display =
+      "none";
+
+    if(
+      chatBody.children.length === 0
+    ){
+      addMessage(
+        translations[language].welcome,
+        "bot"
       );
     }
 
-    return res.status(200).json({
-      ...data,
-
-      novaire: {
-        session_id: sessionId,
-        conversation_id: conversationId,
-        language: selectedLanguage,
-
-        logging: {
-          user: userLogged,
-          assistant: assistantLogged
-        }
-      }
-    });
-
-  } catch (error) {
-    console.error(
-      "CHAT API ERROR:",
-      error
-    );
-
-    return res.status(500).json({
-      error: "Internal server error"
-    });
+    messageInput.focus();
   }
-};
+);
+
+document.getElementById(
+  "closeBtn"
+).addEventListener(
+  "click",
+  ()=>{
+
+    chat.classList.remove("open");
+
+    launcher.style.display =
+      "block";
+  }
+);
+
+sendBtn.addEventListener(
+  "click",
+  ()=>{
+    sendMessage(
+      messageInput.value
+    );
+  }
+);
+
+messageInput.addEventListener(
+  "keydown",
+  event=>{
+
+    if(event.key === "Enter"){
+
+      event.preventDefault();
+
+      sendMessage(
+        messageInput.value
+      );
+    }
+  }
+);
+
+
+/* START */
+
+renderLanguage();
+
+</script>
+
+</body>
+</html>
