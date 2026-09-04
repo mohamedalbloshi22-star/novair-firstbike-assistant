@@ -100,8 +100,7 @@ module.exports = async function handler(req, res) {
   } catch (error) {
     console.error("DASHBOARD API ERROR:", error);
 
-    return res.status(500).json({
-      error: "Unable to load dashboard statistics"
-    });
-  }
-};
+  return res.status(500).json({
+  error: "Unable to load dashboard statistics",
+  details: error.message
+});
