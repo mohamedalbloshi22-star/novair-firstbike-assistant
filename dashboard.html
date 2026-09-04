@@ -14,6 +14,7 @@
       --gold:#f2a93b;
       --text:#f5f1e8;
       --muted:#b9b2a7;
+      --red:#bf4936;
     }
 
     *{
@@ -114,6 +115,31 @@
       border-bottom:none;
     }
 
+    .question-cell{
+      text-align:right;
+      min-width:320px;
+    }
+
+    .status-badge{
+      display:inline-block;
+      padding:5px 9px;
+      border-radius:20px;
+      font-size:11px;
+      font-weight:bold;
+    }
+
+    .status-unresolved{
+      background:rgba(191,73,54,.18);
+      color:#ff8d7a;
+      border:1px solid rgba(191,73,54,.5);
+    }
+
+    .status-resolved{
+      background:rgba(78,159,109,.18);
+      color:#82d39f;
+      border:1px solid rgba(78,159,109,.5);
+    }
+
     .status{
       margin-top:25px;
       padding:14px;
@@ -179,6 +205,12 @@
       <div class="small" id="handoffRate">-</div>
     </div>
 
+    <div class="card">
+      <div class="label">الأسئلة غير المجابة</div>
+      <div class="value" id="unansweredQuestions">-</div>
+      <div class="small" id="unresolvedQuestions">-</div>
+    </div>
+
   </div>
 
   <div class="section-title">
@@ -213,6 +245,36 @@
 
   </div>
 
+  <div class="section-title">
+    آخر الأسئلة غير المجابة
+  </div>
+
+  <div class="table-wrap">
+
+    <table>
+
+      <thead>
+        <tr>
+          <th>السؤال</th>
+          <th>الحالة</th>
+          <th>التاريخ</th>
+        </tr>
+      </thead>
+
+      <tbody id="unansweredTable">
+
+        <tr>
+          <td colspan="3">
+            جاري تحميل البيانات...
+          </td>
+        </tr>
+
+      </tbody>
+
+    </table>
+
+  </div>
+
   <div class="status" id="status">
     جاري تحميل البيانات...
   </div>
@@ -221,6 +283,28 @@
 
 <script>
 
+function formatDate(value){
+
+  if(!value){
+    return "-";
+  }
+
+  const date =
+    new Date(value);
+
+  if(Number.isNaN(date.getTime())){
+    return value;
+  }
+
+  return date.toLocaleString(
+    "ar-AE",
+    {
+      dateStyle:"medium",
+      timeStyle:"short"
+    }
+  );
+}
+
 async function loadDashboard(){
 
   const status =
@@ -228,6 +312,9 @@ async function loadDashboard(){
 
   const dailyTable =
     document.getElementById("dailyTable");
+
+  const unansweredTable =
+    document.getElementById("unansweredTable");
 
   try{
 
@@ -249,6 +336,13 @@ async function loadDashboard(){
         ? data.daily
         : [];
 
+    const unanswered =
+      Array.isArray(
+        data.recent_unanswered_questions
+      )
+        ? data.recent_unanswered_questions
+        : [];
+
     document.getElementById("totalConversations").textContent =
       summary.total_conversations ?? 0;
 
@@ -263,6 +357,13 @@ async function loadDashboard(){
 
     document.getElementById("handoffRequests").textContent =
       summary.human_handoff_requests ?? 0;
+
+    document.getElementById("unansweredQuestions").textContent =
+      summary.total_unanswered_questions ?? 0;
+
+    document.getElementById("unresolvedQuestions").textContent =
+      "غير محلولة حاليًا: " +
+      (summary.unresolved_unanswered_questions ?? 0);
 
     document.getElementById("callbackRate").textContent =
       "نسبة المحادثات التي طلبت اتصال: " +
@@ -307,6 +408,42 @@ async function loadDashboard(){
 
     }
 
+    unansweredTable.innerHTML = "";
+
+    if(unanswered.length === 0){
+
+      unansweredTable.innerHTML = `
+        <tr>
+          <td colspan="3">
+            لا توجد أسئلة غير مجابة
+          </td>
+        </tr>
+      `;
+
+    }else{
+
+      unanswered.forEach(row => {
+
+        const tr =
+          document.createElement("tr");
+
+        const badge =
+          row.resolved
+            ? `<span class="status-badge status-resolved">تمت المعالجة</span>`
+            : `<span class="status-badge status-unresolved">غير محلول</span>`;
+
+        tr.innerHTML = `
+          <td class="question-cell">${row.question ?? "-"}</td>
+          <td>${badge}</td>
+          <td>${formatDate(row.created_at)}</td>
+        `;
+
+        unansweredTable.appendChild(tr);
+
+      });
+
+    }
+
     status.textContent =
       "تم تحديث البيانات بنجاح";
 
@@ -322,6 +459,14 @@ async function loadDashboard(){
     dailyTable.innerHTML = `
       <tr>
         <td colspan="5">
+          تعذر تحميل البيانات
+        </td>
+      </tr>
+    `;
+
+    unansweredTable.innerHTML = `
+      <tr>
+        <td colspan="3">
           تعذر تحميل البيانات
         </td>
       </tr>
