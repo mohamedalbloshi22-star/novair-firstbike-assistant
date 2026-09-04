@@ -610,16 +610,23 @@
 
     let language = localStorage.getItem("novaire_language") || "ar";
 
-    let sessionId = localStorage.getItem("novaire_firstbike_session_id");
+    let sessionId = sessionStorage.getItem("novaire_firstbike_session_id_v2");
 
     if(!sessionId){
       if(window.crypto && typeof window.crypto.randomUUID === "function"){
         sessionId = "firstbike-" + window.crypto.randomUUID();
       }else{
-        sessionId = "firstbike-" + Date.now() + "-" + Math.random().toString(36).substring(2,10);
+        sessionId =
+          "firstbike-" +
+          Date.now() +
+          "-" +
+          Math.random().toString(36).substring(2,10);
       }
 
-      localStorage.setItem("novaire_firstbike_session_id", sessionId);
+      sessionStorage.setItem(
+        "novaire_firstbike_session_id_v2",
+        sessionId
+      );
     }
 
     let history = [];
