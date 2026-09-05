@@ -69,6 +69,10 @@ module.exports = async function handler(req, res) {
       `language_dashboard_stats?client_id=eq.${clientId}&select=*`
     );
 
+    const commonQuestionsRows = await supabaseRequest(
+      `common_questions_dashboard_stats?client_id=eq.${clientId}&select=question,times_asked,last_asked_at&order=times_asked.desc,last_asked_at.desc&limit=10`
+    );
+
     const unanswered =
       Array.isArray(unansweredRows) && unansweredRows.length > 0
         ? unansweredRows[0]
@@ -130,6 +134,11 @@ module.exports = async function handler(req, res) {
       recent_unanswered_questions:
         Array.isArray(recentUnanswered)
           ? recentUnanswered
+          : [],
+
+      common_questions:
+        Array.isArray(commonQuestionsRows)
+          ? commonQuestionsRows
           : []
     });
 
