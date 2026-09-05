@@ -1,801 +1,415 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NOVAIRE | الأسئلة غير المجابة</title>
 
-  <title>NOVAIRE | الأسئلة غير المجابة</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, Tahoma, sans-serif;
-      background: #f4f6f8;
-      color: #1f2937;
-    }
-
-    .container {
-      max-width: 1050px;
-      margin: auto;
-      padding: 24px;
-    }
-
-    .card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 18px;
-      box-shadow: 0 3px 12px rgba(0,0,0,.06);
-    }
-
-    h1, h2, h3 {
-      margin-top: 0;
-    }
-
-    .muted {
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    input,
-    textarea,
-    select,
-    button {
-      width: 100%;
-      padding: 11px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      font-size: 15px;
-      margin-top: 7px;
-      margin-bottom: 12px;
-    }
-
-    textarea {
-      min-height: 110px;
-      resize: vertical;
-    }
-
-    button {
-      cursor: pointer;
-      border: none;
-      font-weight: bold;
-    }
-
-    .primary {
-      background: #111827;
-      color: #fff;
-    }
-
-    .success {
-      background: #047857;
-      color: #fff;
-    }
-
-    .secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-
-    #app {
-      display: none;
-    }
-
-    #message {
-      display: none;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-
-    #message.ok {
-      display: block;
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    #message.error {
-      display: block;
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .top {
-      display: grid;
-      grid-template-columns: 1fr 160px;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .question-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 17px;
-      margin-bottom: 15px;
-      background: #fafafa;
-    }
-
-    .question-text {
-      font-size: 17px;
-      font-weight: bold;
-      line-height: 1.7;
-      margin-bottom: 10px;
-    }
-
-    .date {
-      color: #6b7280;
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
-
-    .empty {
-      text-align: center;
-      padding: 30px 10px;
-      color: #6b7280;
-    }
-
-    .counter {
-      display: inline-block;
-      background: #eef2ff;
-      color: #3730a3;
-      padding: 6px 10px;
-      border-radius: 20px;
-      font-size: 13px;
-      margin-bottom: 15px;
-    }
-
-    @media (max-width: 700px) {
-      .top {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#1f2937}
+.container{max-width:1000px;margin:auto;padding:24px}
+.card{background:white;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+.item{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;background:#fafafa}
+input,textarea,select,button{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin:6px 0 12px}
+textarea{min-height:90px}
+button{border:0;cursor:pointer;font-weight:bold}
+.primary{background:#111827;color:white}
+.success{background:#047857;color:white}
+.secondary{background:#e5e7eb;color:#111827}
+.muted{color:#6b7280;font-size:14px}
+#app{display:none}
+#message{display:none;padding:12px;border-radius:8px;margin-bottom:15px}
+#message.ok{display:block;background:#d1fae5;color:#065f46}
+#message.error{display:block;background:#fee2e2;color:#991b1b}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <!-- LOGIN -->
+<div class="card" id="loginBox">
+<h1>NOVAIRE</h1>
+<h2>الأسئلة غير المجابة</h2>
 
-  <div class="card" id="loginBox">
+<input id="password" type="password" placeholder="كلمة مرور الإدارة">
 
-    <h1>NOVAIRE</h1>
-    <h2>الأسئلة غير المجابة</h2>
-
-    <p class="muted">
-      مراجعة الأسئلة التي لم يتمكن المساعد من الإجابة عنها،
-      واعتماد الإجابات الصحيحة لكل عميل.
-    </p>
-
-    <label>كلمة مرور الإدارة</label>
-
-    <input
-      id="password"
-      type="password"
-      placeholder="أدخل كلمة مرور الإدارة"
-    >
-
-    <button
-      class="primary"
-      onclick="login()"
-    >
-      دخول
-    </button>
-
-  </div>
+<button class="primary" onclick="login()">
+دخول
+</button>
+</div>
 
 
-  <!-- APP -->
+<div id="app">
 
-  <div id="app">
+<div id="message"></div>
 
-    <div id="message"></div>
+<div class="card">
 
+<label>العميل</label>
 
-    <div class="card">
+<select id="clientSelect" onchange="clientChanged()">
+<option value="">اختر العميل</option>
+</select>
 
-      <div class="top">
+<button class="secondary" onclick="logout()">
+تسجيل الخروج
+</button>
 
-        <div>
-
-          <label>اختر العميل</label>
-
-          <select
-            id="clientSelect"
-            onchange="loadQuestions()"
-          >
-            <option value="">
-              اختر العميل
-            </option>
-          </select>
-
-        </div>
+</div>
 
 
-        <button
-          class="secondary"
-          onclick="logout()"
-        >
-          تسجيل الخروج
-        </button>
+<div class="card">
 
-      </div>
+<h2>الأسئلة التي تحتاج إجابة</h2>
 
-    </div>
+<div id="list">
+اختر العميل.
+</div>
 
+</div>
 
-    <div class="card">
-
-      <h2>الأسئلة التي تحتاج إجابة</h2>
-
-      <p
-        id="clientInfo"
-        class="muted"
-      >
-        اختر العميل أولًا.
-      </p>
-
-      <div id="questionCount"></div>
-
-      <div id="questionsList"></div>
-
-    </div>
-
-  </div>
+</div>
 
 </div>
 
 
 <script>
 
-let adminPassword = "";
-let currentQuestions = [];
+let adminPassword="";
+
+const params=new URLSearchParams(window.location.search);
+const requestedClient=params.get("client")||"";
 
 
-/*
-==================================================
-Message
-==================================================
-*/
+async function api(url,payload){
 
-function showMessage(text, type = "ok") {
+const response=await fetch(url,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+password:adminPassword,
+...payload
+})
+});
 
-  const box =
-    document.getElementById("message");
+let data={};
 
-  box.textContent = text;
-  box.className = type;
-  box.style.display = "block";
+try{
+data=await response.json();
+}catch{}
 
-  setTimeout(() => {
-    box.style.display = "none";
-    box.className = "";
-  }, 4000);
+if(!response.ok){
+throw new Error(data.error||data.details||"حدث خطأ");
+}
+
+return data;
 }
 
 
-/*
-==================================================
-API
-==================================================
-*/
+function showMessage(text,type="ok"){
 
-async function postAPI(url, payload) {
+const box=document.getElementById("message");
 
-  const response =
-    await fetch(url, {
-      method: "POST",
+box.textContent=text;
+box.className=type;
+box.style.display="block";
 
-      headers: {
-        "Content-Type": "application/json"
-      },
+setTimeout(()=>{
+box.style.display="none";
+},3000);
 
-      body: JSON.stringify({
-        password: adminPassword,
-        ...payload
-      })
-    });
-
-
-  let data = {};
-
-  try {
-    data = await response.json();
-  } catch {
-    data = {};
-  }
-
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      data.details ||
-      "حدث خطأ في الاتصال"
-    );
-  }
-
-
-  return data;
 }
 
 
-/*
-==================================================
-Login
-==================================================
-*/
+async function login(){
 
-async function login() {
+const value=document.getElementById("password").value.trim();
 
-  const password =
-    document
-      .getElementById("password")
-      .value
-      .trim();
+if(!value){
+alert("أدخل كلمة المرور");
+return;
+}
 
+adminPassword=value;
 
-  if (!password) {
-    alert("أدخل كلمة مرور الإدارة");
-    return;
-  }
+try{
 
+await loadClients();
 
-  adminPassword = password;
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").style.display="block";
 
+}catch(error){
 
-  try {
+adminPassword="";
+alert(error.message);
 
-    await loadClients();
+}
 
-    document
-      .getElementById("loginBox")
-      .style.display = "none";
-
-    document
-      .getElementById("app")
-      .style.display = "block";
-
-  } catch (error) {
-
-    adminPassword = "";
-
-    alert(
-      "تعذر تسجيل الدخول: " +
-      error.message
-    );
-  }
 }
 
 
-/*
-==================================================
-Logout
-==================================================
-*/
+function logout(){
 
-function logout() {
+adminPassword="";
 
-  adminPassword = "";
-  currentQuestions = [];
+document.getElementById("app").style.display="none";
+document.getElementById("loginBox").style.display="block";
 
-  document
-    .getElementById("password")
-    .value = "";
-
-  document
-    .getElementById("app")
-    .style.display = "none";
-
-  document
-    .getElementById("loginBox")
-    .style.display = "block";
 }
 
 
-/*
-==================================================
-Load Clients
-==================================================
-*/
+async function loadClients(){
 
-async function loadClients() {
+const data=await api("/api/client-admin",{
+action:"list"
+});
 
-  const data =
-    await postAPI(
-      "/api/client-admin",
-      {
-        action: "list"
-      }
-    );
+const clients=
+Array.isArray(data.clients)
+?data.clients
+:Array.isArray(data.items)
+?data.items
+:Array.isArray(data)
+?data
+:[];
 
+const select=document.getElementById("clientSelect");
 
-  const clients =
-    Array.isArray(data.clients)
-      ? data.clients
-      : Array.isArray(data.items)
-        ? data.items
-        : Array.isArray(data)
-          ? data
-          : [];
+select.innerHTML='<option value="">اختر العميل</option>';
 
+clients.forEach(client=>{
 
-  const select =
-    document.getElementById(
-      "clientSelect"
-    );
+const option=document.createElement("option");
 
+option.value=client.slug;
 
-  select.innerHTML =
-    '<option value="">اختر العميل</option>';
+option.textContent=
+client.name||
+client.config?.brand_name||
+client.slug;
+
+select.appendChild(option);
+
+});
 
 
-  clients.forEach(client => {
+if(requestedClient){
 
-    const option =
-      document.createElement("option");
+const exists=clients.some(
+client=>client.slug===requestedClient
+);
 
-    option.value =
-      client.slug;
+if(exists){
 
-    option.textContent =
-      client.name ||
-      client.config?.brand_name ||
-      client.slug;
+select.value=requestedClient;
 
-    select.appendChild(option);
-  });
+await loadQuestions();
 
+return;
 
-  const firstBike =
-    clients.find(
-      client =>
-        client.slug === "first-bike"
-    );
+}
 
-
-  if (firstBike) {
-
-    select.value = "first-bike";
-
-    await loadQuestions();
-  }
 }
 
 
-/*
-==================================================
-Load Questions
-==================================================
-*/
+if(clients.length){
 
-async function loadQuestions() {
+select.value=clients[0].slug;
 
-  const clientSlug =
-    document
-      .getElementById("clientSelect")
-      .value;
+await loadQuestions();
 
+}
 
-  const list =
-    document.getElementById(
-      "questionsList"
-    );
-
-
-  const counter =
-    document.getElementById(
-      "questionCount"
-    );
-
-
-  if (!clientSlug) {
-
-    currentQuestions = [];
-
-    list.innerHTML = "";
-
-    counter.innerHTML = "";
-
-    document
-      .getElementById("clientInfo")
-      .textContent =
-        "اختر العميل أولًا.";
-
-    return;
-  }
-
-
-  list.innerHTML =
-    "<p>جاري التحميل...</p>";
-
-
-  counter.innerHTML = "";
-
-
-  try {
-
-    const data =
-      await postAPI(
-        "/api/unanswered-admin",
-        {
-          action: "list",
-          client_slug: clientSlug
-        }
-      );
-
-
-    currentQuestions =
-      Array.isArray(data.questions)
-        ? data.questions
-        : [];
-
-
-    document
-      .getElementById("clientInfo")
-      .textContent =
-        `العميل: ${
-          data.client?.name ||
-          clientSlug
-        }`;
-
-
-    counter.innerHTML =
-      `<span class="counter">
-        عدد الأسئلة غير المجابة:
-        ${currentQuestions.length}
-      </span>`;
-
-
-    renderQuestions();
-
-  } catch (error) {
-
-    list.innerHTML = "";
-
-    showMessage(
-      error.message,
-      "error"
-    );
-  }
 }
 
 
-/*
-==================================================
-Render Questions
-==================================================
-*/
+async function clientChanged(){
 
-function renderQuestions() {
+const slug=document.getElementById("clientSelect").value;
 
-  const list =
-    document.getElementById(
-      "questionsList"
-    );
+if(slug){
 
+history.replaceState(
+{},
+"",
+window.location.pathname+
+"?client="+encodeURIComponent(slug)
+);
 
-  list.innerHTML = "";
+}
 
+await loadQuestions();
 
-  if (currentQuestions.length === 0) {
-
-    list.innerHTML =
-      `<div class="empty">
-        لا توجد أسئلة غير مجابة لهذا العميل.
-      </div>`;
-
-    return;
-  }
-
-
-  currentQuestions.forEach(item => {
-
-    const card =
-      document.createElement("div");
-
-    card.className =
-      "question-card";
-
-
-    const createdAt =
-      item.created_at
-        ? new Date(
-            item.created_at
-          ).toLocaleString(
-            "ar-AE"
-          )
-        : "";
-
-
-    card.innerHTML = `
-
-      <div class="question-text">
-        ${escapeHtml(item.question)}
-      </div>
-
-      <div class="date">
-        ${escapeHtml(createdAt)}
-      </div>
-
-      <label>
-        الإجابة المعتمدة
-      </label>
-
-      <textarea
-        id="answer-${item.id}"
-        placeholder="اكتب الإجابة الصحيحة التي سيستخدمها المساعد مستقبلًا"
-      ></textarea>
-
-      <label>
-        لغة الإجابة
-      </label>
-
-      <select id="language-${item.id}">
-        <option value="ar">
-          العربية
-        </option>
-
-        <option value="en">
-          English
-        </option>
-      </select>
-
-      <button
-        class="success"
-        onclick="resolveQuestion('${item.id}')"
-      >
-        اعتماد الإجابة وإضافتها لقاعدة المعرفة
-      </button>
-    `;
-
-
-    list.appendChild(card);
-  });
 }
 
 
-/*
-==================================================
-Resolve
-==================================================
-*/
+async function loadQuestions(){
 
-async function resolveQuestion(questionId) {
+const slug=document.getElementById("clientSelect").value;
 
-  const clientSlug =
-    document
-      .getElementById("clientSelect")
-      .value;
+const list=document.getElementById("list");
 
+if(!slug){
 
-  if (!clientSlug) {
-    alert("اختر العميل أولًا");
-    return;
-  }
+list.innerHTML="اختر العميل.";
 
+return;
 
-  const answerElement =
-    document.getElementById(
-      `answer-${questionId}`
-    );
+}
 
+list.innerHTML="جاري التحميل...";
 
-  const languageElement =
-    document.getElementById(
-      `language-${questionId}`
-    );
+try{
 
+const data=await api("/api/unanswered-admin",{
+action:"list",
+client_slug:slug
+});
 
-  const approvedAnswer =
-    answerElement
-      ? answerElement.value.trim()
-      : "";
+const items=
+Array.isArray(data.questions)
+?data.questions
+:Array.isArray(data.items)
+?data.items
+:[];
 
+render(items);
 
-  const language =
-    languageElement
-      ? languageElement.value
-      : "ar";
+}catch(error){
 
+list.innerHTML="";
 
-  if (!approvedAnswer) {
+showMessage(error.message,"error");
 
-    alert(
-      "اكتب الإجابة المعتمدة أولًا"
-    );
+}
 
-    return;
-  }
-
-
-  const confirmed =
-    confirm(
-      "سيتم اعتماد هذه الإجابة وإضافتها إلى قاعدة معرفة هذا العميل. هل تريد المتابعة؟"
-    );
-
-
-  if (!confirmed) {
-    return;
-  }
-
-
-  try {
-
-    await postAPI(
-      "/api/unanswered-admin",
-      {
-        action: "resolve",
-
-        client_slug:
-          clientSlug,
-
-        question_id:
-          questionId,
-
-        approved_answer:
-          approvedAnswer,
-
-        language
-      }
-    );
-
-
-    showMessage(
-      "تم اعتماد الإجابة وإضافتها إلى قاعدة معرفة العميل."
-    );
-
-
-    await loadQuestions();
-
-  } catch (error) {
-
-    showMessage(
-      error.message,
-      "error"
-    );
-  }
 }
 
 
-/*
-==================================================
-Escape HTML
-==================================================
-*/
+function render(items){
 
-function escapeHtml(value) {
+const list=document.getElementById("list");
 
-  const div =
-    document.createElement("div");
+list.innerHTML="";
 
-  div.textContent =
-    value || "";
+if(!items.length){
 
-  return div.innerHTML;
+list.innerHTML=
+'<p class="muted">لا توجد أسئلة غير مجابة لهذا العميل.</p>';
+
+return;
+
 }
 
 
-/*
-==================================================
-Enter Login
-==================================================
-*/
+items.forEach(item=>{
 
-document
-  .getElementById("password")
-  .addEventListener(
-    "keydown",
-    event => {
+const div=document.createElement("div");
 
-      if (event.key === "Enter") {
-        login();
-      }
-    }
-  );
+div.className="item";
+
+div.innerHTML=`
+
+<h3>${escapeHtml(item.question||"")}</h3>
+
+<p class="muted">
+تاريخ السؤال:
+${item.created_at
+?escapeHtml(new Date(item.created_at).toLocaleString("ar-AE"))
+:""}
+</p>
+
+<label>الإجابة المعتمدة</label>
+
+<textarea
+id="answer-${item.id}"
+placeholder="اكتب الإجابة التي تريد أن يتعلمها المساعد"
+></textarea>
+
+<label>اللغة</label>
+
+<select id="language-${item.id}">
+<option value="ar">العربية</option>
+<option value="en">English</option>
+</select>
+
+<button
+class="success"
+onclick="resolveQuestion('${item.id}')"
+>
+اعتماد الإجابة وإضافتها لقاعدة المعرفة
+</button>
+`;
+
+list.appendChild(div);
+
+});
+
+}
+
+
+async function resolveQuestion(id){
+
+const slug=document.getElementById("clientSelect").value;
+
+const answer=document.getElementById("answer-"+id).value.trim();
+
+const language=document.getElementById("language-"+id).value;
+
+if(!answer){
+
+alert("اكتب الإجابة أولًا");
+
+return;
+
+}
+
+try{
+
+await api("/api/unanswered-admin",{
+action:"resolve",
+client_slug:slug,
+id,
+answer,
+language
+});
+
+showMessage("تم اعتماد الإجابة وإضافتها لقاعدة المعرفة.");
+
+await loadQuestions();
+
+}catch(error){
+
+showMessage(error.message,"error");
+
+}
+
+}
+
+
+function escapeHtml(value){
+
+return String(value)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+
+document.getElementById("password")
+.addEventListener("keydown",event=>{
+
+if(event.key==="Enter"){
+login();
+}
+
+});
 
 </script>
 
