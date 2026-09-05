@@ -70,7 +70,8 @@
       color: #d4dbeb;
     }
 
-    input {
+    input,
+    textarea {
       width: 100%;
       padding: 14px;
       border-radius: 10px;
@@ -79,10 +80,21 @@
       color: white;
       font-size: 16px;
       outline: none;
+    }
+
+    input {
       margin-bottom: 15px;
     }
 
-    input:focus {
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      font-family: Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    input:focus,
+    textarea:focus {
       border-color: #7384b4;
     }
 
@@ -148,6 +160,13 @@
       font-size: 21px;
     }
 
+    .section-subtitle {
+      color: #9da9c5;
+      margin-bottom: 15px;
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
     .cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -182,9 +201,79 @@
       border-color: #354d3d;
     }
 
+    .questions-container {
+      display: grid;
+      gap: 15px;
+    }
+
+    .question-card {
+      background: #151c31;
+      border: 1px solid #28334f;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .question-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 15px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .question-text {
+      font-size: 17px;
+      line-height: 1.7;
+      font-weight: bold;
+    }
+
+    .question-date {
+      color: #8996b3;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .answer-label {
+      margin-top: 15px;
+      margin-bottom: 8px;
+      color: #cbd5e1;
+      font-size: 14px;
+    }
+
+    .resolve-btn {
+      margin-top: 12px;
+      background: #dce7df;
+      color: #102017;
+    }
+
+    .question-status {
+      min-height: 22px;
+      margin-top: 10px;
+      font-size: 13px;
+    }
+
+    .status-success {
+      color: #7ee2a8;
+    }
+
+    .status-error {
+      color: #ff8fa8;
+    }
+
+    .empty-state {
+      background: #151c31;
+      border: 1px solid #28334f;
+      border-radius: 14px;
+      padding: 28px;
+      text-align: center;
+      color: #9da9c5;
+      line-height: 1.8;
+    }
+
     .loading {
       text-align: center;
-      margin-top: 20px;
+      padding: 25px;
       color: #9da9c5;
     }
 
@@ -210,6 +299,14 @@
 
       .topbar h1 {
         font-size: 23px;
+      }
+
+      .question-header {
+        display: block;
+      }
+
+      .question-date {
+        margin-top: 8px;
       }
     }
   </style>
@@ -301,6 +398,8 @@
     </div>
 
 
+    <!-- OPERATIONS -->
+
     <h2 class="section-title">
       المؤشرات التشغيلية
     </h2>
@@ -311,124 +410,76 @@
         <div class="card-title">
           إجمالي المحادثات
         </div>
-        <div
-          id="totalConversations"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="totalConversations" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           إجمالي الرسائل
         </div>
-        <div
-          id="totalMessages"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="totalMessages" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           طلبات التواصل
         </div>
-        <div
-          id="totalContactRequests"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="totalContactRequests" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           طلبات الاتصال
         </div>
-        <div
-          id="callbackRequests"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="callbackRequests" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           التحويل لموظف
         </div>
-        <div
-          id="humanHandoff"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="humanHandoff" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           الأسئلة غير المجابة
         </div>
-        <div
-          id="unansweredQuestions"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="unansweredQuestions" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           غير محلولة حتى الآن
         </div>
-        <div
-          id="unresolvedQuestions"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="unresolvedQuestions" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           نسبة الحل بالذكاء الاصطناعي
         </div>
-        <div
-          id="aiResolution"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="aiResolution" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           المحادثات العربية
         </div>
-        <div
-          id="arabicConversations"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="arabicConversations" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           المحادثات الإنجليزية
         </div>
-        <div
-          id="englishConversations"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="englishConversations" class="card-value">-</div>
       </div>
 
     </section>
 
+
+    <!-- AI USAGE -->
 
     <h2 class="section-title">
       استهلاك الذكاء الاصطناعي والتكلفة
@@ -440,131 +491,101 @@
         <div class="card-title">
           نموذج الذكاء الاصطناعي
         </div>
-
-        <div
-          id="aiModel"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="aiModel" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           Input Tokens
         </div>
-
-        <div
-          id="inputTokens"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="inputTokens" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           Output Tokens
         </div>
-
-        <div
-          id="outputTokens"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="outputTokens" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           إجمالي Tokens
         </div>
-
-        <div
-          id="totalTokens"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="totalTokens" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           سجلات استخدام AI
         </div>
-
-        <div
-          id="usageRecords"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="usageRecords" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           تكلفة الإدخال
         </div>
-
-        <div
-          id="inputCost"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="inputCost" class="card-value">-</div>
       </div>
 
       <div class="card">
         <div class="card-title">
           تكلفة الإخراج
         </div>
-
-        <div
-          id="outputCost"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="outputCost" class="card-value">-</div>
       </div>
 
       <div class="card cost-card">
         <div class="card-title">
           إجمالي تكلفة AI بالدولار
         </div>
-
-        <div
-          id="totalCostUsd"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="totalCostUsd" class="card-value">-</div>
       </div>
 
       <div class="card cost-card">
         <div class="card-title">
           إجمالي تكلفة AI بالدرهم
         </div>
-
-        <div
-          id="totalCostAed"
-          class="card-value"
-        >
-          -
-        </div>
+        <div id="totalCostAed" class="card-value">-</div>
       </div>
 
     </section>
 
+
+    <!-- UNANSWERED QUESTIONS -->
+
+    <h2 class="section-title">
+      إدارة الأسئلة غير المجابة
+    </h2>
+
+    <p class="section-subtitle">
+      هنا تظهر الأسئلة التي لم يتمكن النظام من الإجابة عنها.
+      اكتب الإجابة المعتمدة ثم اضغط «اعتماد وحل».
+    </p>
+
+    <section
+      id="questionsContainer"
+      class="questions-container"
+    >
+      <div class="loading">
+        جاري تحميل الأسئلة...
+      </div>
+    </section>
+
+
     <div class="security-note">
       هذه الصفحة مخصصة لإدارة NOVAIRE فقط.
-      بيانات استهلاك الذكاء الاصطناعي والتكاليف الداخلية
-      لا يتم عرضها في لوحة العميل.
+      بيانات استهلاك الذكاء الاصطناعي والتكاليف والإجابات المعتمدة
+      لا يتم عرضها للعميل.
     </div>
 
   </main>
 
 
   <script>
+
+    let adminPassword = "";
 
     const loginPage =
       document.getElementById("loginPage");
@@ -587,6 +608,9 @@
     const logoutButton =
       document.getElementById("logoutButton");
 
+    const questionsContainer =
+      document.getElementById("questionsContainer");
+
 
     function setText(id, value) {
       const element =
@@ -602,6 +626,30 @@
     function formatNumber(value) {
       return Number(value || 0)
         .toLocaleString("en-US");
+    }
+
+
+    function formatDate(value) {
+      if (!value) {
+        return "-";
+      }
+
+      try {
+        return new Intl.DateTimeFormat(
+          "ar-AE",
+          {
+            timeZone: "Asia/Dubai",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+            hour: "2-digit",
+            minute: "2-digit"
+          }
+        ).format(new Date(value));
+
+      } catch {
+        return value;
+      }
     }
 
 
@@ -764,6 +812,361 @@
     }
 
 
+    async function loadAdminDashboard() {
+
+      const response =
+        await fetch(
+          "/api/admin-dashboard",
+          {
+            method: "POST",
+
+            headers: {
+              "Content-Type":
+                "application/json"
+            },
+
+            body:
+              JSON.stringify({
+                password:
+                  adminPassword
+              })
+          }
+        );
+
+      const data =
+        await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          data.error ||
+          "Unable to load dashboard"
+        );
+      }
+
+      showDashboard(data);
+    }
+
+
+    async function loadQuestions() {
+
+      questionsContainer.innerHTML =
+        `
+          <div class="loading">
+            جاري تحميل الأسئلة...
+          </div>
+        `;
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/unanswered-admin",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  password:
+                    adminPassword,
+
+                  action:
+                    "list"
+                })
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (response.status === 401) {
+          throw new Error(
+            "Unauthorized"
+          );
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+            "Unable to load questions"
+          );
+        }
+
+        renderQuestions(
+          data.questions || []
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+        questionsContainer.innerHTML =
+          `
+            <div class="empty-state">
+              تعذر تحميل الأسئلة غير المجابة.
+            </div>
+          `;
+      }
+    }
+
+
+    function renderQuestions(questions) {
+
+      if (
+        !Array.isArray(questions) ||
+        questions.length === 0
+      ) {
+
+        questionsContainer.innerHTML =
+          `
+            <div class="empty-state">
+              لا توجد أسئلة غير محلولة حاليًا.
+            </div>
+          `;
+
+        return;
+      }
+
+      questionsContainer.innerHTML = "";
+
+      questions.forEach(
+        function(question) {
+
+          const card =
+            document.createElement("div");
+
+          card.className =
+            "question-card";
+
+
+          const header =
+            document.createElement("div");
+
+          header.className =
+            "question-header";
+
+
+          const questionText =
+            document.createElement("div");
+
+          questionText.className =
+            "question-text";
+
+          questionText.textContent =
+            question.question || "-";
+
+
+          const questionDate =
+            document.createElement("div");
+
+          questionDate.className =
+            "question-date";
+
+          questionDate.textContent =
+            formatDate(
+              question.created_at
+            );
+
+
+          header.appendChild(
+            questionText
+          );
+
+          header.appendChild(
+            questionDate
+          );
+
+
+          const label =
+            document.createElement("div");
+
+          label.className =
+            "answer-label";
+
+          label.textContent =
+            "الإجابة المعتمدة";
+
+
+          const textarea =
+            document.createElement("textarea");
+
+          textarea.placeholder =
+            "اكتب الإجابة الصحيحة التي تريد اعتمادها...";
+
+          textarea.value =
+            question.approved_answer || "";
+
+
+          const button =
+            document.createElement("button");
+
+          button.type =
+            "button";
+
+          button.className =
+            "resolve-btn";
+
+          button.textContent =
+            "اعتماد وحل";
+
+
+          const status =
+            document.createElement("div");
+
+          status.className =
+            "question-status";
+
+
+          button.addEventListener(
+            "click",
+            async function() {
+
+              const answer =
+                textarea.value.trim();
+
+              status.textContent = "";
+              status.className =
+                "question-status";
+
+
+              if (!answer) {
+
+                status.textContent =
+                  "اكتب الإجابة أولًا.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+                return;
+              }
+
+
+              button.disabled = true;
+
+              button.textContent =
+                "جاري الحفظ...";
+
+
+              try {
+
+                const response =
+                  await fetch(
+                    "/api/unanswered-admin",
+                    {
+                      method: "POST",
+
+                      headers: {
+                        "Content-Type":
+                          "application/json"
+                      },
+
+                      body:
+                        JSON.stringify({
+                          password:
+                            adminPassword,
+
+                          action:
+                            "resolve",
+
+                          question_id:
+                            question.id,
+
+                          approved_answer:
+                            answer
+                        })
+                    }
+                  );
+
+
+                const data =
+                  await response.json();
+
+
+                if (!response.ok) {
+
+                  throw new Error(
+                    data.error ||
+                    "Unable to resolve question"
+                  );
+                }
+
+
+                status.textContent =
+                  "تم اعتماد الإجابة وحل السؤال.";
+
+                status.classList.add(
+                  "status-success"
+                );
+
+
+                await loadAdminDashboard();
+
+                setTimeout(
+                  function() {
+                    loadQuestions();
+                  },
+                  500
+                );
+
+
+              } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                  "تعذر حفظ الإجابة.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+
+              } finally {
+
+                button.disabled =
+                  false;
+
+                button.textContent =
+                  "اعتماد وحل";
+              }
+            }
+          );
+
+
+          card.appendChild(
+            header
+          );
+
+          card.appendChild(
+            label
+          );
+
+          card.appendChild(
+            textarea
+          );
+
+          card.appendChild(
+            button
+          );
+
+          card.appendChild(
+            status
+          );
+
+
+          questionsContainer.appendChild(
+            card
+          );
+        }
+      );
+    }
+
+
     loginForm.addEventListener(
       "submit",
       async function(event) {
@@ -776,16 +1179,26 @@
           passwordInput.value;
 
         if (!password) {
+
           loginError.textContent =
             "أدخل كلمة المرور.";
+
           return;
         }
 
-        loginButton.disabled = true;
+
+        loginButton.disabled =
+          true;
+
         loginButton.textContent =
           "جاري الدخول...";
 
+
         try {
+
+          adminPassword =
+            password;
+
 
           const response =
             await fetch(
@@ -800,13 +1213,16 @@
 
                 body:
                   JSON.stringify({
-                    password
+                    password:
+                      adminPassword
                   })
               }
             );
 
 
           if (response.status === 401) {
+
+            adminPassword = "";
 
             loginError.textContent =
               "كلمة المرور غير صحيحة.";
@@ -821,6 +1237,8 @@
 
           if (!response.ok) {
 
+            adminPassword = "";
+
             console.error(data);
 
             loginError.textContent =
@@ -834,13 +1252,18 @@
 
           showDashboard(data);
 
+          await loadQuestions();
+
 
         } catch (error) {
+
+          adminPassword = "";
 
           console.error(error);
 
           loginError.textContent =
             "حدث خطأ في الاتصال.";
+
 
         } finally {
 
@@ -858,6 +1281,8 @@
       "click",
       function() {
 
+        adminPassword = "";
+
         dashboard.style.display =
           "none";
 
@@ -867,6 +1292,9 @@
         passwordInput.value = "";
 
         loginError.textContent = "";
+
+        questionsContainer.innerHTML =
+          "";
 
         passwordInput.focus();
       }
