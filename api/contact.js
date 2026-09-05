@@ -102,6 +102,7 @@ module.exports = async function handler(req, res) {
     }
 
     const clientId = await getClientId();
+
     const conversationId =
       await getConversationId(clientId, session_id);
 
@@ -118,7 +119,9 @@ module.exports = async function handler(req, res) {
           request_type,
           customer_name: String(customer_name).trim(),
           phone: String(phone).trim(),
-          reason: reason ? String(reason).trim() : null,
+          reason: reason
+            ? String(reason).trim()
+            : null,
           status: "new"
         })
       }
@@ -136,10 +139,10 @@ module.exports = async function handler(req, res) {
         headers: {
           Prefer: "return=minimal"
         },
-       body: JSON.stringify({
-  [updateField]: true,
-  resolved_by_ai: false
-})
+        body: JSON.stringify({
+          [updateField]: true,
+          resolved_by_ai: false
+        })
       }
     );
 
