@@ -2,8 +2,6 @@ const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const ADMIN_PASSWORD = process.env.NOVAIRE_ADMIN_PASSWORD;
 
-const CLIENT_SLUG = "first-bike";
-
 const AI_MODEL_NAME = "Claude Sonnet 4.6";
 const INPUT_PRICE_PER_MILLION = 3;
 const OUTPUT_PRICE_PER_MILLION = 15;
@@ -28,7 +26,20 @@ async function supabaseRequest(path) {
   return text ? JSON.parse(text) : [];
 }
 
+function safeSlug(value) {
+  const slug = String(value || "")
+    .trim()
+    .toLowerCase();
+
+  if (!/^[a-z0-9_-]{2,80}$/.test(slug)) {
+    return null;
+  }
+
+  return slug;
+}
+
 module.exports = async function handler(req, res) {
+
   if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed"
@@ -52,9 +63,21 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  const clientSlug = safeSlug(
+    req.body?.client_slug ||
+    req.body?.client
+  );
+
+  if (!clientSlug) {
+    return res.status(400).json({
+      error: "Valid client_slug is required"
+    });
+  }
+
   try {
+
     const summaryRows = await supabaseRequest(
-      `client_dashboard_stats?slug=eq.${encodeURIComponent(CLIENT_SLUG)}&select=*`
+      `client_dashboard_stats?slug=eq.${encodeURIComponent(clientSlug)}&select=*`
     );
 
     if (!Array.isArray(summaryRows) || summaryRows.length === 0) {
@@ -66,39 +89,47 @@ module.exports = async function handler(req, res) {
     const summary = summaryRows[0];
     const clientId = summary.client_id;
 
-    const unansweredRows = await supabaseRequest(
-      `unanswered_dashboard_stats?client_id=eq.${clientId}&select=*`
-    );
+    const [
+      unansweredRows,
+      aiResolutionRows,
+      languageRows,
+      aiUsageRows
+    ] = await Promise.all([
 
-    const aiResolutionRows = await supabaseRequest(
-      `ai_resolution_dashboard_stats?client_id=eq.${clientId}&select=*`
-    );
+      supabaseRequest(
+        `unanswered_dashboard_stats?client_id=eq.${encodeURIComponent(clientId)}&select=*`
+      ),
 
-    const languageRows = await supabaseRequest(
-      `language_dashboard_stats?client_id=eq.${clientId}&select=*`
-    );
+      supabaseRequest(
+        `ai_resolution_dashboard_stats?client_id=eq.${encodeURIComponent(clientId)}&select=*`
+      ),
 
-    const aiUsageRows = await supabaseRequest(
-      `ai_usage_dashboard_stats?client_id=eq.${clientId}&select=*`
-    );
+      supabaseRequest(
+        `language_dashboard_stats?client_id=eq.${encodeURIComponent(clientId)}&select=*`
+      ),
+
+      supabaseRequest(
+        `ai_usage_dashboard_stats?client_id=eq.${encodeURIComponent(clientId)}&select=*`
+      )
+    ]);
 
     const unanswered =
-      Array.isArray(unansweredRows) && unansweredRows.length > 0
+      Array.isArray(unansweredRows) && unansweredRows.length
         ? unansweredRows[0]
         : {};
 
     const aiResolution =
-      Array.isArray(aiResolutionRows) && aiResolutionRows.length > 0
+      Array.isArray(aiResolutionRows) && aiResolutionRows.length
         ? aiResolutionRows[0]
         : {};
 
     const languageStats =
-      Array.isArray(languageRows) && languageRows.length > 0
+      Array.isArray(languageRows) && languageRows.length
         ? languageRows[0]
         : {};
 
     const aiUsage =
-      Array.isArray(aiUsageRows) && aiUsageRows.length > 0
+      Array.isArray(aiUsageRows) && aiUsageRows.length
         ? aiUsageRows[0]
         : {};
 
@@ -109,7 +140,10 @@ module.exports = async function handler(req, res) {
       Number(aiUsage.total_output_tokens || 0);
 
     const totalTokens =
-      Number(aiUsage.total_tokens || 0);
+      Number(
+        aiUsage.total_tokens ||
+        totalInputTokens + totalOutputTokens
+      );
 
     const inputCostUsd =
       (totalInputTokens / 1000000) *
@@ -131,6 +165,7 @@ module.exports = async function handler(req, res) {
     );
 
     return res.status(200).json({
+
       client: {
         client_id: summary.client_id,
         client_name: summary.client_name,
@@ -138,40 +173,41 @@ module.exports = async function handler(req, res) {
       },
 
       operations: {
+
         total_conversations:
-          summary.total_conversations || 0,
+          Number(summary.total_conversations || 0),
 
         total_messages:
-          summary.total_messages || 0,
+          Number(summary.total_messages || 0),
 
         total_contact_requests:
-          summary.total_contact_requests || 0,
+          Number(summary.total_contact_requests || 0),
 
         callback_requests:
-          summary.callback_requests || 0,
+          Number(summary.callback_requests || 0),
 
         human_handoff_requests:
-          summary.human_handoff_requests || 0,
+          Number(summary.human_handoff_requests || 0),
 
         total_unanswered_questions:
-          unanswered.total_unanswered_questions || 0,
+          Number(unanswered.total_unanswered_questions || 0),
 
         unresolved_unanswered_questions:
-          unanswered.unresolved_unanswered_questions || 0,
+          Number(unanswered.unresolved_unanswered_questions || 0),
 
         ai_resolution_rate_percent:
-          aiResolution.ai_resolution_rate_percent || 0,
+          Number(aiResolution.ai_resolution_rate_percent || 0),
 
         arabic_conversations:
-          languageStats.arabic_conversations || 0,
+          Number(languageStats.arabic_conversations || 0),
 
         english_conversations:
-          languageStats.english_conversations || 0
+          Number(languageStats.english_conversations || 0)
       },
 
       ai_usage: {
-        model:
-          AI_MODEL_NAME,
+
+        model: AI_MODEL_NAME,
 
         total_input_tokens:
           totalInputTokens,
@@ -183,7 +219,7 @@ module.exports = async function handler(req, res) {
           totalTokens,
 
         ai_usage_records:
-          aiUsage.ai_usage_records || 0,
+          Number(aiUsage.ai_usage_records || 0),
 
         input_price_per_million_usd:
           INPUT_PRICE_PER_MILLION,
@@ -206,14 +242,14 @@ module.exports = async function handler(req, res) {
     });
 
   } catch (error) {
+
     console.error(
       "ADMIN DASHBOARD API ERROR:",
       error
     );
 
     return res.status(500).json({
-      error:
-        "Unable to load admin dashboard statistics"
+      error: "Unable to load admin dashboard statistics"
     });
   }
 };
