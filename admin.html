@@ -443,17 +443,11 @@
           required
         />
 
-        <button
-          id="loginButton"
-          type="submit"
-        >
+        <button id="loginButton" type="submit">
           دخول
         </button>
 
-        <div
-          id="loginError"
-          class="error-message"
-        ></div>
+        <div id="loginError" class="error-message"></div>
 
       </form>
 
@@ -629,6 +623,7 @@
       يمكنك إضافة معلومة جديدة، تعديلها، تعطيلها مؤقتًا، إعادة تفعيلها، أو حذفها.
     </p>
 
+
     <div class="create-knowledge-card">
 
       <button
@@ -638,6 +633,7 @@
       >
         + إضافة معلومة جديدة
       </button>
+
 
       <div
         id="createKnowledgeForm"
@@ -657,6 +653,7 @@
           placeholder="مثال: هل يوجد حجز مسبق للدراجات؟"
         ></textarea>
 
+
         <label
           for="newKnowledgeAnswer"
           class="answer-label"
@@ -669,6 +666,7 @@
           placeholder="اكتب الإجابة الرسمية المعتمدة..."
         ></textarea>
 
+
         <label
           for="newKnowledgeLanguage"
           class="answer-label"
@@ -677,14 +675,10 @@
         </label>
 
         <select id="newKnowledgeLanguage">
-          <option value="ar">
-            العربية
-          </option>
-
-          <option value="en">
-            English
-          </option>
+          <option value="ar">العربية</option>
+          <option value="en">English</option>
         </select>
+
 
         <div class="create-actions">
 
@@ -739,6 +733,7 @@
 
     let adminPassword = "";
 
+
     const loginPage =
       document.getElementById("loginPage");
 
@@ -792,6 +787,7 @@
 
 
     function setText(id, value) {
+
       const element =
         document.getElementById(id);
 
@@ -803,17 +799,20 @@
 
 
     function formatNumber(value) {
+
       return Number(value || 0)
         .toLocaleString("en-US");
     }
 
 
     function formatDate(value) {
+
       if (!value) {
         return "-";
       }
 
       try {
+
         return new Intl.DateTimeFormat(
           "ar-AE",
           {
@@ -824,9 +823,12 @@
             hour: "2-digit",
             minute: "2-digit"
           }
-        ).format(new Date(value));
+        ).format(
+          new Date(value)
+        );
 
-      } catch {
+      } catch (error) {
+
         return value;
       }
     }
@@ -863,37 +865,51 @@
 
       setText(
         "totalConversations",
-        formatNumber(operations.total_conversations)
+        formatNumber(
+          operations.total_conversations
+        )
       );
 
       setText(
         "totalMessages",
-        formatNumber(operations.total_messages)
+        formatNumber(
+          operations.total_messages
+        )
       );
 
       setText(
         "totalContactRequests",
-        formatNumber(operations.total_contact_requests)
+        formatNumber(
+          operations.total_contact_requests
+        )
       );
 
       setText(
         "callbackRequests",
-        formatNumber(operations.callback_requests)
+        formatNumber(
+          operations.callback_requests
+        )
       );
 
       setText(
         "humanHandoff",
-        formatNumber(operations.human_handoff_requests)
+        formatNumber(
+          operations.human_handoff_requests
+        )
       );
 
       setText(
         "unansweredQuestions",
-        formatNumber(operations.total_unanswered_questions)
+        formatNumber(
+          operations.total_unanswered_questions
+        )
       );
 
       setText(
         "unresolvedQuestions",
-        formatNumber(operations.unresolved_unanswered_questions)
+        formatNumber(
+          operations.unresolved_unanswered_questions
+        )
       );
 
       setText(
@@ -905,12 +921,16 @@
 
       setText(
         "arabicConversations",
-        formatNumber(operations.arabic_conversations)
+        formatNumber(
+          operations.arabic_conversations
+        )
       );
 
       setText(
         "englishConversations",
-        formatNumber(operations.english_conversations)
+        formatNumber(
+          operations.english_conversations
+        )
       );
 
       setText(
@@ -920,43 +940,60 @@
 
       setText(
         "inputTokens",
-        formatNumber(ai.total_input_tokens)
+        formatNumber(
+          ai.total_input_tokens
+        )
       );
 
       setText(
         "outputTokens",
-        formatNumber(ai.total_output_tokens)
+        formatNumber(
+          ai.total_output_tokens
+        )
       );
 
       setText(
         "totalTokens",
-        formatNumber(ai.total_tokens)
+        formatNumber(
+          ai.total_tokens
+        )
       );
 
       setText(
         "usageRecords",
-        formatNumber(ai.ai_usage_records)
+        formatNumber(
+          ai.ai_usage_records
+        )
       );
 
       setText(
         "inputCost",
-        `$${Number(ai.input_cost_usd || 0).toFixed(6)}`
+        `$${Number(
+          ai.input_cost_usd || 0
+        ).toFixed(6)}`
       );
 
       setText(
         "outputCost",
-        `$${Number(ai.output_cost_usd || 0).toFixed(6)}`
+        `$${Number(
+          ai.output_cost_usd || 0
+        ).toFixed(6)}`
       );
 
       setText(
         "totalCostUsd",
-        `$${Number(ai.total_cost_usd || 0).toFixed(6)}`
+        `$${Number(
+          ai.total_cost_usd || 0
+        ).toFixed(6)}`
       );
 
       setText(
         "totalCostAed",
-        `${Number(ai.total_cost_aed || 0).toFixed(4)} AED`
+        `${Number(
+          ai.total_cost_aed || 0
+        ).toFixed(4)} AED`
       );
+
 
       loginPage.style.display =
         "none";
@@ -987,15 +1024,19 @@
           }
         );
 
+
       const data =
         await response.json();
 
+
       if (!response.ok) {
+
         throw new Error(
           data.error ||
           "Unable to load dashboard"
         );
       }
+
 
       showDashboard(data);
     }
@@ -1006,4 +1047,1208 @@
       questionsContainer.innerHTML =
         `
           <div class="loading">
-            جاري
+            جاري تحميل الأسئلة...
+          </div>
+        `;
+
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/unanswered-admin",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  password:
+                    adminPassword,
+
+                  action:
+                    "list"
+                })
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.error ||
+            "Unable to load questions"
+          );
+        }
+
+
+        renderQuestions(
+          data.questions || []
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        questionsContainer.innerHTML =
+          `
+            <div class="empty-state">
+              تعذر تحميل الأسئلة غير المجابة.
+            </div>
+          `;
+      }
+    }
+
+
+    function renderQuestions(questions) {
+
+      if (
+        !Array.isArray(questions) ||
+        questions.length === 0
+      ) {
+
+        questionsContainer.innerHTML =
+          `
+            <div class="empty-state">
+              لا توجد أسئلة غير محلولة حاليًا.
+            </div>
+          `;
+
+        return;
+      }
+
+
+      questionsContainer.innerHTML = "";
+
+
+      questions.forEach(
+        function(question) {
+
+          const card =
+            document.createElement("div");
+
+          card.className =
+            "question-card";
+
+
+          const header =
+            document.createElement("div");
+
+          header.className =
+            "question-header";
+
+
+          const questionText =
+            document.createElement("div");
+
+          questionText.className =
+            "question-text";
+
+          questionText.textContent =
+            question.question || "-";
+
+
+          const questionDate =
+            document.createElement("div");
+
+          questionDate.className =
+            "question-date";
+
+          questionDate.textContent =
+            formatDate(
+              question.created_at
+            );
+
+
+          header.appendChild(
+            questionText
+          );
+
+          header.appendChild(
+            questionDate
+          );
+
+
+          const label =
+            document.createElement("div");
+
+          label.className =
+            "answer-label";
+
+          label.textContent =
+            "الإجابة المعتمدة";
+
+
+          const textarea =
+            document.createElement("textarea");
+
+          textarea.placeholder =
+            "اكتب الإجابة الصحيحة التي تريد اعتمادها...";
+
+          textarea.value =
+            question.approved_answer || "";
+
+
+          const button =
+            document.createElement("button");
+
+          button.type =
+            "button";
+
+          button.className =
+            "resolve-btn";
+
+          button.textContent =
+            "اعتماد وحل";
+
+
+          const status =
+            document.createElement("div");
+
+          status.className =
+            "question-status";
+
+
+          button.addEventListener(
+            "click",
+            async function() {
+
+              const answer =
+                textarea.value.trim();
+
+
+              status.textContent = "";
+
+              status.className =
+                "question-status";
+
+
+              if (!answer) {
+
+                status.textContent =
+                  "اكتب الإجابة أولًا.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+                return;
+              }
+
+
+              button.disabled =
+                true;
+
+              button.textContent =
+                "جاري الحفظ...";
+
+
+              try {
+
+                const response =
+                  await fetch(
+                    "/api/unanswered-admin",
+                    {
+                      method: "POST",
+
+                      headers: {
+                        "Content-Type":
+                          "application/json"
+                      },
+
+                      body:
+                        JSON.stringify({
+                          password:
+                            adminPassword,
+
+                          action:
+                            "resolve",
+
+                          question_id:
+                            question.id,
+
+                          approved_answer:
+                            answer
+                        })
+                    }
+                  );
+
+
+                const data =
+                  await response.json();
+
+
+                if (!response.ok) {
+
+                  throw new Error(
+                    data.error ||
+                    "Unable to resolve question"
+                  );
+                }
+
+
+                status.textContent =
+                  "تم اعتماد الإجابة وحفظها في قاعدة المعرفة.";
+
+                status.classList.add(
+                  "status-success"
+                );
+
+
+                await loadAdminDashboard();
+
+                await loadKnowledge();
+
+
+                setTimeout(
+                  function() {
+                    loadQuestions();
+                  },
+                  400
+                );
+
+
+              } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                  "تعذر حفظ الإجابة.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+
+              } finally {
+
+                button.disabled =
+                  false;
+
+                button.textContent =
+                  "اعتماد وحل";
+              }
+            }
+          );
+
+
+          card.appendChild(header);
+          card.appendChild(label);
+          card.appendChild(textarea);
+          card.appendChild(button);
+          card.appendChild(status);
+
+
+          questionsContainer.appendChild(
+            card
+          );
+        }
+      );
+    }
+
+
+    async function loadKnowledge() {
+
+      knowledgeContainer.innerHTML =
+        `
+          <div class="loading">
+            جاري تحميل قاعدة المعرفة...
+          </div>
+        `;
+
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/knowledge-admin",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  password:
+                    adminPassword,
+
+                  action:
+                    "list"
+                })
+            }
+          );
+
+
+        const data =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          throw new Error(
+            data.error ||
+            "Unable to load knowledge base"
+          );
+        }
+
+
+        renderKnowledge(
+          data.items || []
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        knowledgeContainer.innerHTML =
+          `
+            <div class="empty-state">
+              تعذر تحميل قاعدة المعرفة.
+            </div>
+          `;
+      }
+    }
+
+
+    function renderKnowledge(items) {
+
+      if (
+        !Array.isArray(items) ||
+        items.length === 0
+      ) {
+
+        knowledgeContainer.innerHTML =
+          `
+            <div class="empty-state">
+              لا توجد معلومات معتمدة في قاعدة المعرفة حاليًا.
+            </div>
+          `;
+
+        return;
+      }
+
+
+      knowledgeContainer.innerHTML = "";
+
+
+      items.forEach(
+        function(item) {
+
+          const card =
+            document.createElement("div");
+
+          card.className =
+            "knowledge-card";
+
+
+          const header =
+            document.createElement("div");
+
+          header.className =
+            "knowledge-header";
+
+
+          const title =
+            document.createElement("div");
+
+          title.className =
+            "knowledge-title";
+
+          title.textContent =
+            item.language === "en"
+              ? "Approved Knowledge"
+              : "معلومة معتمدة";
+
+
+          const meta =
+            document.createElement("div");
+
+          meta.className =
+            "knowledge-meta";
+
+          meta.innerHTML =
+            `
+              آخر تحديث:
+              ${formatDate(item.updated_at)}
+              <br>
+              اللغة:
+              ${item.language === "en" ? "English" : "العربية"}
+              <br>
+              المصدر:
+              ${item.source || "admin"}
+            `;
+
+
+          header.appendChild(title);
+          header.appendChild(meta);
+
+
+          const badge =
+            document.createElement("div");
+
+          badge.className =
+            item.active
+              ? "active-badge"
+              : "inactive-badge";
+
+          badge.textContent =
+            item.active
+              ? "مفعّلة"
+              : "معطّلة";
+
+
+          const questionLabel =
+            document.createElement("div");
+
+          questionLabel.className =
+            "answer-label";
+
+          questionLabel.textContent =
+            "السؤال / الموضوع";
+
+
+          const questionInput =
+            document.createElement("textarea");
+
+          questionInput.className =
+            "knowledge-question-input";
+
+          questionInput.value =
+            item.question || "";
+
+          questionInput.placeholder =
+            "السؤال أو الموضوع";
+
+
+          const answerLabel =
+            document.createElement("div");
+
+          answerLabel.className =
+            "answer-label";
+
+          answerLabel.textContent =
+            "الإجابة الرسمية";
+
+
+          const answerInput =
+            document.createElement("textarea");
+
+          answerInput.value =
+            item.answer || "";
+
+          answerInput.placeholder =
+            "الإجابة الرسمية المعتمدة";
+
+
+          const actions =
+            document.createElement("div");
+
+          actions.className =
+            "knowledge-actions";
+
+
+          const saveButton =
+            document.createElement("button");
+
+          saveButton.type =
+            "button";
+
+          saveButton.className =
+            "save-btn";
+
+          saveButton.textContent =
+            "حفظ التعديل";
+
+
+          const toggleButton =
+            document.createElement("button");
+
+          toggleButton.type =
+            "button";
+
+          toggleButton.className =
+            "toggle-btn";
+
+          toggleButton.textContent =
+            item.active
+              ? "تعطيل"
+              : "تفعيل";
+
+
+          const deleteButton =
+            document.createElement("button");
+
+          deleteButton.type =
+            "button";
+
+          deleteButton.className =
+            "delete-btn";
+
+          deleteButton.textContent =
+            "حذف";
+
+
+          const status =
+            document.createElement("div");
+
+          status.className =
+            "knowledge-status";
+
+
+          saveButton.addEventListener(
+            "click",
+            async function() {
+
+              const question =
+                questionInput.value.trim();
+
+              const answer =
+                answerInput.value.trim();
+
+
+              status.textContent = "";
+
+              status.className =
+                "knowledge-status";
+
+
+              if (!question || !answer) {
+
+                status.textContent =
+                  "السؤال والإجابة مطلوبان.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+                return;
+              }
+
+
+              saveButton.disabled =
+                true;
+
+              saveButton.textContent =
+                "جاري الحفظ...";
+
+
+              try {
+
+                const response =
+                  await fetch(
+                    "/api/knowledge-admin",
+                    {
+                      method: "POST",
+
+                      headers: {
+                        "Content-Type":
+                          "application/json"
+                      },
+
+                      body:
+                        JSON.stringify({
+                          password:
+                            adminPassword,
+
+                          action:
+                            "update",
+
+                          id:
+                            item.id,
+
+                          question,
+
+                          answer
+                        })
+                    }
+                  );
+
+
+                const data =
+                  await response.json();
+
+
+                if (!response.ok) {
+
+                  throw new Error(
+                    data.error ||
+                    "Unable to update item"
+                  );
+                }
+
+
+                status.textContent =
+                  "تم حفظ التعديل.";
+
+                status.classList.add(
+                  "status-success"
+                );
+
+
+                setTimeout(
+                  function() {
+                    loadKnowledge();
+                  },
+                  500
+                );
+
+
+              } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                  "تعذر حفظ التعديل.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+
+              } finally {
+
+                saveButton.disabled =
+                  false;
+
+                saveButton.textContent =
+                  "حفظ التعديل";
+              }
+            }
+          );
+
+
+          toggleButton.addEventListener(
+            "click",
+            async function() {
+
+              toggleButton.disabled =
+                true;
+
+              toggleButton.textContent =
+                "جاري التنفيذ...";
+
+
+              try {
+
+                const response =
+                  await fetch(
+                    "/api/knowledge-admin",
+                    {
+                      method: "POST",
+
+                      headers: {
+                        "Content-Type":
+                          "application/json"
+                      },
+
+                      body:
+                        JSON.stringify({
+                          password:
+                            adminPassword,
+
+                          action:
+                            "toggle",
+
+                          id:
+                            item.id,
+
+                          active:
+                            !item.active
+                        })
+                    }
+                  );
+
+
+                const data =
+                  await response.json();
+
+
+                if (!response.ok) {
+
+                  throw new Error(
+                    data.error ||
+                    "Unable to toggle item"
+                  );
+                }
+
+
+                await loadKnowledge();
+
+
+              } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                  "تعذر تغيير حالة المعلومة.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+
+              } finally {
+
+                toggleButton.disabled =
+                  false;
+              }
+            }
+          );
+
+
+          deleteButton.addEventListener(
+            "click",
+            async function() {
+
+              const confirmed =
+                window.confirm(
+                  "هل أنت متأكد من حذف هذه المعلومة نهائيًا؟"
+                );
+
+
+              if (!confirmed) {
+                return;
+              }
+
+
+              deleteButton.disabled =
+                true;
+
+              deleteButton.textContent =
+                "جاري الحذف...";
+
+
+              try {
+
+                const response =
+                  await fetch(
+                    "/api/knowledge-admin",
+                    {
+                      method: "POST",
+
+                      headers: {
+                        "Content-Type":
+                          "application/json"
+                      },
+
+                      body:
+                        JSON.stringify({
+                          password:
+                            adminPassword,
+
+                          action:
+                            "delete",
+
+                          id:
+                            item.id
+                        })
+                    }
+                  );
+
+
+                const data =
+                  await response.json();
+
+
+                if (!response.ok) {
+
+                  throw new Error(
+                    data.error ||
+                    "Unable to delete item"
+                  );
+                }
+
+
+                await loadKnowledge();
+
+
+              } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                  "تعذر حذف المعلومة.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+
+              } finally {
+
+                deleteButton.disabled =
+                  false;
+              }
+            }
+          );
+
+
+          actions.appendChild(saveButton);
+          actions.appendChild(toggleButton);
+          actions.appendChild(deleteButton);
+
+          card.appendChild(header);
+          card.appendChild(badge);
+          card.appendChild(questionLabel);
+          card.appendChild(questionInput);
+          card.appendChild(answerLabel);
+          card.appendChild(answerInput);
+          card.appendChild(actions);
+          card.appendChild(status);
+
+          knowledgeContainer.appendChild(card);
+        }
+      );
+    }
+
+
+    showCreateKnowledgeButton.addEventListener(
+      "click",
+      function() {
+
+        createKnowledgeForm.classList.add(
+          "show"
+        );
+
+        showCreateKnowledgeButton.style.display =
+          "none";
+
+        newKnowledgeQuestion.focus();
+      }
+    );
+
+
+    cancelNewKnowledgeButton.addEventListener(
+      "click",
+      function() {
+
+        resetCreateKnowledgeForm();
+
+        createKnowledgeForm.classList.remove(
+          "show"
+        );
+
+        showCreateKnowledgeButton.style.display =
+          "block";
+      }
+    );
+
+
+    saveNewKnowledgeButton.addEventListener(
+      "click",
+      async function() {
+
+        const question =
+          newKnowledgeQuestion.value.trim();
+
+        const answer =
+          newKnowledgeAnswer.value.trim();
+
+        const language =
+          newKnowledgeLanguage.value === "en"
+            ? "en"
+            : "ar";
+
+
+        createKnowledgeStatus.textContent = "";
+
+        createKnowledgeStatus.className =
+          "create-status";
+
+
+        if (!question || !answer) {
+
+          createKnowledgeStatus.textContent =
+            "اكتب السؤال والإجابة أولًا.";
+
+          createKnowledgeStatus.classList.add(
+            "status-error"
+          );
+
+          return;
+        }
+
+
+        saveNewKnowledgeButton.disabled =
+          true;
+
+        saveNewKnowledgeButton.textContent =
+          "جاري الحفظ...";
+
+
+        try {
+
+          const response =
+            await fetch(
+              "/api/knowledge-admin",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json"
+                },
+
+                body:
+                  JSON.stringify({
+                    password:
+                      adminPassword,
+
+                    action:
+                      "create",
+
+                    question,
+
+                    answer,
+
+                    language
+                  })
+              }
+            );
+
+
+          const data =
+            await response.json();
+
+
+          if (response.status === 409) {
+
+            createKnowledgeStatus.textContent =
+              "هذه المعلومة موجودة مسبقًا.";
+
+            createKnowledgeStatus.classList.add(
+              "status-error"
+            );
+
+            return;
+          }
+
+
+          if (!response.ok) {
+
+            throw new Error(
+              data.error ||
+              "Unable to create knowledge item"
+            );
+          }
+
+
+          createKnowledgeStatus.textContent =
+            "تمت إضافة المعلومة بنجاح.";
+
+          createKnowledgeStatus.classList.add(
+            "status-success"
+          );
+
+
+          await loadKnowledge();
+
+
+          setTimeout(
+            function() {
+
+              resetCreateKnowledgeForm();
+
+              createKnowledgeForm.classList.remove(
+                "show"
+              );
+
+              showCreateKnowledgeButton.style.display =
+                "block";
+
+            },
+            700
+          );
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          createKnowledgeStatus.textContent =
+            "تعذر إضافة المعلومة.";
+
+          createKnowledgeStatus.classList.add(
+            "status-error"
+          );
+
+
+        } finally {
+
+          saveNewKnowledgeButton.disabled =
+            false;
+
+          saveNewKnowledgeButton.textContent =
+            "حفظ المعلومة";
+        }
+      }
+    );
+
+
+    loginForm.addEventListener(
+      "submit",
+      async function(event) {
+
+        event.preventDefault();
+
+        loginError.textContent = "";
+
+
+        const password =
+          passwordInput.value;
+
+
+        if (!password) {
+
+          loginError.textContent =
+            "أدخل كلمة المرور.";
+
+          return;
+        }
+
+
+        loginButton.disabled =
+          true;
+
+        loginButton.textContent =
+          "جاري الدخول...";
+
+
+        try {
+
+          adminPassword =
+            password;
+
+
+          const response =
+            await fetch(
+              "/api/admin-dashboard",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json"
+                },
+
+                body:
+                  JSON.stringify({
+                    password:
+                      adminPassword
+                  })
+              }
+            );
+
+
+          if (response.status === 401) {
+
+            adminPassword = "";
+
+            loginError.textContent =
+              "كلمة المرور غير صحيحة.";
+
+            return;
+          }
+
+
+          const data =
+            await response.json();
+
+
+          if (!response.ok) {
+
+            adminPassword = "";
+
+            console.error(data);
+
+            loginError.textContent =
+              "تعذر تحميل لوحة الإدارة.";
+
+            return;
+          }
+
+
+          passwordInput.value = "";
+
+
+          showDashboard(data);
+
+
+          await Promise.all([
+            loadQuestions(),
+            loadKnowledge()
+          ]);
+
+
+        } catch (error) {
+
+          adminPassword = "";
+
+          console.error(error);
+
+          loginError.textContent =
+            "حدث خطأ في الاتصال.";
+
+
+        } finally {
+
+          loginButton.disabled =
+            false;
+
+          loginButton.textContent =
+            "دخول";
+        }
+      }
+    );
+
+
+    logoutButton.addEventListener(
+      "click",
+      function() {
+
+        adminPassword = "";
+
+        dashboard.style.display =
+          "none";
+
+        loginPage.style.display =
+          "flex";
+
+        passwordInput.value = "";
+
+        loginError.textContent = "";
+
+        questionsContainer.innerHTML = "";
+
+        knowledgeContainer.innerHTML = "";
+
+        resetCreateKnowledgeForm();
+
+        createKnowledgeForm.classList.remove(
+          "show"
+        );
+
+        showCreateKnowledgeButton.style.display =
+          "block";
+
+        passwordInput.focus();
+      }
+    );
+
+  </script>
+
+</body>
+</html>
