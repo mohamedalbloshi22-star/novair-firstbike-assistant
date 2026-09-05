@@ -65,6 +65,10 @@ module.exports = async function handler(req, res) {
       `ai_resolution_dashboard_stats?client_id=eq.${clientId}&select=*`
     );
 
+    const languageRows = await supabaseRequest(
+      `language_dashboard_stats?client_id=eq.${clientId}&select=*`
+    );
+
     const unanswered =
       Array.isArray(unansweredRows) && unansweredRows.length > 0
         ? unansweredRows[0]
@@ -73,6 +77,11 @@ module.exports = async function handler(req, res) {
     const aiResolution =
       Array.isArray(aiResolutionRows) && aiResolutionRows.length > 0
         ? aiResolutionRows[0]
+        : {};
+
+    const languageStats =
+      Array.isArray(languageRows) && languageRows.length > 0
+        ? languageRows[0]
         : {};
 
     return res.status(200).json({
@@ -95,10 +104,28 @@ module.exports = async function handler(req, res) {
           aiResolution.not_ai_resolved_conversations || 0,
 
         ai_resolution_rate_percent:
-          aiResolution.ai_resolution_rate_percent || 0
+          aiResolution.ai_resolution_rate_percent || 0,
+
+        arabic_conversations:
+          languageStats.arabic_conversations || 0,
+
+        english_conversations:
+          languageStats.english_conversations || 0,
+
+        language_evaluated_conversations:
+          languageStats.language_evaluated_conversations || 0,
+
+        arabic_rate_percent:
+          languageStats.arabic_rate_percent || 0,
+
+        english_rate_percent:
+          languageStats.english_rate_percent || 0
       },
 
-      daily: Array.isArray(dailyRows) ? dailyRows : [],
+      daily:
+        Array.isArray(dailyRows)
+          ? dailyRows
+          : [],
 
       recent_unanswered_questions:
         Array.isArray(recentUnanswered)
