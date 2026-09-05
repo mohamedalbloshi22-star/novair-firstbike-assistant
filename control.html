@@ -13,9 +13,9 @@ body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#1f29
 .request{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;background:#fafafa}
 input,select,button{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin:6px 0 12px}
 button{border:0;cursor:pointer;font-weight:bold}
-.primary{background:#111827;color:white}
+.primary{background:#111827;color:#fff}
 .secondary{background:#e5e7eb;color:#111827}
-.success{background:#047857;color:white}
+.success{background:#047857;color:#fff}
 .muted{color:#6b7280;font-size:14px}
 .badge{display:inline-block;padding:5px 10px;border-radius:20px;font-size:12px;background:#e5e7eb}
 #app{display:none}
@@ -69,357 +69,556 @@ button{border:0;cursor:pointer;font-weight:bold}
 
 <script>
 
-let adminPassword="";
-
-const params=new URLSearchParams(window.location.search);
-const requestedClient=params.get("client")||"";
+let adminPassword = "";
 
 
+/* العميل المطلوب من الرابط */
+function getRequestedClient(){
+
+  const params =
+    new URLSearchParams(window.location.search);
+
+  return (
+    params.get("client") || ""
+  ).trim().toLowerCase();
+
+}
+
+
+/* API */
 async function api(url,payload){
 
-const response=await fetch(url,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-password:adminPassword,
-...payload
-})
-});
+  const response =
+    await fetch(url,{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        password:adminPassword,
+        ...payload
+      })
+    });
 
-let data={};
+  let data={};
 
-try{
-data=await response.json();
-}catch{}
+  try{
+    data=await response.json();
+  }catch{}
 
-if(!response.ok){
-throw new Error(data.error||data.details||"حدث خطأ");
+  if(!response.ok){
+    throw new Error(
+      data.error ||
+      data.details ||
+      "حدث خطأ"
+    );
+  }
+
+  return data;
 }
 
-return data;
-}
 
-
+/* رسالة */
 function showMessage(text,type="ok"){
 
-const box=document.getElementById("message");
+  const box =
+    document.getElementById("message");
 
-box.textContent=text;
-box.className=type;
-box.style.display="block";
+  box.textContent=text;
+  box.className=type;
+  box.style.display="block";
 
-setTimeout(()=>{
-box.style.display="none";
-},3000);
+  setTimeout(()=>{
+    box.style.display="none";
+  },3000);
 
 }
 
 
+/* دخول */
 async function login(){
 
-const value=document.getElementById("password").value.trim();
+  const value =
+    document
+      .getElementById("password")
+      .value
+      .trim();
 
-if(!value){
-alert("أدخل كلمة المرور");
-return;
+  if(!value){
+    alert("أدخل كلمة المرور");
+    return;
+  }
+
+  adminPassword=value;
+
+  try{
+
+    await loadClients();
+
+    document
+      .getElementById("loginBox")
+      .style.display="none";
+
+    document
+      .getElementById("app")
+      .style.display="block";
+
+  }catch(error){
+
+    adminPassword="";
+
+    alert(error.message);
+
+  }
+
 }
 
-adminPassword=value;
 
-try{
-
-await loadClients();
-
-document.getElementById("loginBox").style.display="none";
-document.getElementById("app").style.display="block";
-
-}catch(error){
-
-adminPassword="";
-alert(error.message);
-
-}
-
-}
-
-
+/* خروج */
 function logout(){
 
-adminPassword="";
+  adminPassword="";
 
-document.getElementById("app").style.display="none";
-document.getElementById("loginBox").style.display="block";
+  document
+    .getElementById("app")
+    .style.display="none";
+
+  document
+    .getElementById("loginBox")
+    .style.display="block";
 
 }
 
 
+/* تحميل العملاء */
 async function loadClients(){
 
-const data=await api("/api/client-admin",{
-action:"list"
-});
+  const data =
+    await api(
+      "/api/client-admin",
+      {
+        action:"list"
+      }
+    );
 
-const clients=
-Array.isArray(data.clients)
-?data.clients
-:Array.isArray(data.items)
-?data.items
-:Array.isArray(data)
-?data
-:[];
+  const clients =
+    Array.isArray(data.clients)
+      ? data.clients
+      : Array.isArray(data.items)
+        ? data.items
+        : Array.isArray(data)
+          ? data
+          : [];
 
-const select=document.getElementById("clientSelect");
+  const select =
+    document.getElementById(
+      "clientSelect"
+    );
 
-select.innerHTML='<option value="">اختر العميل</option>';
-
-clients.forEach(client=>{
-
-const option=document.createElement("option");
-
-option.value=client.slug;
-
-option.textContent=
-client.name||
-client.config?.brand_name||
-client.slug;
-
-select.appendChild(option);
-
-});
+  select.innerHTML =
+    '<option value="">اختر العميل</option>';
 
 
-if(requestedClient){
+  clients.forEach(client=>{
 
-const exists=clients.some(
-client=>client.slug===requestedClient
-);
+    if(!client || !client.slug){
+      return;
+    }
 
-if(exists){
+    const option =
+      document.createElement("option");
 
-select.value=requestedClient;
+    option.value =
+      String(client.slug)
+        .trim()
+        .toLowerCase();
 
-await loadRequests();
+    option.textContent =
+      client.name ||
+      client.config?.brand_name ||
+      client.slug;
 
-return;
+    select.appendChild(option);
+
+  });
+
+
+  /*
+  ==============================================
+  مهم:
+  الأولوية للعميل الموجود في الرابط.
+  لا نختار First Bike تلقائيًا إذا كان الرابط
+  يحتوي على client.
+  ==============================================
+  */
+
+  const requestedClient =
+    getRequestedClient();
+
+
+  if(requestedClient){
+
+    const optionExists =
+      Array.from(select.options)
+        .some(
+          option =>
+            option.value === requestedClient
+        );
+
+
+    if(optionExists){
+
+      select.value =
+        requestedClient;
+
+      await loadRequests();
+
+      return;
+    }
+
+  }
+
+
+  /*
+  إذا لم يوجد عميل في الرابط فقط،
+  نختار أول عميل بالقائمة.
+  */
+
+  if(select.options.length > 1){
+
+    select.selectedIndex = 1;
+
+    await loadRequests();
+
+  }
 
 }
 
-}
 
-
-if(clients.length){
-
-select.value=clients[0].slug;
-
-await loadRequests();
-
-}
-
-}
-
-
+/* تغيير العميل */
 async function clientChanged(){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document
+      .getElementById("clientSelect")
+      .value;
 
-if(slug){
+  if(slug){
 
-history.replaceState(
-{},
-"",
-window.location.pathname+
-"?client="+encodeURIComponent(slug)
-);
+    const url =
+      new URL(window.location.href);
+
+    url.searchParams.set(
+      "client",
+      slug
+    );
+
+    history.replaceState(
+      {},
+      "",
+      url.pathname +
+      url.search
+    );
+
+  }
+
+  await loadRequests();
 
 }
 
-await loadRequests();
 
-}
-
-
+/* تحميل الطلبات */
 async function loadRequests(){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document
+      .getElementById("clientSelect")
+      .value;
 
-const list=document.getElementById("list");
-const count=document.getElementById("count");
+  const list =
+    document.getElementById("list");
 
-if(!slug){
+  const count =
+    document.getElementById("count");
 
-list.innerHTML="اختر العميل.";
-count.textContent="";
-return;
+
+  if(!slug){
+
+    list.innerHTML =
+      "اختر العميل.";
+
+    count.textContent="";
+
+    return;
+  }
+
+
+  list.innerHTML =
+    "جاري التحميل...";
+
+
+  try{
+
+    const data =
+      await api(
+        "/api/contact-admin",
+        {
+          action:"list",
+          client_slug:slug
+        }
+      );
+
+
+    const items =
+      Array.isArray(data.requests)
+        ? data.requests
+        : [];
+
+
+    count.textContent =
+      "إجمالي الطلبات: " +
+      items.length;
+
+
+    render(items);
+
+  }catch(error){
+
+    list.innerHTML="";
+
+    showMessage(
+      error.message,
+      "error"
+    );
+
+  }
 
 }
 
-list.innerHTML="جاري التحميل...";
 
-try{
-
-const data=await api("/api/contact-admin",{
-action:"list",
-client_slug:slug
-});
-
-const items=
-Array.isArray(data.requests)
-?data.requests
-:[];
-
-count.textContent="إجمالي الطلبات: "+items.length;
-
-render(items);
-
-}catch(error){
-
-list.innerHTML="";
-showMessage(error.message,"error");
-
-}
-
-}
-
-
+/* عرض الطلبات */
 function render(items){
 
-const list=document.getElementById("list");
+  const list =
+    document.getElementById("list");
 
-list.innerHTML="";
+  list.innerHTML="";
 
-if(!items.length){
 
-list.innerHTML='<p class="muted">لا توجد طلبات تواصل لهذا العميل.</p>';
+  if(!items.length){
 
-return;
+    list.innerHTML =
+      '<p class="muted">لا توجد طلبات تواصل لهذا العميل.</p>';
+
+    return;
+  }
+
+
+  items.forEach(item=>{
+
+    const div =
+      document.createElement("div");
+
+    div.className="request";
+
+
+    const type =
+      item.request_type === "callback"
+        ? "طلب معاودة اتصال"
+        : "طلب التواصل مع موظف";
+
+
+    const date =
+      item.created_at
+        ? new Date(
+            item.created_at
+          ).toLocaleString("ar-AE")
+        : "";
+
+
+    div.innerHTML = `
+
+      <span class="badge">
+        ${escapeHtml(
+          statusLabel(item.status)
+        )}
+      </span>
+
+      <h3>
+        ${escapeHtml(type)}
+      </h3>
+
+      <p>
+        <strong>الاسم:</strong>
+        ${escapeHtml(
+          item.customer_name || ""
+        )}
+      </p>
+
+      <p>
+        <strong>الهاتف:</strong>
+        ${escapeHtml(
+          item.phone || ""
+        )}
+      </p>
+
+      <p>
+        <strong>السبب:</strong>
+        ${escapeHtml(
+          item.reason || "غير محدد"
+        )}
+      </p>
+
+      <p class="muted">
+        ${escapeHtml(date)}
+      </p>
+
+      <label>
+        حالة الطلب
+      </label>
+
+      <select id="status-${item.id}">
+
+        <option
+          value="new"
+          ${item.status==="new"?"selected":""}
+        >
+          جديد
+        </option>
+
+        <option
+          value="in_progress"
+          ${item.status==="in_progress"?"selected":""}
+        >
+          قيد المتابعة
+        </option>
+
+        <option
+          value="completed"
+          ${item.status==="completed"?"selected":""}
+        >
+          مكتمل
+        </option>
+
+        <option
+          value="closed"
+          ${item.status==="closed"?"selected":""}
+        >
+          مغلق
+        </option>
+
+      </select>
+
+      <button
+        class="success"
+        onclick="updateStatus('${item.id}')"
+      >
+        حفظ الحالة
+      </button>
+    `;
+
+
+    list.appendChild(div);
+
+  });
 
 }
 
 
-items.forEach(item=>{
-
-const div=document.createElement("div");
-
-div.className="request";
-
-const type=
-item.request_type==="callback"
-?"طلب معاودة اتصال"
-:"طلب التواصل مع موظف";
-
-const date=
-item.created_at
-?new Date(item.created_at).toLocaleString("ar-AE")
-:"";
-
-div.innerHTML=`
-
-<span class="badge">${escapeHtml(statusLabel(item.status))}</span>
-
-<h3>${escapeHtml(type)}</h3>
-
-<p><strong>الاسم:</strong> ${escapeHtml(item.customer_name||"")}</p>
-
-<p><strong>الهاتف:</strong> ${escapeHtml(item.phone||"")}</p>
-
-<p><strong>السبب:</strong> ${escapeHtml(item.reason||"غير محدد")}</p>
-
-<p class="muted">${escapeHtml(date)}</p>
-
-<label>حالة الطلب</label>
-
-<select id="status-${item.id}">
-
-<option value="new" ${item.status==="new"?"selected":""}>
-جديد
-</option>
-
-<option value="in_progress" ${item.status==="in_progress"?"selected":""}>
-قيد المتابعة
-</option>
-
-<option value="completed" ${item.status==="completed"?"selected":""}>
-مكتمل
-</option>
-
-<option value="closed" ${item.status==="closed"?"selected":""}>
-مغلق
-</option>
-
-</select>
-
-<button class="success" onclick="updateStatus('${item.id}')">
-حفظ الحالة
-</button>
-
-`;
-
-list.appendChild(div);
-
-});
-
-}
-
-
+/* اسم الحالة */
 function statusLabel(status){
 
-if(status==="in_progress") return "قيد المتابعة";
-if(status==="completed") return "مكتمل";
-if(status==="closed") return "مغلق";
+  if(status==="in_progress"){
+    return "قيد المتابعة";
+  }
 
-return "جديد";
+  if(status==="completed"){
+    return "مكتمل";
+  }
+
+  if(status==="closed"){
+    return "مغلق";
+  }
+
+  return "جديد";
 
 }
 
 
+/* تحديث الحالة */
 async function updateStatus(id){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document
+      .getElementById("clientSelect")
+      .value;
 
-const status=document.getElementById("status-"+id).value;
+  const status =
+    document
+      .getElementById(
+        "status-"+id
+      )
+      .value;
 
-try{
 
-await api("/api/contact-admin",{
-action:"update_status",
-client_slug:slug,
-request_id:id,
-status
-});
+  try{
 
-showMessage("تم تحديث الحالة.");
+    await api(
+      "/api/contact-admin",
+      {
+        action:"update_status",
+        client_slug:slug,
+        request_id:id,
+        status:status
+      }
+    );
 
-await loadRequests();
 
-}catch(error){
+    showMessage(
+      "تم تحديث الحالة."
+    );
 
-showMessage(error.message,"error");
+
+    await loadRequests();
+
+  }catch(error){
+
+    showMessage(
+      error.message,
+      "error"
+    );
+
+  }
 
 }
 
-}
 
-
+/* حماية النص */
 function escapeHtml(value){
 
-return String(value)
-.replace(/&/g,"&amp;")
-.replace(/</g,"&lt;")
-.replace(/>/g,"&gt;")
-.replace(/"/g,"&quot;")
-.replace(/'/g,"&#039;");
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 
 }
 
 
-document.getElementById("password")
-.addEventListener("keydown",event=>{
+/* Enter */
+document
+  .getElementById("password")
+  .addEventListener(
+    "keydown",
+    event=>{
 
-if(event.key==="Enter"){
-login();
-}
+      if(event.key==="Enter"){
+        login();
+      }
 
-});
+    }
+  );
 
 </script>
 
