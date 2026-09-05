@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>NOVAIRE | لوحة التحكم</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Tahoma, sans-serif;
+      background: #f4f6f8;
+      color: #111827;
+    }
+
+    .header {
+      background: #111827;
+      color: white;
+      padding: 22px;
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      margin: auto;
+    }
+
+    .header h1 {
+      margin: 0 0 6px;
+      font-size: 25px;
+    }
+
+    .header p {
+      margin: 0;
+      color: #d1d5db;
+      font-size: 14px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: auto;
+      padding: 24px;
+    }
+
+    .section-title {
+      margin: 0 0 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.06);
+      border: 1px solid #e5e7eb;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      margin-bottom: 8px;
+      font-size: 19px;
+    }
+
+    .card p {
+      color: #6b7280;
+      line-height: 1.7;
+      min-height: 50px;
+      font-size: 14px;
+    }
+
+    .icon {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f3f4f6;
+      border-radius: 10px;
+      font-size: 21px;
+      margin-bottom: 14px;
+    }
+
+    .button {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      background: #111827;
+      color: white;
+      padding: 11px;
+      border-radius: 8px;
+      font-weight: bold;
+      margin-top: 12px;
+    }
+
+    .button:hover {
+      opacity: .9;
+    }
+
+    .primary-card {
+      border: 2px solid #111827;
+    }
+
+    .status {
+      background: white;
+      border-radius: 14px;
+      padding: 18px 20px;
+      margin-bottom: 22px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.05);
+      border: 1px solid #e5e7eb;
+    }
+
+    .status strong {
+      color: #047857;
+    }
+
+    .footer {
+      text-align: center;
+      color: #6b7280;
+      font-size: 13px;
+      padding: 25px;
+    }
+
+    @media (max-width: 900px) {
+      .grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      .container {
+        padding: 16px;
+      }
+
+      .header {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <header class="header">
+    <div class="header-inner">
+      <h1>NOVAIRE | نوفاير</h1>
+      <p>لوحة التحكم المركزية — Smart Response</p>
+    </div>
+  </header>
+
+
+  <main class="container">
+
+    <div class="status">
+      <strong>● النظام يعمل</strong>
+      <div style="margin-top:6px;color:#6b7280;font-size:14px;">
+        إدارة عملاء NOVAIRE Smart Response من مكان واحد.
+      </div>
+    </div>
+
+
+    <h2 class="section-title">
+      إدارة النظام
+    </h2>
+
+
+    <div class="grid">
+
+      <div class="card primary-card">
+        <div class="icon">👥</div>
+
+        <h2>العملاء</h2>
+
+        <p>
+          إضافة العملاء وتعديل بياناتهم وتشغيل أو إيقاف المساعد وفتح مساعد كل عميل.
+        </p>
+
+        <a class="button" href="/clients.html">
+          إدارة العملاء
+        </a>
+      </div>
+
+
+      <div class="card">
+        <div class="icon">📚</div>
+
+        <h2>قاعدة المعرفة</h2>
+
+        <p>
+          إدارة معلومات وأسئلة وأجوبة كل عميل بشكل مستقل.
+        </p>
+
+        <a class="button" href="/knowledge.html">
+          فتح قاعدة المعرفة
+        </a>
+      </div>
+
+
+      <div class="card">
+        <div class="icon">❓</div>
+
+        <h2>الأسئلة غير المجابة</h2>
+
+        <p>
+          مراجعة الأسئلة التي لم يعرف المساعد إجابتها وتحويلها إلى معرفة معتمدة.
+        </p>
+
+        <a class="button" href="/unanswered.html">
+          مراجعة الأسئلة
+        </a>
+      </div>
+
+
+      <div class="card">
+        <div class="icon">☎️</div>
+
+        <h2>طلبات التواصل</h2>
+
+        <p>
+          متابعة طلبات الموظف ومعاودة الاتصال وتحديث حالة كل طلب.
+        </p>
+
+        <a class="button" href="/contacts.html">
+          فتح طلبات التواصل
+        </a>
+      </div>
+
+
+      <div class="card">
+        <div class="icon">📊</div>
+
+        <h2>الإحصائيات</h2>
+
+        <p>
+          متابعة المحادثات والرسائل ومؤشرات أداء المساعد.
+        </p>
+
+        <a class="button" href="/dashboard.html">
+          فتح الإحصائيات
+        </a>
+      </div>
+
+
+      <div class="card">
+        <div class="icon">⚙️</div>
+
+        <h2>الإدارة المتقدمة</h2>
+
+        <p>
+          الوصول إلى لوحة الإدارة الحالية ومؤشرات الذكاء الاصطناعي والتكلفة.
+        </p>
+
+        <a class="button" href="/admin.html">
+          فتح الإدارة
+        </a>
+      </div>
+
+
+      <div class="card">
+        <div class="icon">💬</div>
+
+        <h2>تجربة المساعد</h2>
+
+        <p>
+          فتح مساعد Smart Response واختبار تجربة العميل مباشرة.
+        </p>
+
+        <a class="button" href="/">
+          فتح المساعد
+        </a>
+      </div>
+
+    </div>
+
+  </main>
+
+
+  <div class="footer">
+    NOVAIRE | نوفاير للحلول والدراسات ودعم القرار
+    <br>
+    NOVAIRE Digital — Smart Response
+  </div>
+
+</body>
+</html>
