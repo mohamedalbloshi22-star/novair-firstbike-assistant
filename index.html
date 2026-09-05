@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>First Bike — NOVAIRE Smart Response</title>
+  <title>NOVAIRE Smart Response</title>
 
   <style>
     :root{
@@ -100,7 +100,7 @@
       align-items:center;
       justify-content:center;
       font-weight:900;
-      font-size:19px;
+      font-size:18px;
     }
 
     h1{
@@ -177,6 +177,24 @@
       line-height:1.7;
       color:var(--muted);
       font-size:14px;
+    }
+
+    .empty-state{
+      color:var(--muted);
+      font-size:14px;
+      padding:14px 0;
+    }
+
+    .loading-screen{
+      text-align:center;
+      padding:80px 20px;
+      color:var(--muted);
+    }
+
+    .error-screen{
+      text-align:center;
+      padding:80px 20px;
+      color:#ff8170;
     }
 
     .chat-launcher{
@@ -449,116 +467,79 @@
 
 <body>
 
-<div class="topbar" id="topbar"></div>
+<div class="topbar" id="topbar">
+  NOVAIRE Smart Response
+</div>
 
-<main class="container">
+<main class="container" id="mainContent">
 
-  <div class="language-area">
-    <div class="language-switch">
-      <button id="arabicBtn" class="lang-btn">العربية</button>
-      <button id="englishBtn" class="lang-btn">English</button>
-    </div>
+  <div class="loading-screen" id="loadingScreen">
+    جاري تحميل بيانات المنشأة...
   </div>
 
-  <header class="header">
+  <div id="clientContent" style="display:none;">
 
-    <div class="brand">
-      <div class="logo">FB</div>
-
-      <div>
-        <h1>First Bike</h1>
-        <div class="subtitle" id="subtitle"></div>
+    <div class="language-area">
+      <div class="language-switch">
+        <button id="arabicBtn" class="lang-btn">العربية</button>
+        <button id="englishBtn" class="lang-btn">English</button>
       </div>
     </div>
 
-    <div class="info" id="info"></div>
+    <header class="header">
 
-  </header>
+      <div class="brand">
+        <div class="logo" id="logo">NV</div>
 
-  <section class="section">
+        <div>
+          <h1 id="businessName"></h1>
+          <div class="subtitle" id="subtitle"></div>
+        </div>
+      </div>
 
-    <h2 id="pricesTitle"></h2>
+      <div class="info" id="info"></div>
 
-    <div class="price-row">
-      <strong>50 cc</strong>
-      <span class="price" id="p50"></span>
-    </div>
+    </header>
 
-    <div class="price-row">
-      <strong>90 cc</strong>
-      <span class="price" id="p90"></span>
-    </div>
+    <section class="section" id="pricesSection">
+      <h2 id="pricesTitle"></h2>
+      <div id="pricesContainer"></div>
+    </section>
 
-    <div class="price-row">
-      <strong>220 cc</strong>
-      <span class="price" id="p220"></span>
-    </div>
+    <div class="services" id="servicesContainer"></div>
 
-    <div class="price-row">
-      <strong>400 cc</strong>
-      <span class="price" id="p400"></span>
-    </div>
+    <div class="note" id="note"></div>
 
-    <div class="price-row">
-      <strong>800 cc+</strong>
-      <span class="price" id="p800"></span>
-    </div>
-
-  </section>
-
-  <div class="services">
-    <span class="service" id="repair"></span>
-    <span class="service" id="parts"></span>
-    <span class="service" id="rental"></span>
   </div>
 
-  <div class="note" id="note"></div>
-
 </main>
+
 
 <button
   class="chat-launcher"
   id="launcher"
->
-</button>
+  style="display:none;"
+></button>
 
-<section
-  class="chat"
-  id="chat"
->
+
+<section class="chat" id="chat">
 
   <div class="chat-header">
 
     <div>
-      <div
-        class="chat-header-title"
-        id="chatName"
-      ></div>
-
-      <div
-        class="status"
-        id="chatStatus"
-      ></div>
+      <div class="chat-header-title" id="chatName"></div>
+      <div class="status" id="chatStatus"></div>
     </div>
 
-    <button
-      class="close-btn"
-      id="closeBtn"
-    >
+    <button class="close-btn" id="closeBtn">
       ×
     </button>
 
   </div>
 
-  <div
-    class="chat-body"
-    id="chatBody"
-  ></div>
+  <div class="chat-body" id="chatBody"></div>
 
-  <div
-    class="quick-area"
-    id="quickArea"
-  ></div>
+  <div class="quick-area" id="quickArea"></div>
 
   <div class="contact-actions">
 
@@ -585,20 +566,9 @@
       id="contactFormTitle"
     ></div>
 
-    <input
-      id="customerName"
-      type="text"
-    >
-
-    <input
-      id="customerPhone"
-      type="tel"
-    >
-
-    <input
-      id="contactReason"
-      type="text"
-    >
+    <input id="customerName" type="text">
+    <input id="customerPhone" type="tel">
+    <input id="contactReason" type="text">
 
     <div
       class="privacy-note"
@@ -661,8 +631,8 @@ let clientSlug =
     urlParams.get("client") ||
     "first-bike"
   )
-  .trim()
-  .toLowerCase();
+    .trim()
+    .toLowerCase();
 
 
 if(
@@ -670,8 +640,18 @@ if(
     clientSlug
   )
 ){
-  clientSlug = "first-bike";
+  clientSlug =
+    "first-bike";
 }
+
+
+/*
+==================================================
+CLIENT CONFIG
+==================================================
+*/
+
+let clientConfig = null;
 
 
 /*
@@ -686,38 +666,28 @@ const translations = {
     dir:"rtl",
 
     topbar:
-      "تجربة NOVAIRE — المساعد الذكي لـ First Bike",
+      "مدعوم بواسطة NOVAIRE Smart Response",
 
-    subtitle:
-      "تأجير وتصليح الدراجات النارية",
+    locationLabel:
+      "الموقع",
 
-    info:
-      "<strong>الموقع:</strong> العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون<br>" +
-      "<strong>الدوام:</strong> يوميًا من 3 العصر حتى 12 منتصف الليل",
+    hoursLabel:
+      "الدوام",
 
     pricesTitle:
-      "أسعار تأجير الدراجات بالساعة",
+      "الأسعار",
 
-    currency:
-      "درهم / ساعة",
+    noPrices:
+      "لا توجد أسعار معلنة حاليًا.",
 
-    repair:
-      "🔧 تصليح الدراجات",
+    noServices:
+      "لا توجد خدمات معلنة حاليًا.",
 
-    parts:
-      "⚙️ قطع الغيار",
-
-    rental:
-      "🏍️ تأجير الدراجات",
-
-    note:
-      "<strong>ملاحظة:</strong> أسعار التصليح وقطع الغيار تختلف حسب نوع القطعة والعطل والتركيب.",
+    noteLabel:
+      "ملاحظة",
 
     launcher:
-      "⚡ تحدث مع مساعد المحل",
-
-    chatName:
-      "مساعد First Bike",
+      "⚡ تحدث مع المساعد الذكي",
 
     chatStatus:
       "متصل الآن",
@@ -725,8 +695,8 @@ const translations = {
     placeholder:
       "اكتب سؤالك هنا...",
 
-    welcome:
-      "هلا فيك 🏍️ أنا مساعد First Bike. اسألني عن أسعار الإيجار أو التصليح أو موقع المحل.",
+    defaultWelcome:
+      "هلا فيك 👋 كيف أقدر أساعدك؟",
 
     error:
       "عذرًا، حدث خطأ. حاول مرة أخرى.",
@@ -744,7 +714,7 @@ const translations = {
       "طلب التحدث مع مسؤول",
 
     callbackTitle:
-      "طلب اتصال من First Bike",
+      "طلب اتصال",
 
     namePlaceholder:
       "الاسم",
@@ -773,18 +743,21 @@ const translations = {
     contactError:
       "تعذر تسجيل الطلب. حاول مرة أخرى.",
 
+    loadError:
+      "تعذر تحميل بيانات المنشأة.",
+
     quickQuestions:[
       {
-        label:"سعر 220 سي سي؟",
-        message:"كم سعر إيجار دراجة 220 سي سي؟"
+        label:"📍 الموقع",
+        message:"وين موقعكم؟"
       },
       {
-        label:"كم تكلفة التصليح؟",
-        message:"كم تكلفة تصليح الدراجة؟"
+        label:"🕒 أوقات الدوام",
+        message:"ما هي أوقات الدوام؟"
       },
       {
-        label:"وين موقعكم؟",
-        message:"وين موقعكم بالضبط؟"
+        label:"🧾 الخدمات",
+        message:"ما هي الخدمات التي تقدمونها؟"
       }
     ]
   },
@@ -794,38 +767,28 @@ const translations = {
     dir:"ltr",
 
     topbar:
-      "NOVAIRE Demo — Smart Assistant for First Bike",
+      "Powered by NOVAIRE Smart Response",
 
-    subtitle:
-      "Motorcycle Rental & Repair",
+    locationLabel:
+      "Location",
 
-    info:
-      "<strong>Location:</strong> Al Ain, Al Salamat, Al Heeba Street, next to 1 Million Cafe<br>" +
-      "<strong>Hours:</strong> Daily from 3 PM until midnight",
+    hoursLabel:
+      "Hours",
 
     pricesTitle:
-      "Hourly Motorcycle Rental Prices",
+      "Prices",
 
-    currency:
-      "AED / hour",
+    noPrices:
+      "No public prices are currently available.",
 
-    repair:
-      "🔧 Motorcycle Repair",
+    noServices:
+      "No services are currently listed.",
 
-    parts:
-      "⚙️ Spare Parts",
-
-    rental:
-      "🏍️ Motorcycle Rental",
-
-    note:
-      "<strong>Note:</strong> Repair and spare-part prices vary by fault, part and installation.",
+    noteLabel:
+      "Note",
 
     launcher:
-      "⚡ Chat with First Bike",
-
-    chatName:
-      "First Bike Assistant",
+      "⚡ Chat with Smart Assistant",
 
     chatStatus:
       "Online now",
@@ -833,8 +796,8 @@ const translations = {
     placeholder:
       "Type your question here...",
 
-    welcome:
-      "Hi 🏍️ I'm the First Bike assistant. Ask me about rental prices, repairs or our location.",
+    defaultWelcome:
+      "Hi 👋 How can I help you?",
 
     error:
       "Sorry, something went wrong. Please try again.",
@@ -849,10 +812,10 @@ const translations = {
       "📞 Request a callback",
 
     humanTitle:
-      "Talk to a First Bike representative",
+      "Talk to a representative",
 
     callbackTitle:
-      "Request a callback from First Bike",
+      "Request a callback",
 
     namePlaceholder:
       "Your name",
@@ -881,18 +844,21 @@ const translations = {
     contactError:
       "We couldn't record your request. Please try again.",
 
+    loadError:
+      "Unable to load business information.",
+
     quickQuestions:[
       {
-        label:"220cc price?",
-        message:"How much is the 220cc motorcycle rental?"
+        label:"📍 Location",
+        message:"Where are you located?"
       },
       {
-        label:"Repair cost?",
-        message:"How much does motorcycle repair cost?"
+        label:"🕒 Opening hours",
+        message:"What are your opening hours?"
       },
       {
-        label:"Your location?",
-        message:"Where exactly are you located?"
+        label:"🧾 Services",
+        message:"What services do you provide?"
       }
     ]
   }
@@ -913,12 +879,12 @@ let language =
 
 /*
 ==================================================
-CLIENT-SPECIFIC SESSION
+SESSION
 ==================================================
 */
 
 const sessionStorageKey =
-  `novaire_session_${clientSlug}_v3`;
+  `novaire_session_${clientSlug}_v4`;
 
 let sessionId =
   sessionStorage.getItem(
@@ -949,7 +915,6 @@ if(!sessionId){
         .substring(2,10);
   }
 
-
   sessionStorage.setItem(
     sessionStorageKey,
     sessionId
@@ -964,7 +929,6 @@ STATE
 */
 
 let history = [];
-
 let selectedContactType = null;
 
 
@@ -974,46 +938,202 @@ ELEMENTS
 ==================================================
 */
 
+const loadingScreen =
+  document.getElementById(
+    "loadingScreen"
+  );
+
+const clientContent =
+  document.getElementById(
+    "clientContent"
+  );
+
 const chat =
-  document.getElementById("chat");
+  document.getElementById(
+    "chat"
+  );
 
 const chatBody =
-  document.getElementById("chatBody");
+  document.getElementById(
+    "chatBody"
+  );
 
 const launcher =
-  document.getElementById("launcher");
+  document.getElementById(
+    "launcher"
+  );
 
 const messageInput =
-  document.getElementById("messageInput");
+  document.getElementById(
+    "messageInput"
+  );
 
 const sendBtn =
-  document.getElementById("sendBtn");
+  document.getElementById(
+    "sendBtn"
+  );
 
 const quickArea =
-  document.getElementById("quickArea");
+  document.getElementById(
+    "quickArea"
+  );
 
 const contactForm =
-  document.getElementById("contactForm");
+  document.getElementById(
+    "contactForm"
+  );
 
 const customerName =
-  document.getElementById("customerName");
+  document.getElementById(
+    "customerName"
+  );
 
 const customerPhone =
-  document.getElementById("customerPhone");
+  document.getElementById(
+    "customerPhone"
+  );
 
 const contactReason =
-  document.getElementById("contactReason");
+  document.getElementById(
+    "contactReason"
+  );
 
 const contactMessage =
-  document.getElementById("contactMessage");
+  document.getElementById(
+    "contactMessage"
+  );
 
 const submitContactBtn =
-  document.getElementById("submitContactBtn");
+  document.getElementById(
+    "submitContactBtn"
+  );
 
 
 /*
 ==================================================
-SAFE MESSAGE FORMAT
+CLIENT CONFIG LOAD
+==================================================
+*/
+
+async function loadClientConfig(){
+
+  const response =
+    await fetch(
+      `/api/client-config?client=${encodeURIComponent(clientSlug)}`
+    );
+
+  if(!response.ok){
+
+    throw new Error(
+      "Unable to load client"
+    );
+  }
+
+  const data =
+    await response.json();
+
+  if(
+    !data ||
+    !data.success ||
+    !data.client
+  ){
+    throw new Error(
+      "Invalid client response"
+    );
+  }
+
+  clientConfig =
+    data.client;
+
+  if(
+    !localStorage.getItem(
+      "novaire_language"
+    )
+  ){
+    language =
+      clientConfig.default_language === "en"
+        ? "en"
+        : "ar";
+  }
+}
+
+
+/*
+==================================================
+HELPERS
+==================================================
+*/
+
+function localized(
+  key
+){
+
+  if(!clientConfig){
+    return "";
+  }
+
+  const suffix =
+    language === "en"
+      ? "_en"
+      : "_ar";
+
+  return String(
+    clientConfig[
+      `${key}${suffix}`
+    ] || ""
+  ).trim();
+}
+
+
+function businessName(){
+
+  return String(
+    clientConfig?.name ||
+    "NOVAIRE Client"
+  ).trim();
+}
+
+
+function assistantName(){
+
+  const value =
+    language === "en"
+      ? clientConfig?.assistant_name_en
+      : clientConfig?.assistant_name_ar;
+
+  return String(
+    value ||
+    businessName()
+  ).trim();
+}
+
+
+function getInitials(name){
+
+  const parts =
+    String(name || "")
+      .trim()
+      .split(/\s+/)
+      .filter(Boolean);
+
+  if(parts.length === 0){
+    return "NV";
+  }
+
+  return parts
+    .slice(0,2)
+    .map(
+      part =>
+        part.charAt(0)
+    )
+    .join("")
+    .toUpperCase();
+}
+
+
+/*
+==================================================
+SAFE HTML
 ==================================================
 */
 
@@ -1041,171 +1161,20 @@ function formatMessage(text){
 
 /*
 ==================================================
-MESSAGES
+CLIENT PAGE RENDER
 ==================================================
 */
 
-function addMessage(
-  text,
-  sender
-){
-
-  const message =
-    document.createElement("div");
-
-  message.className =
-    "msg " + sender;
-
-  message.innerHTML =
-    formatMessage(text);
-
-  chatBody.appendChild(
-    message
-  );
-
-  chatBody.scrollTop =
-    chatBody.scrollHeight;
-
-  return message;
-}
-
-
-function createStreamingMessage(){
-
-  const message =
-    document.createElement("div");
-
-  message.className =
-    "msg bot";
-
-  message.innerHTML = "";
-
-  chatBody.appendChild(
-    message
-  );
-
-  chatBody.scrollTop =
-    chatBody.scrollHeight;
-
-  return message;
-}
-
-
-function updateStreamingMessage(
-  element,
-  text
-){
-
-  if(!element){
-    return;
-  }
-
-  element.innerHTML =
-    formatMessage(text);
-
-  chatBody.scrollTop =
-    chatBody.scrollHeight;
-}
-
-
-/*
-==================================================
-TYPING
-==================================================
-*/
-
-function showTyping(){
-
-  removeTyping();
-
-  const typing =
-    document.createElement("div");
-
-  typing.className =
-    "typing";
-
-  typing.id =
-    "typing";
-
-  typing.textContent =
-    translations[language].typing;
-
-  chatBody.appendChild(
-    typing
-  );
-
-  chatBody.scrollTop =
-    chatBody.scrollHeight;
-}
-
-
-function removeTyping(){
-
-  const typing =
-    document.getElementById(
-      "typing"
-    );
-
-  if(typing){
-    typing.remove();
-  }
-}
-
-
-/*
-==================================================
-QUICK QUESTIONS
-==================================================
-*/
-
-function renderQuickQuestions(){
-
-  quickArea.innerHTML = "";
-
-  translations[
-    language
-  ].quickQuestions.forEach(
-    item => {
-
-      const button =
-        document.createElement("button");
-
-      button.className =
-        "quick-btn";
-
-      button.type =
-        "button";
-
-      button.textContent =
-        item.label;
-
-      button.addEventListener(
-        "click",
-        () => {
-          sendMessage(
-            item.message
-          );
-        }
-      );
-
-      quickArea.appendChild(
-        button
-      );
-    }
-  );
-}
-
-
-/*
-==================================================
-LANGUAGE UI
-==================================================
-*/
-
-function renderLanguage(){
+function renderClientPage(){
 
   const t =
     translations[language];
+
+  const name =
+    businessName();
+
+  document.title =
+    `${name} — NOVAIRE Smart Response`;
 
   document.documentElement.lang =
     language;
@@ -1219,64 +1188,237 @@ function renderLanguage(){
     t.topbar;
 
   document.getElementById(
+    "businessName"
+  ).textContent =
+    name;
+
+  document.getElementById(
+    "logo"
+  ).textContent =
+    getInitials(name);
+
+  document.getElementById(
     "subtitle"
   ).textContent =
-    t.subtitle;
+    localized(
+      "business_type"
+    );
+
+
+  /*
+  ----------------------------------------------
+  Location + Hours
+  ----------------------------------------------
+  */
+
+  const infoLines = [];
+
+  const location =
+    localized("location");
+
+  const hours =
+    localized(
+      "working_hours"
+    );
+
+  if(location){
+
+    infoLines.push(
+      `<strong>${escapeHtml(t.locationLabel)}:</strong> ${escapeHtml(location)}`
+    );
+  }
+
+  if(hours){
+
+    infoLines.push(
+      `<strong>${escapeHtml(t.hoursLabel)}:</strong> ${escapeHtml(hours)}`
+    );
+  }
 
   document.getElementById(
     "info"
   ).innerHTML =
-    t.info;
+    infoLines.join("<br>");
+
+
+  /*
+  ----------------------------------------------
+  Prices
+  ----------------------------------------------
+  */
+
+  const prices =
+    Array.isArray(
+      clientConfig.rental_prices
+    )
+      ? clientConfig.rental_prices
+      : [];
+
+  const pricesContainer =
+    document.getElementById(
+      "pricesContainer"
+    );
+
+  const pricesSection =
+    document.getElementById(
+      "pricesSection"
+    );
 
   document.getElementById(
     "pricesTitle"
   ).textContent =
     t.pricesTitle;
 
-  document.getElementById(
-    "p50"
-  ).textContent =
-    "80 " + t.currency;
+  pricesContainer.innerHTML =
+    "";
 
-  document.getElementById(
-    "p90"
-  ).textContent =
-    "150 " + t.currency;
+  if(prices.length === 0){
 
-  document.getElementById(
-    "p220"
-  ).textContent =
-    "200 " + t.currency;
+    pricesSection.style.display =
+      "none";
 
-  document.getElementById(
-    "p400"
-  ).textContent =
-    "250 " + t.currency;
+  }else{
 
-  document.getElementById(
-    "p800"
-  ).textContent =
-    "300 " + t.currency;
+    pricesSection.style.display =
+      "block";
 
-  document.getElementById(
-    "repair"
-  ).textContent =
-    t.repair;
+    prices.forEach(
+      item => {
 
-  document.getElementById(
-    "parts"
-  ).textContent =
-    t.parts;
+        const row =
+          document.createElement(
+            "div"
+          );
 
-  document.getElementById(
-    "rental"
-  ).textContent =
-    t.rental;
+        row.className =
+          "price-row";
 
-  document.getElementById(
-    "note"
-  ).innerHTML =
-    t.note;
+        const label =
+          document.createElement(
+            "strong"
+          );
+
+        label.textContent =
+          String(
+            item.label || ""
+          );
+
+        const price =
+          document.createElement(
+            "span"
+          );
+
+        price.className =
+          "price";
+
+        const unit =
+          language === "en"
+            ? item.unit_en
+            : item.unit_ar;
+
+        price.textContent =
+          `${item.price ?? ""}${unit ? " " + unit : ""}`;
+
+        row.appendChild(
+          label
+        );
+
+        row.appendChild(
+          price
+        );
+
+        pricesContainer.appendChild(
+          row
+        );
+      }
+    );
+  }
+
+
+  /*
+  ----------------------------------------------
+  Services
+  ----------------------------------------------
+  */
+
+  const services =
+    Array.isArray(
+      clientConfig[
+        language === "en"
+          ? "services_en"
+          : "services_ar"
+      ]
+    )
+      ? clientConfig[
+          language === "en"
+            ? "services_en"
+            : "services_ar"
+        ]
+      : [];
+
+  const servicesContainer =
+    document.getElementById(
+      "servicesContainer"
+    );
+
+  servicesContainer.innerHTML =
+    "";
+
+  services.forEach(
+    service => {
+
+      const item =
+        document.createElement(
+          "span"
+        );
+
+      item.className =
+        "service";
+
+      item.textContent =
+        service;
+
+      servicesContainer.appendChild(
+        item
+      );
+    }
+  );
+
+
+  /*
+  ----------------------------------------------
+  Notes
+  ----------------------------------------------
+  */
+
+  const note =
+    localized("notes");
+
+  const noteElement =
+    document.getElementById(
+      "note"
+    );
+
+  if(note){
+
+    noteElement.style.display =
+      "block";
+
+    noteElement.innerHTML =
+      `<strong>${escapeHtml(t.noteLabel)}:</strong> ${escapeHtml(note)}`;
+
+  }else{
+
+    noteElement.style.display =
+      "none";
+  }
+
+
+  /*
+  ----------------------------------------------
+  Chat
+  ----------------------------------------------
+  */
 
   launcher.textContent =
     t.launcher;
@@ -1284,7 +1426,7 @@ function renderLanguage(){
   document.getElementById(
     "chatName"
   ).textContent =
-    t.chatName;
+    assistantName();
 
   document.getElementById(
     "chatStatus"
@@ -1340,23 +1482,212 @@ function renderLanguage(){
     language === "en"
   );
 
-  if(selectedContactType){
-
-    document.getElementById(
-      "contactFormTitle"
-    ).textContent =
-
-      selectedContactType ===
-      "human_handoff"
-
-        ? t.humanTitle
-
-        : t.callbackTitle;
-  }
 
   renderQuickQuestions();
 }
 
+
+/*
+==================================================
+WELCOME
+==================================================
+*/
+
+function getWelcomeMessage(){
+
+  const custom =
+    language === "en"
+      ? clientConfig?.welcome_message_en
+      : clientConfig?.welcome_message_ar;
+
+  if(
+    String(custom || "").trim()
+  ){
+    return String(
+      custom
+    ).trim();
+  }
+
+  if(language === "en"){
+
+    return `Hi 👋 I'm the ${assistantName()}. How can I help you?`;
+  }
+
+  return `هلا فيك 👋 أنا ${assistantName()}. كيف أقدر أساعدك؟`;
+}
+
+
+/*
+==================================================
+MESSAGES
+==================================================
+*/
+
+function addMessage(
+  text,
+  sender
+){
+
+  const message =
+    document.createElement(
+      "div"
+    );
+
+  message.className =
+    "msg " + sender;
+
+  message.innerHTML =
+    formatMessage(text);
+
+  chatBody.appendChild(
+    message
+  );
+
+  chatBody.scrollTop =
+    chatBody.scrollHeight;
+
+  return message;
+}
+
+
+function createStreamingMessage(){
+
+  const message =
+    document.createElement(
+      "div"
+    );
+
+  message.className =
+    "msg bot";
+
+  chatBody.appendChild(
+    message
+  );
+
+  chatBody.scrollTop =
+    chatBody.scrollHeight;
+
+  return message;
+}
+
+
+function updateStreamingMessage(
+  element,
+  text
+){
+
+  if(!element){
+    return;
+  }
+
+  element.innerHTML =
+    formatMessage(text);
+
+  chatBody.scrollTop =
+    chatBody.scrollHeight;
+}
+
+
+/*
+==================================================
+TYPING
+==================================================
+*/
+
+function showTyping(){
+
+  removeTyping();
+
+  const typing =
+    document.createElement(
+      "div"
+    );
+
+  typing.className =
+    "typing";
+
+  typing.id =
+    "typing";
+
+  typing.textContent =
+    translations[
+      language
+    ].typing;
+
+  chatBody.appendChild(
+    typing
+  );
+
+  chatBody.scrollTop =
+    chatBody.scrollHeight;
+}
+
+
+function removeTyping(){
+
+  const typing =
+    document.getElementById(
+      "typing"
+    );
+
+  if(typing){
+    typing.remove();
+  }
+}
+
+
+/*
+==================================================
+QUICK QUESTIONS
+==================================================
+*/
+
+function renderQuickQuestions(){
+
+  quickArea.innerHTML =
+    "";
+
+  translations[
+    language
+  ].quickQuestions.forEach(
+    item => {
+
+      const button =
+        document.createElement(
+          "button"
+        );
+
+      button.className =
+        "quick-btn";
+
+      button.type =
+        "button";
+
+      button.textContent =
+        item.label;
+
+      button.addEventListener(
+        "click",
+        () => {
+          sendMessage(
+            item.message
+          );
+        }
+      );
+
+      quickArea.appendChild(
+        button
+      );
+    }
+  );
+}
+
+
+/*
+==================================================
+LANGUAGE
+==================================================
+*/
 
 function changeLanguage(
   newLanguage
@@ -1377,7 +1708,24 @@ function changeLanguage(
     language
   );
 
-  renderLanguage();
+  renderClientPage();
+
+  if(selectedContactType){
+
+    const t =
+      translations[
+        language
+      ];
+
+    document.getElementById(
+      "contactFormTitle"
+    ).textContent =
+
+      selectedContactType ===
+      "human_handoff"
+        ? t.humanTitle
+        : t.callbackTitle;
+  }
 }
 
 
@@ -1395,16 +1743,16 @@ function openContactForm(
     type;
 
   const t =
-    translations[language];
+    translations[
+      language
+    ];
 
   document.getElementById(
     "contactFormTitle"
   ).textContent =
 
     type === "human_handoff"
-
       ? t.humanTitle
-
       : t.callbackTitle;
 
   contactMessage.textContent =
@@ -1433,7 +1781,9 @@ function closeContactForm(){
 async function submitContactRequest(){
 
   const t =
-    translations[language];
+    translations[
+      language
+    ];
 
   const name =
     customerName.value.trim();
@@ -1492,6 +1842,7 @@ async function submitContactRequest(){
       );
 
     if(!response.ok){
+
       throw new Error(
         "Contact request failed"
       );
@@ -1503,9 +1854,14 @@ async function submitContactRequest(){
     contactMessage.className =
       "contact-message success";
 
-    customerName.value = "";
-    customerPhone.value = "";
-    contactReason.value = "";
+    customerName.value =
+      "";
+
+    customerPhone.value =
+      "";
+
+    contactReason.value =
+      "";
 
     setTimeout(
       closeContactForm,
@@ -1542,6 +1898,7 @@ async function readChatStream(
 ){
 
   if(!response.body){
+
     throw new Error(
       "Streaming not supported"
     );
@@ -1556,6 +1913,7 @@ async function readChatStream(
   let buffer = "";
   let fullAnswer = "";
   let receivedDelta = false;
+
 
   while(true){
 
@@ -1594,9 +1952,12 @@ async function readChatStream(
       let event;
 
       try{
+
         event =
           JSON.parse(line);
+
       }catch{
+
         continue;
       }
 
@@ -1606,7 +1967,10 @@ async function readChatStream(
       ){
 
         if(!receivedDelta){
-          receivedDelta = true;
+
+          receivedDelta =
+            true;
+
           removeTyping();
         }
 
@@ -1622,6 +1986,7 @@ async function readChatStream(
       if(
         event.type === "error"
       ){
+
         throw new Error(
           event.error ||
           "Chat stream error"
@@ -1629,6 +1994,7 @@ async function readChatStream(
       }
     }
   }
+
 
   const finalLine =
     buffer.trim();
@@ -1638,16 +2004,16 @@ async function readChatStream(
     try{
 
       const event =
-        JSON.parse(finalLine);
+        JSON.parse(
+          finalLine
+        );
 
       if(
         event.type === "delta" &&
         typeof event.text === "string"
       ){
 
-        if(!receivedDelta){
-          removeTyping();
-        }
+        removeTyping();
 
         fullAnswer +=
           event.text;
@@ -1660,6 +2026,7 @@ async function readChatStream(
 
     }catch{}
   }
+
 
   return fullAnswer.trim();
 }
@@ -1696,14 +2063,20 @@ async function sendMessage(
     content:cleanText
   });
 
-  messageInput.value = "";
+  messageInput.value =
+    "";
 
-  sendBtn.disabled = true;
+  sendBtn.disabled =
+    true;
 
   showTyping();
 
-  let streamingMessage = null;
-  let fullAnswer = "";
+  let streamingMessage =
+    null;
+
+  let fullAnswer =
+    "";
+
 
   try{
 
@@ -1734,6 +2107,7 @@ async function sendMessage(
         }
       );
 
+
     if(!response.ok){
 
       const text =
@@ -1744,8 +2118,10 @@ async function sendMessage(
       );
     }
 
+
     streamingMessage =
       createStreamingMessage();
+
 
     fullAnswer =
       await readChatStream(
@@ -1753,7 +2129,9 @@ async function sendMessage(
         streamingMessage
       );
 
+
     removeTyping();
+
 
     if(!fullAnswer){
 
@@ -1766,10 +2144,13 @@ async function sendMessage(
       );
     }
 
+
     history.push({
       role:"assistant",
-      content:fullAnswer
+      content:
+        fullAnswer
     });
+
 
   }catch(error){
 
@@ -1780,12 +2161,14 @@ async function sendMessage(
 
     removeTyping();
 
+
     if(
       streamingMessage &&
       !fullAnswer
     ){
       streamingMessage.remove();
     }
+
 
     if(!fullAnswer){
 
@@ -1817,7 +2200,9 @@ document.getElementById(
   "arabicBtn"
 ).addEventListener(
   "click",
-  () => changeLanguage("ar")
+  () => changeLanguage(
+    "ar"
+  )
 );
 
 
@@ -1825,7 +2210,9 @@ document.getElementById(
   "englishBtn"
 ).addEventListener(
   "click",
-  () => changeLanguage("en")
+  () => changeLanguage(
+    "en"
+  )
 );
 
 
@@ -1874,17 +2261,17 @@ launcher.addEventListener(
     launcher.style.display =
       "none";
 
+
     if(
       chatBody.children.length === 0
     ){
 
       addMessage(
-        translations[
-          language
-        ].welcome,
+        getWelcomeMessage(),
         "bot"
       );
     }
+
 
     messageInput.focus();
   }
@@ -1937,7 +2324,42 @@ START
 ==================================================
 */
 
-renderLanguage();
+async function startApp(){
+
+  try{
+
+    await loadClientConfig();
+
+    loadingScreen.style.display =
+      "none";
+
+    clientContent.style.display =
+      "block";
+
+    launcher.style.display =
+      "block";
+
+    renderClientPage();
+
+  }catch(error){
+
+    console.error(
+      "APP START ERROR:",
+      error
+    );
+
+    loadingScreen.className =
+      "error-screen";
+
+    loadingScreen.textContent =
+      translations[
+        language
+      ].loadError;
+  }
+}
+
+
+startApp();
 
 </script>
 
