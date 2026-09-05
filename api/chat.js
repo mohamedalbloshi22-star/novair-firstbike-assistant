@@ -2,7 +2,6 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const CLIENT_SLUG = "first-bike";
 const UNANSWERED_MARKER = "[[UNANSWERED]]";
 
 const MAX_KNOWLEDGE_ITEMS_SENT = 10;
@@ -51,14 +50,45 @@ async function supabaseRequest(path, options = {}) {
 
 /*
 ==================================================
+Client slug
+==================================================
+*/
+
+function normalizeClientSlug(value) {
+  const slug =
+    String(value || "")
+      .trim()
+      .toLowerCase();
+
+  if (!slug) {
+    return "";
+  }
+
+  /*
+    Allowed:
+    letters
+    numbers
+    hyphen
+    underscore
+  */
+  if (!/^[a-z0-9_-]{2,80}$/.test(slug)) {
+    return "";
+  }
+
+  return slug;
+}
+
+
+/*
+==================================================
 Client
 ==================================================
 */
 
-async function getClient() {
+async function getClient(clientSlug) {
   const rows = await supabaseRequest(
     `clients` +
-    `?slug=eq.${encodeURIComponent(CLIENT_SLUG)}` +
+    `?slug=eq.${encodeURIComponent(clientSlug)}` +
     `&select=id,name,slug,config` +
     `&limit=1`
   );
@@ -102,7 +132,11 @@ function safeConfig(client) {
 }
 
 
-function getLocalizedConfig(config, key, language) {
+function getLocalizedConfig(
+  config,
+  key,
+  language
+) {
   const suffix =
     language === "en"
       ? "_en"
@@ -155,19 +189,14 @@ function buildBaseBusinessInfo(
       language
     );
 
+  const servicesKey =
+    language === "en"
+      ? "services_en"
+      : "services_ar";
+
   const services =
-    Array.isArray(
-      config[
-        language === "en"
-          ? "services_en"
-          : "services_ar"
-      ]
-    )
-      ? config[
-          language === "en"
-            ? "services_en"
-            : "services_ar"
-        ]
+    Array.isArray(config[servicesKey])
+      ? config[servicesKey]
       : [];
 
   const rentalPrices =
@@ -218,8 +247,8 @@ function buildBaseBusinessInfo(
   if (rentalPrices.length > 0) {
     lines.push(
       language === "en"
-        ? "Rental prices:"
-        : "أسعار التأجير:"
+        ? "Prices:"
+        : "الأسعار:"
     );
 
     for (const item of rentalPrices) {
@@ -374,7 +403,7 @@ function tokenize(value) {
 
 /*
 ==================================================
-Knowledge selection
+Knowledge scoring
 ==================================================
 */
 
@@ -778,7 +807,7 @@ function prepareMessagesForClaude(messages) {
 
 /*
 ==================================================
-Streaming helpers
+Streaming
 ==================================================
 */
 
@@ -804,8 +833,7 @@ module.exports = async function handler(
 ) {
   if (req.method !== "POST") {
     return res.status(405).json({
-      error:
-        "Method not allowed"
+      error: "Method not allowed"
     });
   }
 
@@ -824,13 +852,24 @@ module.exports = async function handler(
     const {
       messages,
       language = "ar",
-      session_id
+      session_id,
+      client_slug
     } = req.body || {};
 
     const safeLanguage =
       language === "en"
         ? "en"
         : "ar";
+
+    const safeClientSlug =
+      normalizeClientSlug(client_slug);
+
+    if (!safeClientSlug) {
+      return res.status(400).json({
+        error:
+          "Valid client_slug is required"
+      });
+    }
 
     if (
       !Array.isArray(messages) ||
@@ -870,7 +909,9 @@ module.exports = async function handler(
     */
 
     const client =
-      await getClient();
+      await getClient(
+        safeClientSlug
+      );
 
     const clientConfig =
       safeConfig(client);
@@ -895,7 +936,7 @@ module.exports = async function handler(
 
     /*
     ==============================================
-    Conversation + Knowledge in parallel
+    Conversation + Knowledge
     ==============================================
     */
 
@@ -908,6 +949,7 @@ module.exports = async function handler(
         session_id,
         safeLanguage
       ),
+
       getKnowledgeBase(
         client.id
       ).catch(
@@ -925,7 +967,7 @@ module.exports = async function handler(
 
     /*
     ==============================================
-    Save user message without blocking Claude
+    Save customer message
     ==============================================
     */
 
@@ -939,7 +981,7 @@ module.exports = async function handler(
 
     /*
     ==============================================
-    Relevant knowledge
+    Business info + knowledge
     ==============================================
     */
 
@@ -988,7 +1030,6 @@ ${knowledgeText}
 - لغة الرد الحالية: ${safeLanguage === "en" ? "English" : "العربية"}.
 `;
 
-
     const claudeMessages =
       prepareMessagesForClaude(
         messages
@@ -997,7 +1038,7 @@ ${knowledgeText}
 
     /*
     ==============================================
-    Anthropic Streaming Request
+    Anthropic
     ==============================================
     */
 
@@ -1084,6 +1125,8 @@ ${knowledgeText}
       res,
       {
         type: "start",
+        client_slug:
+          client.slug,
         conversation_id:
           conversation.id,
         session_id,
@@ -1095,7 +1138,7 @@ ${knowledgeText}
 
     /*
     ==============================================
-    Read Anthropic stream
+    Read Claude stream
     ==============================================
     */
 
@@ -1257,7 +1300,7 @@ ${knowledgeText}
 
     /*
     ==============================================
-    Flush remaining text
+    Final marker cleanup
     ==============================================
     */
 
@@ -1299,7 +1342,8 @@ ${knowledgeText}
         res,
         {
           type: "delta",
-          text: finalVisibleTail
+          text:
+            finalVisibleTail
         }
       );
     }
@@ -1307,7 +1351,7 @@ ${knowledgeText}
 
     /*
     ==============================================
-    Save database records
+    Save records
     ==============================================
     */
 
@@ -1381,28 +1425,40 @@ ${knowledgeText}
       res,
       {
         type: "done",
+
         novaire: {
           client_id:
             client.id,
+
           client_slug:
             client.slug,
+
           client_name:
             brandName,
+
           conversation_id:
             conversation.id,
+
           session_id,
+
           language:
             safeLanguage,
+
           unanswered:
             isUnanswered,
+
           resolved_by_ai:
             resolvedByAi,
+
           knowledge_items:
             knowledgeBase.length,
+
           knowledge_items_used:
             relevantKnowledge.length,
+
           input_tokens:
             inputTokens,
+
           output_tokens:
             outputTokens
         }
