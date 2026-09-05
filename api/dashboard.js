@@ -3,14 +3,6 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const CLIENT_SLUG = "first-bike";
 
-// Claude Sonnet 4.6 standard global pricing
-const AI_MODEL_NAME = "Claude Sonnet 4.6";
-const INPUT_PRICE_PER_MILLION = 3;
-const OUTPUT_PRICE_PER_MILLION = 15;
-
-// Fixed AED/USD peg approximation
-const AED_PER_USD = 3.6725;
-
 async function supabaseRequest(path) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method: "GET",
@@ -85,10 +77,6 @@ module.exports = async function handler(req, res) {
       `peak_hours_dashboard_stats?client_id=eq.${clientId}&select=hour_of_day,conversations,messages&order=conversations.desc,messages.desc&limit=10`
     );
 
-    const aiUsageRows = await supabaseRequest(
-      `ai_usage_dashboard_stats?client_id=eq.${clientId}&select=*`
-    );
-
     const unanswered =
       Array.isArray(unansweredRows) && unansweredRows.length > 0
         ? unansweredRows[0]
@@ -103,34 +91,6 @@ module.exports = async function handler(req, res) {
       Array.isArray(languageRows) && languageRows.length > 0
         ? languageRows[0]
         : {};
-
-    const aiUsage =
-      Array.isArray(aiUsageRows) && aiUsageRows.length > 0
-        ? aiUsageRows[0]
-        : {};
-
-    const totalInputTokens =
-      Number(aiUsage.total_input_tokens || 0);
-
-    const totalOutputTokens =
-      Number(aiUsage.total_output_tokens || 0);
-
-    const totalTokens =
-      Number(aiUsage.total_tokens || 0);
-
-    const inputCostUsd =
-      (totalInputTokens / 1000000) *
-      INPUT_PRICE_PER_MILLION;
-
-    const outputCostUsd =
-      (totalOutputTokens / 1000000) *
-      OUTPUT_PRICE_PER_MILLION;
-
-    const totalCostUsd =
-      inputCostUsd + outputCostUsd;
-
-    const totalCostAed =
-      totalCostUsd * AED_PER_USD;
 
     return res.status(200).json({
       summary: {
@@ -167,40 +127,7 @@ module.exports = async function handler(req, res) {
           languageStats.arabic_rate_percent || 0,
 
         english_rate_percent:
-          languageStats.english_rate_percent || 0,
-
-        total_input_tokens:
-          totalInputTokens,
-
-        total_output_tokens:
-          totalOutputTokens,
-
-        total_tokens:
-          totalTokens,
-
-        ai_usage_records:
-          aiUsage.ai_usage_records || 0,
-
-        ai_model:
-          AI_MODEL_NAME,
-
-        input_price_per_million_usd:
-          INPUT_PRICE_PER_MILLION,
-
-        output_price_per_million_usd:
-          OUTPUT_PRICE_PER_MILLION,
-
-        input_cost_usd:
-          Number(inputCostUsd.toFixed(6)),
-
-        output_cost_usd:
-          Number(outputCostUsd.toFixed(6)),
-
-        ai_cost_usd:
-          Number(totalCostUsd.toFixed(6)),
-
-        ai_cost_aed:
-          Number(totalCostAed.toFixed(4))
+          languageStats.english_rate_percent || 0
       },
 
       daily:
