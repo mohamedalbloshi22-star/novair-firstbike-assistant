@@ -77,6 +77,10 @@ module.exports = async function handler(req, res) {
       `peak_hours_dashboard_stats?client_id=eq.${clientId}&select=hour_of_day,conversations,messages&order=conversations.desc,messages.desc&limit=10`
     );
 
+    const aiUsageRows = await supabaseRequest(
+      `ai_usage_dashboard_stats?client_id=eq.${clientId}&select=*`
+    );
+
     const unanswered =
       Array.isArray(unansweredRows) && unansweredRows.length > 0
         ? unansweredRows[0]
@@ -90,6 +94,11 @@ module.exports = async function handler(req, res) {
     const languageStats =
       Array.isArray(languageRows) && languageRows.length > 0
         ? languageRows[0]
+        : {};
+
+    const aiUsage =
+      Array.isArray(aiUsageRows) && aiUsageRows.length > 0
+        ? aiUsageRows[0]
         : {};
 
     return res.status(200).json({
@@ -127,7 +136,19 @@ module.exports = async function handler(req, res) {
           languageStats.arabic_rate_percent || 0,
 
         english_rate_percent:
-          languageStats.english_rate_percent || 0
+          languageStats.english_rate_percent || 0,
+
+        total_input_tokens:
+          aiUsage.total_input_tokens || 0,
+
+        total_output_tokens:
+          aiUsage.total_output_tokens || 0,
+
+        total_tokens:
+          aiUsage.total_tokens || 0,
+
+        ai_usage_records:
+          aiUsage.ai_usage_records || 0
       },
 
       daily:
