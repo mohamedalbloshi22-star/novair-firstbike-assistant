@@ -3,6 +3,14 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 const CLIENT_SLUG = "first-bike";
 
+// Claude Sonnet 4.6 standard global pricing
+const AI_MODEL_NAME = "Claude Sonnet 4.6";
+const INPUT_PRICE_PER_MILLION = 3;
+const OUTPUT_PRICE_PER_MILLION = 15;
+
+// Fixed AED/USD peg approximation
+const AED_PER_USD = 3.6725;
+
 async function supabaseRequest(path) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     method: "GET",
@@ -101,6 +109,29 @@ module.exports = async function handler(req, res) {
         ? aiUsageRows[0]
         : {};
 
+    const totalInputTokens =
+      Number(aiUsage.total_input_tokens || 0);
+
+    const totalOutputTokens =
+      Number(aiUsage.total_output_tokens || 0);
+
+    const totalTokens =
+      Number(aiUsage.total_tokens || 0);
+
+    const inputCostUsd =
+      (totalInputTokens / 1000000) *
+      INPUT_PRICE_PER_MILLION;
+
+    const outputCostUsd =
+      (totalOutputTokens / 1000000) *
+      OUTPUT_PRICE_PER_MILLION;
+
+    const totalCostUsd =
+      inputCostUsd + outputCostUsd;
+
+    const totalCostAed =
+      totalCostUsd * AED_PER_USD;
+
     return res.status(200).json({
       summary: {
         ...summary,
@@ -139,16 +170,37 @@ module.exports = async function handler(req, res) {
           languageStats.english_rate_percent || 0,
 
         total_input_tokens:
-          aiUsage.total_input_tokens || 0,
+          totalInputTokens,
 
         total_output_tokens:
-          aiUsage.total_output_tokens || 0,
+          totalOutputTokens,
 
         total_tokens:
-          aiUsage.total_tokens || 0,
+          totalTokens,
 
         ai_usage_records:
-          aiUsage.ai_usage_records || 0
+          aiUsage.ai_usage_records || 0,
+
+        ai_model:
+          AI_MODEL_NAME,
+
+        input_price_per_million_usd:
+          INPUT_PRICE_PER_MILLION,
+
+        output_price_per_million_usd:
+          OUTPUT_PRICE_PER_MILLION,
+
+        input_cost_usd:
+          Number(inputCostUsd.toFixed(6)),
+
+        output_cost_usd:
+          Number(outputCostUsd.toFixed(6)),
+
+        ai_cost_usd:
+          Number(totalCostUsd.toFixed(6)),
+
+        ai_cost_aed:
+          Number(totalCostAed.toFixed(4))
       },
 
       daily:
