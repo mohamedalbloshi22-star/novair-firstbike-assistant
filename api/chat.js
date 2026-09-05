@@ -57,15 +57,19 @@ async function getClient() {
 }
 
 
-async function getApprovedKnowledge(clientId) {
+/*
+  قاعدة المعرفة الرسمية
+*/
+
+async function getKnowledgeBase(clientId) {
+
   const rows = await supabaseRequest(
-    `unanswered_questions` +
+    `knowledge_base` +
     `?client_id=eq.${clientId}` +
-    `&resolved=eq.true` +
-    `&approved_answer=not.is.null` +
-    `&select=question,approved_answer,resolved_at` +
-    `&order=resolved_at.desc` +
-    `&limit=100`
+    `&active=eq.true` +
+    `&select=id,question,answer,language,source,updated_at` +
+    `&order=updated_at.desc` +
+    `&limit=200`
   );
 
   if (!Array.isArray(rows)) {
@@ -76,30 +80,32 @@ async function getApprovedKnowledge(clientId) {
     row =>
       row &&
       typeof row.question === "string" &&
-      typeof row.approved_answer === "string" &&
+      typeof row.answer === "string" &&
       row.question.trim() &&
-      row.approved_answer.trim()
+      row.answer.trim()
   );
 }
 
 
-function buildApprovedKnowledgeText(rows) {
+function buildKnowledgeText(rows) {
+
   if (
     !Array.isArray(rows) ||
     rows.length === 0
   ) {
-    return "لا توجد إجابات إضافية معتمدة حاليًا.";
+    return "لا توجد معلومات إضافية معتمدة حاليًا.";
   }
 
   return rows
     .map((row, index) => {
       return `
 ${index + 1}.
+
 السؤال أو الموضوع:
 ${row.question.trim()}
 
-الإجابة المعتمدة:
-${row.approved_answer.trim()}
+الإجابة الرسمية المعتمدة:
+${row.answer.trim()}
 `;
     })
     .join("\n");
@@ -111,10 +117,12 @@ async function getOrCreateConversation(
   sessionId,
   language
 ) {
+
   const safeLanguage =
     language === "en"
       ? "en"
       : "ar";
+
 
   const existing = await supabaseRequest(
     `conversations?client_id=eq.${clientId}` +
@@ -123,23 +131,29 @@ async function getOrCreateConversation(
     `&limit=1`
   );
 
+
   if (
     Array.isArray(existing) &&
     existing.length > 0
   ) {
+
     const conversation =
       existing[0];
+
 
     if (
       conversation.language !== safeLanguage
     ) {
+
       await supabaseRequest(
         `conversations?id=eq.${conversation.id}`,
         {
           method: "PATCH",
           prefer: "return=minimal",
+
           body: {
-            language: safeLanguage
+            language:
+              safeLanguage
           }
         }
       );
@@ -147,6 +161,7 @@ async function getOrCreateConversation(
       conversation.language =
         safeLanguage;
     }
+
 
     return conversation;
   }
@@ -157,14 +172,28 @@ async function getOrCreateConversation(
     {
       method: "POST",
       prefer: "return=representation",
+
       body: {
-        client_id: clientId,
-        session_id: sessionId,
-        status: "open",
-        resolved_by_ai: null,
-        human_handoff: false,
-        callback_requested: false,
-        language: safeLanguage
+        client_id:
+          clientId,
+
+        session_id:
+          sessionId,
+
+        status:
+          "open",
+
+        resolved_by_ai:
+          null,
+
+        human_handoff:
+          false,
+
+        callback_requested:
+          false,
+
+        language:
+          safeLanguage
       }
     }
   );
@@ -179,6 +208,7 @@ async function getOrCreateConversation(
     );
   }
 
+
   return created[0];
 }
 
@@ -190,11 +220,13 @@ async function saveMessage(
   inputTokens = null,
   outputTokens = null
 ) {
+
   await supabaseRequest(
     "messages",
     {
       method: "POST",
       prefer: "return=minimal",
+
       body: {
         conversation_id:
           conversationId,
@@ -219,11 +251,13 @@ async function saveUnansweredQuestion(
   conversationId,
   question
 ) {
+
   await supabaseRequest(
     "unanswered_questions",
     {
       method: "POST",
       prefer: "return=minimal",
+
       body: {
         client_id:
           clientId,
@@ -233,7 +267,8 @@ async function saveUnansweredQuestion(
 
         question,
 
-        resolved: false
+        resolved:
+          false
       }
     }
   );
@@ -244,7 +279,9 @@ async function updateResolutionStatus(
   conversation,
   isUnanswered
 ) {
+
   let resolvedByAi = true;
+
 
   if (
     isUnanswered ||
@@ -255,11 +292,13 @@ async function updateResolutionStatus(
     resolvedByAi = false;
   }
 
+
   await supabaseRequest(
     `conversations?id=eq.${conversation.id}`,
     {
       method: "PATCH",
       prefer: "return=minimal",
+
       body: {
         resolved_by_ai:
           resolvedByAi
@@ -267,31 +306,37 @@ async function updateResolutionStatus(
     }
   );
 
+
   return resolvedByAi;
 }
 
 
 function getLatestUserMessage(messages) {
+
   for (
     let i = messages.length - 1;
     i >= 0;
     i--
   ) {
+
     if (
       messages[i] &&
       messages[i].role === "user"
     ) {
+
       return String(
         messages[i].content || ""
       ).trim();
     }
   }
 
+
   return "";
 }
 
 
 function cleanAssistantText(text) {
+
   return String(text || "")
     .replaceAll(
       UNANSWERED_MARKER,
@@ -307,6 +352,7 @@ module.exports = async function handler(
 ) {
 
   if (req.method !== "POST") {
+
     return res.status(405).json({
       error: "Method not allowed"
     });
@@ -318,6 +364,7 @@ module.exports = async function handler(
     !SUPABASE_URL ||
     !SUPABASE_KEY
   ) {
+
     return res.status(500).json({
       error:
         "Required environment variables are missing"
@@ -344,6 +391,7 @@ module.exports = async function handler(
       !Array.isArray(messages) ||
       messages.length === 0
     ) {
+
       return res.status(400).json({
         error:
           "Messages are required"
@@ -355,6 +403,7 @@ module.exports = async function handler(
       !session_id ||
       typeof session_id !== "string"
     ) {
+
       return res.status(400).json({
         error:
           "Session ID is required"
@@ -367,6 +416,7 @@ module.exports = async function handler(
 
 
     if (!latestUserMessage) {
+
       return res.status(400).json({
         error:
           "User message is required"
@@ -394,151 +444,141 @@ module.exports = async function handler(
 
 
     /*
-      جلب المعرفة التي اعتمدها
-      مدير NOVAIRE من لوحة الإدارة.
+      تحميل قاعدة المعرفة الرسمية
     */
 
-    let approvedKnowledge = [];
+    let knowledgeBase = [];
+
 
     try {
-      approvedKnowledge =
-        await getApprovedKnowledge(
+
+      knowledgeBase =
+        await getKnowledgeBase(
           client.id
         );
+
     } catch (knowledgeError) {
+
       console.error(
-        "APPROVED KNOWLEDGE LOAD ERROR:",
+        "KNOWLEDGE BASE LOAD ERROR:",
         knowledgeError
       );
 
-      approvedKnowledge = [];
+      knowledgeBase = [];
     }
 
 
-    const approvedKnowledgeText =
-      buildApprovedKnowledgeText(
-        approvedKnowledge
+    const knowledgeText =
+      buildKnowledgeText(
+        knowledgeBase
       );
 
 
     const systemPrompt = `
 أنت المساعد الذكي الرسمي لمحل First Bike للدراجات النارية في العين.
 
-معلومات First Bike المؤكدة:
+==================================================
 
-- النشاط:
+معلومات First Bike الأساسية:
+
+النشاط:
 تأجير وتصليح الدراجات النارية وقطع الغيار.
 
-- الموقع:
+الموقع:
 العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون.
 
-- ساعات العمل:
+ساعات العمل:
 يوميًا من الساعة 3 مساءً حتى 12 منتصف الليل.
 
+==================================================
 
 أسعار التأجير بالساعة:
 
-- 50cc:
+50cc:
 80 درهم.
 
-- 90cc:
+90cc:
 150 درهم.
 
-- 220cc:
+220cc:
 200 درهم.
 
-- 400cc:
+400cc:
 250 درهم.
 
-- 800cc فما فوق:
+800cc فما فوق:
 300 درهم.
 
+==================================================
 
-التصليح وقطع الغيار:
+قاعدة المعرفة الرسمية والمعتمدة:
 
-الأسعار تختلف حسب نوع العطل والقطعة والتركيب،
-ولا توجد أسعار ثابتة إلا إذا كانت هناك إجابة معتمدة
-ضمن قاعدة المعرفة أدناه.
-
+${knowledgeText}
 
 ==================================================
 
-قاعدة المعرفة المعتمدة من إدارة NOVAIRE / First Bike:
+قواعد قاعدة المعرفة:
 
-${approvedKnowledgeText}
+1. قاعدة المعرفة أعلاه معتمدة رسميًا.
 
-==================================================
+2. إذا كان سؤال العميل يطابق معلومة موجودة في قاعدة المعرفة
+أو يحمل نفس المعنى، استخدم الإجابة الموجودة فيها.
 
+3. لا يشترط أن يستخدم العميل نفس صياغة السؤال المخزنة.
 
-قواعد استخدام قاعدة المعرفة المعتمدة:
+4. افهم معنى السؤال قبل الإجابة.
 
-1. المعلومات الموجودة في قاعدة المعرفة المعتمدة
-تعتبر معلومات رسمية ومؤكدة.
+5. يمكنك إعادة صياغة الإجابة بصورة طبيعية ومهنية،
+لكن لا تغير معناها ولا تضف معلومات غير معتمدة.
 
-2. إذا كان سؤال العميل يطابق سؤالًا معتمدًا
-أو يحمل نفس المعنى،
-استخدم الإجابة المعتمدة.
+6. إذا وجد أكثر من سجل مناسب،
+استخدم المعلومة الأحدث والأكثر ارتباطًا بالسؤال.
 
-3. لا يشترط أن يستخدم العميل نفس الكلمات
-الموجودة في السؤال الأصلي.
-افهم المعنى والسياق.
+7. لا تخبر العميل بوجود قاعدة معرفة أو لوحة إدارة.
 
-4. يمكنك صياغة الإجابة المعتمدة بصورة طبيعية
-ومختصرة، لكن لا تغير معناها ولا تضف معلومات
-غير موجودة فيها.
-
-5. إذا تعارضت إجابة معتمدة حديثة مع معلومة
-سابقة، أعط الأولوية للإجابة المعتمدة الأحدث.
-
-6. لا تخبر العميل أن الإجابة جاءت من
-"قاعدة المعرفة" أو من "لوحة الإدارة".
-
-7. لا تعرض أي معلومات إدارية أو داخلية.
-
+8. لا تعرض أي معلومات إدارية داخلية.
 
 ==================================================
 
 قواعد الإجابة العامة:
 
-1. أجب فقط بناءً على المعلومات المؤكدة
-المتاحة لك عن First Bike.
+1. أجب فقط اعتمادًا على:
+- معلومات First Bike الأساسية.
+- قاعدة المعرفة الرسمية أعلاه.
 
-2. لا تخترع سعرًا أو سياسة أو خدمة أو شرطًا
-أو معلومة غير موجودة.
+2. لا تخترع:
+- أسعارًا.
+- سياسات.
+- شروطًا.
+- خدمات.
+- مواعيد.
+- معلومات غير موجودة.
 
-3. المعلومات الأساسية أعلاه وقاعدة المعرفة
-المعتمدة كلاهما مصادر مؤكدة.
+3. إذا لم تكن الإجابة موجودة في المعلومات الأساسية
+ولا في قاعدة المعرفة، أخبر العميل أن المعلومة تحتاج
+إلى تأكيد من First Bike.
 
-4. إذا كان السؤال يحتاج معلومة غير موجودة
-في المعلومات الأساسية ولا في قاعدة المعرفة
-المعتمدة، أخبر العميل باختصار أن المعلومة
-تحتاج تأكيدًا من First Bike.
-
-5. عندما لا تستطيع إعطاء إجابة مؤكدة
-بسبب عدم توفر المعلومة، أضف في نهاية ردك
-بالضبط:
+4. في هذه الحالة فقط أضف في نهاية ردك:
 
 ${UNANSWERED_MARKER}
 
-6. لا تضف العلامة السابقة إذا استطعت الإجابة
-من المعلومات الأساسية أو قاعدة المعرفة المعتمدة.
+5. لا تضف العلامة إذا استطعت إعطاء إجابة مؤكدة.
 
-7. لا تشرح للعميل معنى العلامة.
+6. لا تشرح للعميل معنى العلامة.
 
-8. أجب بالعربية إذا كانت اللغة المطلوبة ar،
-وبالإنجليزية إذا كانت en.
+7. إذا كانت اللغة الحالية عربية، أجب بالعربية.
 
-9. إذا كانت الإجابة المعتمدة مكتوبة بالعربية
-وكانت المحادثة باللغة الإنجليزية،
-ترجم معنى الإجابة بدقة إلى الإنجليزية
-دون إضافة معلومات جديدة.
+8. إذا كانت اللغة الحالية إنجليزية، أجب بالإنجليزية.
 
-10. اجعل الإجابة قصيرة ومهنية ومفيدة.
+9. إذا كانت المعلومة المخزنة بالعربية والعميل يتحدث الإنجليزية،
+ترجم المعنى بدقة دون إضافة معلومات جديدة.
 
-11. إذا كان العميل يحتاج موظفًا أو اتصالًا،
-أخبره أنه يستطيع استخدام زر التحدث مع مسؤول
-أو طلب اتصال الموجود في المحادثة.
+10. اجعل الرد مختصرًا ومهنيًا ومفيدًا.
 
+11. إذا احتاج العميل لموظف أو اتصال،
+يمكنك إرشاده إلى زر التحدث مع مسؤول أو طلب اتصال.
+
+==================================================
 
 لغة المحادثة الحالية:
 
@@ -570,7 +610,8 @@ ${safeLanguage === "en"
               model:
                 "claude-sonnet-4-6",
 
-              max_tokens: 500,
+              max_tokens:
+                500,
 
               system:
                 systemPrompt,
@@ -583,8 +624,7 @@ ${safeLanguage === "en"
 
                     content:
                       String(
-                        message.content ||
-                        ""
+                        message.content || ""
                       )
                   })
                 )
@@ -598,6 +638,7 @@ ${safeLanguage === "en"
 
 
     if (!anthropicResponse.ok) {
+
       throw new Error(
         `Anthropic error ${anthropicResponse.status}: ${anthropicText}`
       );
@@ -620,6 +661,7 @@ ${safeLanguage === "en"
 
 
     if (!rawAnswer) {
+
       throw new Error(
         "Anthropic returned no answer"
       );
@@ -642,14 +684,17 @@ ${safeLanguage === "en"
       conversation.id,
       "assistant",
       cleanAnswer,
+
       anthropicData.usage?.input_tokens ??
         null,
+
       anthropicData.usage?.output_tokens ??
         null
     );
 
 
     if (isUnanswered) {
+
       try {
 
         await saveUnansweredQuestion(
@@ -679,15 +724,18 @@ ${safeLanguage === "en"
       anthropicData.content &&
       anthropicData.content[0]
     ) {
+
       anthropicData.content[0].text =
         cleanAnswer;
     }
 
 
     return res.status(200).json({
+
       ...anthropicData,
 
       novaire: {
+
         client_id:
           client.id,
 
@@ -705,8 +753,8 @@ ${safeLanguage === "en"
         resolved_by_ai:
           resolvedByAi,
 
-        approved_knowledge_items:
-          approvedKnowledge.length
+        knowledge_items:
+          knowledgeBase.length
       }
     });
 
