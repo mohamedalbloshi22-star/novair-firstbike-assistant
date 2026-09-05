@@ -1,1140 +1,513 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NOVAIRE | إدارة قاعدة المعرفة</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NOVAIRE | قاعدة المعرفة</title>
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, Tahoma, sans-serif;
-      background: #f4f6f8;
-      color: #1f2937;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 24px;
-    }
-
-    .card {
-      background: #ffffff;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 18px;
-      box-shadow: 0 3px 12px rgba(0,0,0,0.06);
-    }
-
-    h1, h2, h3 {
-      margin-top: 0;
-    }
-
-    .muted {
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    input,
-    textarea,
-    select,
-    button {
-      width: 100%;
-      padding: 11px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      font-size: 15px;
-      margin-top: 7px;
-      margin-bottom: 12px;
-    }
-
-    textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    button {
-      cursor: pointer;
-      border: none;
-      font-weight: bold;
-    }
-
-    .primary {
-      background: #111827;
-      color: white;
-    }
-
-    .secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-
-    .danger {
-      background: #b91c1c;
-      color: white;
-    }
-
-    .success {
-      background: #047857;
-      color: white;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 14px;
-    }
-
-    .knowledge-item {
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 14px;
-      background: #fafafa;
-    }
-
-    .knowledge-item.inactive {
-      opacity: 0.6;
-    }
-
-    .actions {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .actions button {
-      margin: 0;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 5px 9px;
-      border-radius: 20px;
-      font-size: 12px;
-      margin-bottom: 8px;
-    }
-
-    .badge.active {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    .badge.inactive {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    #app {
-      display: none;
-    }
-
-    #message {
-      display: none;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-
-    #message.ok {
-      display: block;
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    #message.error {
-      display: block;
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .top-actions {
-      display: grid;
-      grid-template-columns: 1fr 160px;
-      gap: 10px;
-      align-items: end;
-    }
-
-    @media (max-width: 700px) {
-      .grid,
-      .actions,
-      .top-actions {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#1f2937}
+.container{max-width:1100px;margin:auto;padding:24px}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+h1,h2{margin-top:0}
+.muted{color:#6b7280;font-size:14px}
+input,textarea,select,button{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin:6px 0 12px}
+textarea{min-height:100px;resize:vertical}
+button{border:0;cursor:pointer;font-weight:bold}
+.primary{background:#111827;color:white}
+.secondary{background:#e5e7eb;color:#111827}
+.danger{background:#b91c1c;color:white}
+.success{background:#047857;color:white}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.item{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;background:#fafafa}
+.item p{line-height:1.6}
+.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+#app{display:none}
+#message{display:none;padding:12px;border-radius:8px;margin-bottom:15px}
+#message.ok{display:block;background:#d1fae5;color:#065f46}
+#message.error{display:block;background:#fee2e2;color:#991b1b}
+@media(max-width:700px){.grid,.actions{grid-template-columns:1fr}}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <div class="card" id="loginBox">
+<div class="card" id="loginBox">
+<h1>NOVAIRE</h1>
+<h2>قاعدة المعرفة</h2>
 
-    <h1>NOVAIRE</h1>
-    <h2>إدارة قاعدة المعرفة</h2>
+<input
+id="password"
+type="password"
+placeholder="كلمة مرور الإدارة">
 
-    <p class="muted">
-      هذه الصفحة مخصصة لإدارة معلومات كل عميل بشكل مستقل.
-    </p>
-
-    <label>كلمة مرور الإدارة</label>
-
-    <input
-      id="password"
-      type="password"
-      placeholder="أدخل كلمة مرور الإدارة"
-    />
-
-    <button
-      class="primary"
-      onclick="login()"
-    >
-      دخول
-    </button>
-
-  </div>
+<button class="primary" onclick="login()">
+دخول
+</button>
+</div>
 
 
-  <div id="app">
+<div id="app">
 
-    <div id="message"></div>
+<div id="message"></div>
 
+<div class="card">
 
-    <div class="card">
+<label>العميل</label>
 
-      <div class="top-actions">
+<select
+id="clientSelect"
+onchange="clientChanged()">
+<option value="">اختر العميل</option>
+</select>
 
-        <div>
-          <label>اختر العميل</label>
+<button class="secondary" onclick="logout()">
+تسجيل الخروج
+</button>
 
-          <select
-            id="clientSelect"
-            onchange="loadKnowledge()"
-          >
-            <option value="">
-              اختر العميل
-            </option>
-          </select>
-        </div>
-
-        <button
-          class="secondary"
-          onclick="logout()"
-        >
-          تسجيل الخروج
-        </button>
-
-      </div>
-
-    </div>
+</div>
 
 
-    <div class="card">
+<div class="card">
 
-      <h2 id="formTitle">
-        إضافة معلومة جديدة
-      </h2>
+<h2>إضافة معلومة</h2>
 
-      <input
-        type="hidden"
-        id="editId"
-      />
+<label>السؤال</label>
+<textarea id="question"></textarea>
 
+<label>الإجابة</label>
+<textarea id="answer"></textarea>
 
-      <div class="grid">
+<label>اللغة</label>
+<select id="language">
+<option value="ar">العربية</option>
+<option value="en">English</option>
+</select>
 
-        <div>
-          <label>اللغة</label>
+<button class="primary" onclick="createItem()">
+إضافة إلى قاعدة المعرفة
+</button>
 
-          <select id="language">
-            <option value="ar">
-              العربية
-            </option>
-
-            <option value="en">
-              English
-            </option>
-          </select>
-        </div>
-
-      </div>
+</div>
 
 
-      <label>السؤال</label>
+<div class="card">
 
-      <textarea
-        id="question"
-        placeholder="مثال: أين موقعكم؟"
-      ></textarea>
+<h2>المعلومات الحالية</h2>
 
+<div id="list">
+اختر العميل.
+</div>
 
-      <label>الإجابة المعتمدة</label>
+</div>
 
-      <textarea
-        id="answer"
-        placeholder="اكتب الإجابة التي سيستخدمها المساعد"
-      ></textarea>
-
-
-      <div class="grid">
-
-        <button
-          class="success"
-          onclick="saveKnowledge()"
-        >
-          حفظ
-        </button>
-
-        <button
-          class="secondary"
-          onclick="resetForm()"
-        >
-          إلغاء / جديد
-        </button>
-
-      </div>
-
-    </div>
-
-
-    <div class="card">
-
-      <h2>قاعدة المعرفة</h2>
-
-      <p
-        id="clientInfo"
-        class="muted"
-      >
-        اختر العميل أولًا.
-      </p>
-
-      <div id="knowledgeList"></div>
-
-    </div>
-
-  </div>
-
+</div>
 </div>
 
 
 <script>
 
 let adminPassword = "";
-let currentItems = [];
+
+const params = new URLSearchParams(window.location.search);
+const requestedClient = params.get("client") || "";
 
 
-/*
-==================================================
-Message
-==================================================
-*/
+async function api(url,payload){
 
-function showMessage(text, type = "ok") {
+const response = await fetch(url,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+password:adminPassword,
+...payload
+})
+});
 
-  const box =
-    document.getElementById("message");
+let data={};
 
-  box.textContent =
-    text;
+try{
+data=await response.json();
+}catch{}
 
-  box.className =
-    type;
+if(!response.ok){
+throw new Error(data.error || data.details || "حدث خطأ");
+}
 
-  setTimeout(() => {
-
-    box.className = "";
-
-    box.style.display =
-      "none";
-
-  }, 4000);
+return data;
 }
 
 
-/*
-==================================================
-API Helper
-==================================================
-*/
+function message(text,type="ok"){
 
-async function postAPI(url, payload) {
+const box=document.getElementById("message");
 
-  const response =
-    await fetch(
-      url,
-      {
-        method: "POST",
+box.textContent=text;
+box.className=type;
+box.style.display="block";
 
-        headers: {
-          "Content-Type":
-            "application/json"
-        },
+setTimeout(()=>{
+box.style.display="none";
+},3000);
 
-        body:
-          JSON.stringify({
-            password:
-              adminPassword,
-
-            ...payload
-          })
-      }
-    );
-
-
-  let data = {};
-
-  try {
-
-    data =
-      await response.json();
-
-  } catch (error) {
-
-    data = {};
-  }
-
-
-  if (!response.ok) {
-
-    throw new Error(
-      data.error ||
-      "حدث خطأ في الاتصال"
-    );
-  }
-
-
-  return data;
 }
 
 
-/*
-==================================================
-Login
-==================================================
-*/
+async function login(){
 
-async function login() {
+const value=document.getElementById("password").value.trim();
 
-  const password =
-    document
-      .getElementById("password")
-      .value
-      .trim();
+if(!value){
+alert("أدخل كلمة المرور");
+return;
+}
 
+adminPassword=value;
 
-  if (!password) {
+try{
 
-    alert(
-      "أدخل كلمة مرور الإدارة"
-    );
+await loadClients();
 
-    return;
-  }
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").style.display="block";
 
+}catch(error){
 
-  adminPassword =
-    password;
+adminPassword="";
+alert(error.message);
 
+}
 
-  try {
-
-    await loadClients();
-
-    document
-      .getElementById("loginBox")
-      .style.display =
-        "none";
-
-    document
-      .getElementById("app")
-      .style.display =
-        "block";
-
-  } catch (error) {
-
-    adminPassword = "";
-
-    alert(
-      "تعذر تسجيل الدخول: " +
-      error.message
-    );
-  }
 }
 
 
-/*
-==================================================
-Logout
-==================================================
-*/
+function logout(){
 
-function logout() {
+adminPassword="";
 
-  adminPassword = "";
+document.getElementById("app").style.display="none";
+document.getElementById("loginBox").style.display="block";
 
-  currentItems = [];
-
-  document
-    .getElementById("password")
-    .value =
-      "";
-
-  document
-    .getElementById("app")
-    .style.display =
-      "none";
-
-  document
-    .getElementById("loginBox")
-    .style.display =
-      "block";
 }
 
 
-/*
-==================================================
-Load Clients
-==================================================
-*/
+async function loadClients(){
 
-async function loadClients() {
+const data=await api("/api/client-admin",{
+action:"list"
+});
 
-  const data =
-    await postAPI(
-      "/api/client-admin",
-      {
-        action:
-          "list"
-      }
-    );
+const clients=
+Array.isArray(data.clients)
+?data.clients
+:Array.isArray(data.items)
+?data.items
+:Array.isArray(data)
+?data
+:[];
 
+const select=document.getElementById("clientSelect");
 
-  const clients =
-    Array.isArray(data.clients)
-      ? data.clients
-      : Array.isArray(data.items)
-        ? data.items
-        : Array.isArray(data)
-          ? data
-          : [];
+select.innerHTML='<option value="">اختر العميل</option>';
 
+clients.forEach(client=>{
 
-  const select =
-    document.getElementById(
-      "clientSelect"
-    );
+const option=document.createElement("option");
 
+option.value=client.slug;
 
-  select.innerHTML =
-    '<option value="">اختر العميل</option>';
+option.textContent=
+client.name ||
+client.config?.brand_name ||
+client.slug;
+
+select.appendChild(option);
+
+});
 
 
-  clients.forEach(
-    client => {
+if(requestedClient){
 
-      const option =
-        document.createElement(
-          "option"
-        );
+const exists=clients.some(
+client=>client.slug===requestedClient
+);
 
-      option.value =
-        client.slug;
+if(exists){
+select.value=requestedClient;
+await loadKnowledge();
+return;
+}
 
-      option.textContent =
-        client.name ||
-        client.config?.brand_name ||
-        client.slug;
-
-      select.appendChild(
-        option
-      );
-    }
-  );
-
-
-  /*
-  اختيار First Bike تلقائيا إن وجد
-  */
-
-  const firstBike =
-    clients.find(
-      item =>
-        item.slug ===
-        "first-bike"
-    );
-
-
-  if (firstBike) {
-
-    select.value =
-      "first-bike";
-
-    await loadKnowledge();
-  }
 }
 
 
-/*
-==================================================
-Load Knowledge
-==================================================
-*/
+if(clients.length){
 
-async function loadKnowledge() {
+select.value=clients[0].slug;
+await loadKnowledge();
 
-  const clientSlug =
-    document
-      .getElementById(
-        "clientSelect"
-      )
-      .value;
+}
 
-
-  const list =
-    document.getElementById(
-      "knowledgeList"
-    );
-
-
-  if (!clientSlug) {
-
-    list.innerHTML = "";
-
-    document
-      .getElementById(
-        "clientInfo"
-      )
-      .textContent =
-        "اختر العميل أولًا.";
-
-    return;
-  }
-
-
-  list.innerHTML =
-    "جاري التحميل...";
-
-
-  resetForm();
-
-
-  try {
-
-    const data =
-      await postAPI(
-        "/api/knowledge-admin",
-        {
-          action:
-            "list",
-
-          client_slug:
-            clientSlug
-        }
-      );
-
-
-    currentItems =
-      Array.isArray(data.items)
-        ? data.items
-        : [];
-
-
-    document
-      .getElementById(
-        "clientInfo"
-      )
-      .textContent =
-        `العميل: ${
-          data.client?.name ||
-          clientSlug
-        } — عدد المعلومات: ${
-          currentItems.length
-        }`;
-
-
-    renderKnowledge();
-
-  } catch (error) {
-
-    list.innerHTML = "";
-
-    showMessage(
-      error.message,
-      "error"
-    );
-  }
 }
 
 
-/*
-==================================================
-Render
-==================================================
-*/
+async function clientChanged(){
 
-function renderKnowledge() {
+const slug=document.getElementById("clientSelect").value;
 
-  const list =
-    document.getElementById(
-      "knowledgeList"
-    );
+if(slug){
 
+const newUrl=
+window.location.pathname+
+"?client="+encodeURIComponent(slug);
 
-  list.innerHTML = "";
+history.replaceState({}, "", newUrl);
 
+}
 
-  if (
-    currentItems.length === 0
-  ) {
+await loadKnowledge();
 
-    list.innerHTML =
-      "<p>لا توجد معلومات مسجلة لهذا العميل حتى الآن.</p>";
-
-    return;
-  }
-
-
-  currentItems.forEach(
-    item => {
-
-      const div =
-        document.createElement(
-          "div"
-        );
-
-
-      div.className =
-        "knowledge-item " +
-        (
-          item.active === false
-            ? "inactive"
-            : ""
-        );
-
-
-      const badge =
-        item.active === false
-          ? '<span class="badge inactive">متوقفة</span>'
-          : '<span class="badge active">فعالة</span>';
-
-
-      div.innerHTML = `
-        ${badge}
-
-        <h3>
-          ${escapeHtml(item.question)}
-        </h3>
-
-        <p>
-          ${escapeHtml(item.answer).replace(/\n/g, "<br>")}
-        </p>
-
-        <p class="muted">
-          اللغة:
-          ${
-            item.language === "en"
-              ? "English"
-              : "العربية"
-          }
-        </p>
-
-        <div class="actions">
-
-          <button
-            class="secondary"
-            onclick="editKnowledge('${item.id}')"
-          >
-            تعديل
-          </button>
-
-          <button
-            class="primary"
-            onclick="toggleKnowledge('${item.id}')"
-          >
-            ${
-              item.active === false
-                ? "تشغيل"
-                : "إيقاف"
-            }
-          </button>
-
-          <button
-            class="danger"
-            onclick="deleteKnowledge('${item.id}')"
-          >
-            حذف
-          </button>
-
-        </div>
-      `;
-
-
-      list.appendChild(
-        div
-      );
-    }
-  );
 }
 
 
-/*
-==================================================
-Save
-==================================================
-*/
+async function loadKnowledge(){
 
-async function saveKnowledge() {
+const slug=document.getElementById("clientSelect").value;
 
-  const clientSlug =
-    document
-      .getElementById(
-        "clientSelect"
-      )
-      .value;
+const list=document.getElementById("list");
 
+if(!slug){
+list.innerHTML="اختر العميل.";
+return;
+}
 
-  if (!clientSlug) {
+list.innerHTML="جاري التحميل...";
 
-    alert(
-      "اختر العميل أولًا"
-    );
+try{
 
-    return;
-  }
+const data=await api("/api/knowledge-admin",{
+action:"list",
+client_slug:slug
+});
 
+const items=
+Array.isArray(data.items)
+?data.items
+:Array.isArray(data.knowledge)
+?data.knowledge
+:[];
 
-  const id =
-    document
-      .getElementById("editId")
-      .value;
+render(items);
 
+}catch(error){
 
-  const question =
-    document
-      .getElementById("question")
-      .value
-      .trim();
+list.innerHTML="";
+message(error.message,"error");
 
+}
 
-  const answer =
-    document
-      .getElementById("answer")
-      .value
-      .trim();
-
-
-  const language =
-    document
-      .getElementById("language")
-      .value;
-
-
-  if (
-    !question ||
-    !answer
-  ) {
-
-    alert(
-      "اكتب السؤال والإجابة"
-    );
-
-    return;
-  }
-
-
-  try {
-
-    await postAPI(
-      "/api/knowledge-admin",
-      {
-        action:
-          id
-            ? "update"
-            : "create",
-
-        client_slug:
-          clientSlug,
-
-        id:
-          id || undefined,
-
-        question,
-        answer,
-        language
-      }
-    );
-
-
-    showMessage(
-      id
-        ? "تم تحديث المعلومة بنجاح"
-        : "تمت إضافة المعلومة بنجاح"
-    );
-
-
-    resetForm();
-
-    await loadKnowledge();
-
-  } catch (error) {
-
-    showMessage(
-      error.message,
-      "error"
-    );
-  }
 }
 
 
-/*
-==================================================
-Edit
-==================================================
-*/
+function render(items){
 
-function editKnowledge(id) {
+const list=document.getElementById("list");
 
-  const item =
-    currentItems.find(
-      row =>
-        row.id === id
-    );
+list.innerHTML="";
 
+if(!items.length){
 
-  if (!item) {
-    return;
-  }
+list.innerHTML=
+'<p class="muted">لا توجد معلومات لهذا العميل.</p>';
 
+return;
 
-  document
-    .getElementById("editId")
-    .value =
-      item.id;
-
-
-  document
-    .getElementById("question")
-    .value =
-      item.question || "";
-
-
-  document
-    .getElementById("answer")
-    .value =
-      item.answer || "";
-
-
-  document
-    .getElementById("language")
-    .value =
-      item.language === "en"
-        ? "en"
-        : "ar";
-
-
-  document
-    .getElementById(
-      "formTitle"
-    )
-    .textContent =
-      "تعديل المعلومة";
-
-
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth"
-  });
 }
 
 
-/*
-==================================================
-Toggle
-==================================================
-*/
+items.forEach(item=>{
 
-async function toggleKnowledge(id) {
+const div=document.createElement("div");
+div.className="item";
 
-  const clientSlug =
-    document
-      .getElementById(
-        "clientSelect"
-      )
-      .value;
+div.innerHTML=`
 
+<label>السؤال</label>
+<textarea id="q-${item.id}">${escapeHtml(item.question || "")}</textarea>
 
-  try {
+<label>الإجابة</label>
+<textarea id="a-${item.id}">${escapeHtml(item.answer || "")}</textarea>
 
-    await postAPI(
-      "/api/knowledge-admin",
-      {
-        action:
-          "toggle",
+<label>اللغة</label>
 
-        client_slug:
-          clientSlug,
+<select id="l-${item.id}">
+<option value="ar" ${item.language==="ar"?"selected":""}>العربية</option>
+<option value="en" ${item.language==="en"?"selected":""}>English</option>
+</select>
 
-        id
-      }
-    );
+<p class="muted">
+الحالة:
+${item.active===false ? "متوقفة" : "فعالة"}
+</p>
 
+<div class="actions">
 
-    await loadKnowledge();
+<button class="success"
+onclick="updateItem('${item.id}')">
+حفظ
+</button>
 
-  } catch (error) {
+<button class="secondary"
+onclick="toggleItem('${item.id}')">
+${item.active===false ? "تفعيل" : "إيقاف"}
+</button>
 
-    showMessage(
-      error.message,
-      "error"
-    );
-  }
+<button class="danger"
+onclick="deleteItem('${item.id}')">
+حذف
+</button>
+
+</div>
+`;
+
+list.appendChild(div);
+
+});
+
 }
 
 
-/*
-==================================================
-Delete
-==================================================
-*/
+async function createItem(){
 
-async function deleteKnowledge(id) {
+const slug=document.getElementById("clientSelect").value;
+const question=document.getElementById("question").value.trim();
+const answer=document.getElementById("answer").value.trim();
+const language=document.getElementById("language").value;
 
-  const confirmed =
-    confirm(
-      "هل تريد حذف هذه المعلومة نهائيًا؟"
-    );
+if(!slug || !question || !answer){
+alert("اختر العميل واكتب السؤال والإجابة");
+return;
+}
 
+try{
 
-  if (!confirmed) {
-    return;
-  }
+await api("/api/knowledge-admin",{
+action:"create",
+client_slug:slug,
+question,
+answer,
+language
+});
 
+document.getElementById("question").value="";
+document.getElementById("answer").value="";
 
-  const clientSlug =
-    document
-      .getElementById(
-        "clientSelect"
-      )
-      .value;
+message("تمت الإضافة بنجاح");
 
+await loadKnowledge();
 
-  try {
+}catch(error){
+message(error.message,"error");
+}
 
-    await postAPI(
-      "/api/knowledge-admin",
-      {
-        action:
-          "delete",
-
-        client_slug:
-          clientSlug,
-
-        id
-      }
-    );
-
-
-    showMessage(
-      "تم حذف المعلومة"
-    );
-
-
-    await loadKnowledge();
-
-  } catch (error) {
-
-    showMessage(
-      error.message,
-      "error"
-    );
-  }
 }
 
 
-/*
-==================================================
-Reset
-==================================================
-*/
+async function updateItem(id){
 
-function resetForm() {
+const slug=document.getElementById("clientSelect").value;
 
-  document
-    .getElementById("editId")
-    .value =
-      "";
+try{
 
-  document
-    .getElementById("question")
-    .value =
-      "";
+await api("/api/knowledge-admin",{
+action:"update",
+client_slug:slug,
+id,
+question:document.getElementById("q-"+id).value.trim(),
+answer:document.getElementById("a-"+id).value.trim(),
+language:document.getElementById("l-"+id).value
+});
 
-  document
-    .getElementById("answer")
-    .value =
-      "";
+message("تم الحفظ");
 
-  document
-    .getElementById("language")
-    .value =
-      "ar";
+await loadKnowledge();
 
-  document
-    .getElementById(
-      "formTitle"
-    )
-    .textContent =
-      "إضافة معلومة جديدة";
+}catch(error){
+message(error.message,"error");
+}
+
 }
 
 
-/*
-==================================================
-Escape HTML
-==================================================
-*/
+async function toggleItem(id){
 
-function escapeHtml(value) {
+const slug=document.getElementById("clientSelect").value;
 
-  const div =
-    document.createElement(
-      "div"
-    );
+try{
 
-  div.textContent =
-    value || "";
+await api("/api/knowledge-admin",{
+action:"toggle",
+client_slug:slug,
+id
+});
 
-  return div.innerHTML;
+await loadKnowledge();
+
+}catch(error){
+message(error.message,"error");
+}
+
 }
 
 
-/*
-==================================================
-Enter Login
-==================================================
-*/
+async function deleteItem(id){
 
-document
-  .getElementById("password")
-  .addEventListener(
-    "keydown",
-    function(event) {
+if(!confirm("هل تريد حذف هذه المعلومة؟")){
+return;
+}
 
-      if (
-        event.key === "Enter"
-      ) {
+const slug=document.getElementById("clientSelect").value;
 
-        login();
-      }
-    }
-  );
+try{
+
+await api("/api/knowledge-admin",{
+action:"delete",
+client_slug:slug,
+id
+});
+
+message("تم الحذف");
+
+await loadKnowledge();
+
+}catch(error){
+message(error.message,"error");
+}
+
+}
+
+
+function escapeHtml(value){
+
+return String(value)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+
+document.getElementById("password")
+.addEventListener("keydown",event=>{
+if(event.key==="Enter"){
+login();
+}
+});
 
 </script>
 
