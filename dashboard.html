@@ -243,9 +243,27 @@
     </div>
 
     <div class="card">
-      <div class="label">إجمالي استهلاك AI</div>
+      <div class="label">إجمالي Tokens</div>
       <div class="value" id="totalTokens">-</div>
       <div class="small" id="aiUsageRecords">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">تكلفة الذكاء الاصطناعي بالدولار</div>
+      <div class="value" id="aiCostUsd">-</div>
+      <div class="small" id="aiModel">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">تكلفة الذكاء الاصطناعي بالدرهم</div>
+      <div class="value" id="aiCostAed">-</div>
+      <div class="small">تكلفة الاستخدام المسجلة حتى الآن</div>
+    </div>
+
+    <div class="card">
+      <div class="label">أسعار النموذج</div>
+      <div class="value" style="font-size:22px" id="aiPricing">-</div>
+      <div class="small">لكل مليون Token</div>
     </div>
 
   </div>
@@ -332,6 +350,10 @@ function formatNumber(value){
   return Number(value || 0).toLocaleString("en-US");
 }
 
+function formatMoney(value, decimals = 4){
+  return Number(value || 0).toFixed(decimals);
+}
+
 function formatDate(value){
   if(!value) return "-";
 
@@ -391,14 +413,17 @@ async function loadDashboard(){
 
     const summary = data.summary || {};
     const daily = Array.isArray(data.daily) ? data.daily : [];
+
     const unanswered =
       Array.isArray(data.recent_unanswered_questions)
         ? data.recent_unanswered_questions
         : [];
+
     const commonQuestions =
       Array.isArray(data.common_questions)
         ? data.common_questions
         : [];
+
     const peakHours =
       Array.isArray(data.peak_hours)
         ? data.peak_hours
@@ -426,7 +451,7 @@ async function loadDashboard(){
       formatNumber(summary.callback_requests);
 
     document.getElementById("callbackRate").textContent =
-      "نسبة المحادثات: " +
+      "النسبة: " +
       (summary.callback_rate_percent ?? 0) +
       "%";
 
@@ -434,7 +459,7 @@ async function loadDashboard(){
       formatNumber(summary.human_handoff_requests);
 
     document.getElementById("handoffRate").textContent =
-      "نسبة المحادثات: " +
+      "النسبة: " +
       (summary.human_handoff_rate_percent ?? 0) +
       "%";
 
@@ -467,8 +492,24 @@ async function loadDashboard(){
       formatNumber(summary.total_tokens);
 
     document.getElementById("aiUsageRecords").textContent =
-      "عمليات AI المسجلة: " +
+      "عمليات AI: " +
       formatNumber(summary.ai_usage_records);
+
+    document.getElementById("aiCostUsd").textContent =
+      "$" + formatMoney(summary.ai_cost_usd, 4);
+
+    document.getElementById("aiCostAed").textContent =
+      formatMoney(summary.ai_cost_aed, 2) + " AED";
+
+    document.getElementById("aiModel").textContent =
+      summary.ai_model || "-";
+
+    document.getElementById("aiPricing").textContent =
+      "$" +
+      (summary.input_price_per_million_usd ?? 0) +
+      " Input / $" +
+      (summary.output_price_per_million_usd ?? 0) +
+      " Output";
 
 
     commonQuestionsTable.innerHTML = "";
@@ -519,12 +560,10 @@ async function loadDashboard(){
 
         const conversationsTd = document.createElement("td");
         conversationsTd.className = "count";
-        conversationsTd.textContent =
-          formatNumber(row.conversations);
+        conversationsTd.textContent = formatNumber(row.conversations);
 
         const messagesTd = document.createElement("td");
-        messagesTd.textContent =
-          formatNumber(row.messages);
+        messagesTd.textContent = formatNumber(row.messages);
 
         tr.append(hourTd,conversationsTd,messagesTd);
         peakHoursTable.appendChild(tr);
