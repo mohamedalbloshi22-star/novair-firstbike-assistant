@@ -5,33 +5,51 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const CLIENT_SLUG = "first-bike";
 const UNANSWERED_MARKER = "[[UNANSWERED]]";
 
+const MAX_KNOWLEDGE_ITEMS_SENT = 10;
+const MAX_MESSAGES_SENT = 8;
+const MAX_ANTHROPIC_TOKENS = 300;
+
+
+/*
+==================================================
+Supabase
+==================================================
+*/
 
 async function supabaseRequest(path, options = {}) {
+
   const response = await fetch(
     `${SUPABASE_URL}/rest/v1/${path}`,
     {
       method: options.method || "GET",
+
       headers: {
         apikey: SUPABASE_KEY,
         Authorization: `Bearer ${SUPABASE_KEY}`,
         "Content-Type": "application/json",
+
         ...(options.prefer
           ? { Prefer: options.prefer }
           : {})
       },
+
       body: options.body
         ? JSON.stringify(options.body)
         : undefined
     }
   );
 
+
   const text = await response.text();
 
+
   if (!response.ok) {
+
     throw new Error(
       `Supabase error ${response.status}: ${text}`
     );
   }
+
 
   return text
     ? JSON.parse(text)
@@ -39,26 +57,41 @@ async function supabaseRequest(path, options = {}) {
 }
 
 
+/*
+==================================================
+Client
+==================================================
+*/
+
 async function getClient() {
+
   const rows = await supabaseRequest(
-    `clients?slug=eq.${encodeURIComponent(
-      CLIENT_SLUG
-    )}&select=id,name,slug&limit=1`
+    `clients` +
+    `?slug=eq.${encodeURIComponent(CLIENT_SLUG)}` +
+    `&select=id,name,slug` +
+    `&limit=1`
   );
+
 
   if (
     !Array.isArray(rows) ||
     rows.length === 0
   ) {
-    throw new Error("Client not found");
+
+    throw new Error(
+      "Client not found"
+    );
   }
+
 
   return rows[0];
 }
 
 
 /*
-  قاعدة المعرفة الرسمية
+==================================================
+Knowledge Base
+==================================================
 */
 
 async function getKnowledgeBase(clientId) {
@@ -72,9 +105,11 @@ async function getKnowledgeBase(clientId) {
     `&limit=200`
   );
 
+
   if (!Array.isArray(rows)) {
     return [];
   }
+
 
   return rows.filter(
     row =>
@@ -87,30 +122,337 @@ async function getKnowledgeBase(clientId) {
 }
 
 
+/*
+==================================================
+Text normalization
+==================================================
+*/
+
+function normalizeText(value) {
+
+  return String(value || "")
+    .toLowerCase()
+
+    /*
+      Arabic diacritics
+    */
+    .replace(
+      /[\u064B-\u065F\u0670\u06D6-\u06ED]/g,
+      ""
+    )
+
+    /*
+      Normalize Arabic letters
+    */
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ؤ/g, "و")
+    .replace(/ئ/g, "ي")
+    .replace(/ة/g, "ه")
+
+    /*
+      Remove punctuation
+    */
+    .replace(
+      /[^\p{L}\p{N}\s]/gu,
+      " "
+    )
+
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+
+const STOP_WORDS = new Set([
+  "هل",
+  "في",
+  "من",
+  "على",
+  "الى",
+  "إلى",
+  "عن",
+  "ما",
+  "ماذا",
+  "كم",
+  "كيف",
+  "متى",
+  "وين",
+  "اين",
+  "أين",
+  "عندكم",
+  "عندك",
+  "لديكم",
+  "يوجد",
+  "فيه",
+  "فيها",
+  "هو",
+  "هي",
+  "هذا",
+  "هذه",
+  "و",
+  "او",
+  "أو",
+  "the",
+  "a",
+  "an",
+  "is",
+  "are",
+  "do",
+  "does",
+  "what",
+  "when",
+  "where",
+  "how",
+  "can",
+  "you",
+  "your",
+  "have",
+  "has",
+  "there"
+]);
+
+
+function tokenize(value) {
+
+  return normalizeText(value)
+    .split(" ")
+    .filter(
+      token =>
+        token.length >= 2 &&
+        !STOP_WORDS.has(token)
+    );
+}
+
+
+/*
+==================================================
+Choose relevant knowledge
+==================================================
+*/
+
+function scoreKnowledgeItem(
+  item,
+  userQuestion
+) {
+
+  const normalizedQuestion =
+    normalizeText(userQuestion);
+
+  const normalizedStoredQuestion =
+    normalizeText(item.question);
+
+  const normalizedAnswer =
+    normalizeText(item.answer);
+
+
+  if (!normalizedQuestion) {
+    return 0;
+  }
+
+
+  /*
+    Strong exact / containment match
+  */
+
+  if (
+    normalizedStoredQuestion ===
+    normalizedQuestion
+  ) {
+
+    return 1000;
+  }
+
+
+  let score = 0;
+
+
+  if (
+    normalizedStoredQuestion.includes(
+      normalizedQuestion
+    ) ||
+    normalizedQuestion.includes(
+      normalizedStoredQuestion
+    )
+  ) {
+
+    score += 300;
+  }
+
+
+  const userTokens =
+    tokenize(userQuestion);
+
+  const storedTokens =
+    new Set(
+      tokenize(item.question)
+    );
+
+  const answerTokens =
+    new Set(
+      tokenize(item.answer)
+    );
+
+
+  for (const token of userTokens) {
+
+    if (storedTokens.has(token)) {
+      score += 30;
+    }
+
+    if (answerTokens.has(token)) {
+      score += 8;
+    }
+  }
+
+
+  /*
+    Prefer newer item slightly when scores tie
+  */
+
+  if (item.updated_at) {
+
+    const age =
+      Date.now() -
+      new Date(item.updated_at).getTime();
+
+    const thirtyDays =
+      30 * 24 * 60 * 60 * 1000;
+
+
+    if (
+      Number.isFinite(age) &&
+      age >= 0 &&
+      age <= thirtyDays
+    ) {
+
+      score += 2;
+    }
+  }
+
+
+  return score;
+}
+
+
+function selectRelevantKnowledge(
+  rows,
+  userQuestion
+) {
+
+  if (
+    !Array.isArray(rows) ||
+    rows.length === 0
+  ) {
+
+    return [];
+  }
+
+
+  /*
+    When the knowledge base is still small,
+    sending it all is safe and preserves recall.
+  */
+
+  if (
+    rows.length <=
+    MAX_KNOWLEDGE_ITEMS_SENT
+  ) {
+
+    return rows;
+  }
+
+
+  const scored =
+    rows
+      .map(
+        item => ({
+          item,
+          score:
+            scoreKnowledgeItem(
+              item,
+              userQuestion
+            )
+        })
+      )
+
+      .sort(
+        (a, b) =>
+          b.score - a.score
+      );
+
+
+  const relevant =
+    scored
+      .filter(
+        entry =>
+          entry.score > 0
+      )
+
+      .slice(
+        0,
+        MAX_KNOWLEDGE_ITEMS_SENT
+      )
+
+      .map(
+        entry =>
+          entry.item
+      );
+
+
+  /*
+    If lexical matching found nothing,
+    send only the newest few items instead
+    of the entire database.
+  */
+
+  if (relevant.length === 0) {
+
+    return rows.slice(
+      0,
+      Math.min(
+        5,
+        MAX_KNOWLEDGE_ITEMS_SENT
+      )
+    );
+  }
+
+
+  return relevant;
+}
+
+
 function buildKnowledgeText(rows) {
 
   if (
     !Array.isArray(rows) ||
     rows.length === 0
   ) {
-    return "لا توجد معلومات إضافية معتمدة حاليًا.";
+
+    return "لا توجد معلومات إضافية معتمدة ذات صلة حاليًا.";
   }
 
+
   return rows
-    .map((row, index) => {
-      return `
-${index + 1}.
+    .map(
+      (row, index) => {
 
-السؤال أو الموضوع:
-${row.question.trim()}
+        return (
+          `${index + 1}. ` +
+          `السؤال/الموضوع: ${row.question.trim()}\n` +
+          `الإجابة المعتمدة: ${row.answer.trim()}`
+        );
+      }
+    )
 
-الإجابة الرسمية المعتمدة:
-${row.answer.trim()}
-`;
-    })
-    .join("\n");
+    .join("\n\n");
 }
 
+
+/*
+==================================================
+Conversation
+==================================================
+*/
 
 async function getOrCreateConversation(
   clientId,
@@ -124,12 +466,14 @@ async function getOrCreateConversation(
       : "ar";
 
 
-  const existing = await supabaseRequest(
-    `conversations?client_id=eq.${clientId}` +
-    `&session_id=eq.${encodeURIComponent(sessionId)}` +
-    `&select=id,client_id,session_id,resolved_by_ai,human_handoff,callback_requested,language` +
-    `&limit=1`
-  );
+  const existing =
+    await supabaseRequest(
+      `conversations` +
+      `?client_id=eq.${clientId}` +
+      `&session_id=eq.${encodeURIComponent(sessionId)}` +
+      `&select=id,client_id,session_id,resolved_by_ai,human_handoff,callback_requested,language` +
+      `&limit=1`
+    );
 
 
   if (
@@ -142,7 +486,8 @@ async function getOrCreateConversation(
 
 
     if (
-      conversation.language !== safeLanguage
+      conversation.language !==
+      safeLanguage
     ) {
 
       await supabaseRequest(
@@ -158,6 +503,7 @@ async function getOrCreateConversation(
         }
       );
 
+
       conversation.language =
         safeLanguage;
     }
@@ -167,42 +513,44 @@ async function getOrCreateConversation(
   }
 
 
-  const created = await supabaseRequest(
-    "conversations",
-    {
-      method: "POST",
-      prefer: "return=representation",
+  const created =
+    await supabaseRequest(
+      "conversations",
+      {
+        method: "POST",
+        prefer: "return=representation",
 
-      body: {
-        client_id:
-          clientId,
+        body: {
+          client_id:
+            clientId,
 
-        session_id:
-          sessionId,
+          session_id:
+            sessionId,
 
-        status:
-          "open",
+          status:
+            "open",
 
-        resolved_by_ai:
-          null,
+          resolved_by_ai:
+            null,
 
-        human_handoff:
-          false,
+          human_handoff:
+            false,
 
-        callback_requested:
-          false,
+          callback_requested:
+            false,
 
-        language:
-          safeLanguage
+          language:
+            safeLanguage
+        }
       }
-    }
-  );
+    );
 
 
   if (
     !Array.isArray(created) ||
     created.length === 0
   ) {
+
     throw new Error(
       "Unable to create conversation"
     );
@@ -212,6 +560,12 @@ async function getOrCreateConversation(
   return created[0];
 }
 
+
+/*
+==================================================
+Messages
+==================================================
+*/
 
 async function saveMessage(
   conversationId,
@@ -246,6 +600,12 @@ async function saveMessage(
 }
 
 
+/*
+==================================================
+Unanswered
+==================================================
+*/
+
 async function saveUnansweredQuestion(
   clientId,
   conversationId,
@@ -275,6 +635,12 @@ async function saveUnansweredQuestion(
 }
 
 
+/*
+==================================================
+Resolution status
+==================================================
+*/
+
 async function updateResolutionStatus(
   conversation,
   isUnanswered
@@ -289,6 +655,7 @@ async function updateResolutionStatus(
     conversation.human_handoff === true ||
     conversation.callback_requested === true
   ) {
+
     resolvedByAi = false;
   }
 
@@ -310,6 +677,12 @@ async function updateResolutionStatus(
   return resolvedByAi;
 }
 
+
+/*
+==================================================
+Latest user message
+==================================================
+*/
 
 function getLatestUserMessage(messages) {
 
@@ -335,6 +708,57 @@ function getLatestUserMessage(messages) {
 }
 
 
+/*
+==================================================
+Trim conversation history
+==================================================
+*/
+
+function prepareMessagesForClaude(messages) {
+
+  if (!Array.isArray(messages)) {
+    return [];
+  }
+
+
+  return messages
+
+    .filter(
+      message =>
+        message &&
+        (
+          message.role === "user" ||
+          message.role === "assistant"
+        ) &&
+        String(
+          message.content || ""
+        ).trim()
+    )
+
+    .slice(
+      -MAX_MESSAGES_SENT
+    )
+
+    .map(
+      message => ({
+        role:
+          message.role,
+
+        content:
+          String(
+            message.content || ""
+          ).trim()
+      })
+    );
+}
+
+
+/*
+==================================================
+Clean hidden marker
+==================================================
+*/
+
 function cleanAssistantText(text) {
 
   return String(text || "")
@@ -346,6 +770,12 @@ function cleanAssistantText(text) {
 }
 
 
+/*
+==================================================
+Handler
+==================================================
+*/
+
 module.exports = async function handler(
   req,
   res
@@ -354,7 +784,8 @@ module.exports = async function handler(
   if (req.method !== "POST") {
 
     return res.status(405).json({
-      error: "Method not allowed"
+      error:
+        "Method not allowed"
     });
   }
 
@@ -412,7 +843,9 @@ module.exports = async function handler(
 
 
     const latestUserMessage =
-      getLatestUserMessage(messages);
+      getLatestUserMessage(
+        messages
+      );
 
 
     if (!latestUserMessage) {
@@ -424,17 +857,53 @@ module.exports = async function handler(
     }
 
 
+    /*
+    ==============================================
+    1. Get client
+    ==============================================
+    */
+
     const client =
       await getClient();
 
 
-    const conversation =
-      await getOrCreateConversation(
+    /*
+    ==============================================
+    2. Conversation + knowledge in parallel
+    ==============================================
+    */
+
+    const [
+      conversation,
+      knowledgeResult
+    ] = await Promise.all([
+      getOrCreateConversation(
         client.id,
         session_id,
         safeLanguage
-      );
+      ),
 
+      getKnowledgeBase(
+        client.id
+      ).catch(
+        error => {
+
+          console.error(
+            "KNOWLEDGE BASE LOAD ERROR:",
+            error
+          );
+
+          return [];
+        }
+      )
+    ]);
+
+
+    /*
+    ==============================================
+    3. Save user's message
+    ==============================================
+    */
 
     await saveMessage(
       conversation.id,
@@ -444,149 +913,79 @@ module.exports = async function handler(
 
 
     /*
-      تحميل قاعدة المعرفة الرسمية
+    ==============================================
+    4. Select only relevant knowledge
+    ==============================================
     */
 
-    let knowledgeBase = [];
-
-
-    try {
-
-      knowledgeBase =
-        await getKnowledgeBase(
-          client.id
-        );
-
-    } catch (knowledgeError) {
-
-      console.error(
-        "KNOWLEDGE BASE LOAD ERROR:",
-        knowledgeError
+    const relevantKnowledge =
+      selectRelevantKnowledge(
+        knowledgeResult,
+        latestUserMessage
       );
-
-      knowledgeBase = [];
-    }
 
 
     const knowledgeText =
       buildKnowledgeText(
-        knowledgeBase
+        relevantKnowledge
       );
 
 
+    /*
+    ==============================================
+    5. Shorter system prompt
+    ==============================================
+    */
+
     const systemPrompt = `
-أنت المساعد الذكي الرسمي لمحل First Bike للدراجات النارية في العين.
+أنت المساعد الرسمي لـ First Bike للدراجات النارية في العين.
 
-==================================================
-
-معلومات First Bike الأساسية:
-
-النشاط:
-تأجير وتصليح الدراجات النارية وقطع الغيار.
-
-الموقع:
-العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون.
-
-ساعات العمل:
-يوميًا من الساعة 3 مساءً حتى 12 منتصف الليل.
-
-==================================================
+معلومات أساسية معتمدة:
+- النشاط: تأجير وتصليح الدراجات النارية وقطع الغيار.
+- الموقع: العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون.
+- الدوام: يوميًا من 3 مساءً إلى 12 منتصف الليل.
 
 أسعار التأجير بالساعة:
+- 50cc: 80 درهم.
+- 90cc: 150 درهم.
+- 220cc: 200 درهم.
+- 400cc: 250 درهم.
+- 800cc فما فوق: 300 درهم.
 
-50cc:
-80 درهم.
-
-90cc:
-150 درهم.
-
-220cc:
-200 درهم.
-
-400cc:
-250 درهم.
-
-800cc فما فوق:
-300 درهم.
-
-==================================================
-
-قاعدة المعرفة الرسمية والمعتمدة:
-
+المعلومات المعتمدة الإضافية ذات الصلة:
 ${knowledgeText}
 
-==================================================
-
-قواعد قاعدة المعرفة:
-
-1. قاعدة المعرفة أعلاه معتمدة رسميًا.
-
-2. إذا كان سؤال العميل يطابق معلومة موجودة في قاعدة المعرفة
-أو يحمل نفس المعنى، استخدم الإجابة الموجودة فيها.
-
-3. لا يشترط أن يستخدم العميل نفس صياغة السؤال المخزنة.
-
-4. افهم معنى السؤال قبل الإجابة.
-
-5. يمكنك إعادة صياغة الإجابة بصورة طبيعية ومهنية،
-لكن لا تغير معناها ولا تضف معلومات غير معتمدة.
-
-6. إذا وجد أكثر من سجل مناسب،
-استخدم المعلومة الأحدث والأكثر ارتباطًا بالسؤال.
-
-7. لا تخبر العميل بوجود قاعدة معرفة أو لوحة إدارة.
-
-8. لا تعرض أي معلومات إدارية داخلية.
-
-==================================================
-
-قواعد الإجابة العامة:
-
-1. أجب فقط اعتمادًا على:
-- معلومات First Bike الأساسية.
-- قاعدة المعرفة الرسمية أعلاه.
-
-2. لا تخترع:
-- أسعارًا.
-- سياسات.
-- شروطًا.
-- خدمات.
-- مواعيد.
-- معلومات غير موجودة.
-
-3. إذا لم تكن الإجابة موجودة في المعلومات الأساسية
-ولا في قاعدة المعرفة، أخبر العميل أن المعلومة تحتاج
-إلى تأكيد من First Bike.
-
-4. في هذه الحالة فقط أضف في نهاية ردك:
-
-${UNANSWERED_MARKER}
-
-5. لا تضف العلامة إذا استطعت إعطاء إجابة مؤكدة.
-
-6. لا تشرح للعميل معنى العلامة.
-
-7. إذا كانت اللغة الحالية عربية، أجب بالعربية.
-
-8. إذا كانت اللغة الحالية إنجليزية، أجب بالإنجليزية.
-
-9. إذا كانت المعلومة المخزنة بالعربية والعميل يتحدث الإنجليزية،
-ترجم المعنى بدقة دون إضافة معلومات جديدة.
-
-10. اجعل الرد مختصرًا ومهنيًا ومفيدًا.
-
-11. إذا احتاج العميل لموظف أو اتصال،
-يمكنك إرشاده إلى زر التحدث مع مسؤول أو طلب اتصال.
-
-==================================================
-
-لغة المحادثة الحالية:
-
-${safeLanguage === "en"
-  ? "English"
-  : "Arabic"}
+قواعد إلزامية:
+- أجب فقط من المعلومات الأساسية أو المعلومات المعتمدة أعلاه.
+- افهم معنى سؤال العميل؛ لا يشترط التطابق الحرفي.
+- يمكنك إعادة صياغة المعلومة دون تغيير معناها.
+- لا تخترع أسعارًا أو شروطًا أو سياسات أو خدمات أو مواعيد.
+- إذا لم توجد إجابة مؤكدة، أخبر العميل أن المعلومة تحتاج تأكيدًا من First Bike، ثم أضف في نهاية الرد ${UNANSWERED_MARKER}
+- لا تضف العلامة إذا كانت لديك إجابة مؤكدة.
+- لا تذكر قاعدة المعرفة أو العلامة أو أي معلومات إدارية للعميل.
+- إذا احتاج العميل موظفًا أو اتصالًا، يمكن إرشاده إلى زر التحدث مع مسؤول أو طلب اتصال.
+- اجعل الرد قصيرًا وطبيعيًا ومهنيًا.
+- لغة الرد الحالية: ${safeLanguage === "en" ? "English" : "العربية"}.
 `;
 
+
+    /*
+    ==============================================
+    6. Send only recent useful messages
+    ==============================================
+    */
+
+    const claudeMessages =
+      prepareMessagesForClaude(
+        messages
+      );
+
+
+    /*
+    ==============================================
+    7. Anthropic
+    ==============================================
+    */
 
     const anthropicResponse =
       await fetch(
@@ -611,23 +1010,13 @@ ${safeLanguage === "en"
                 "claude-sonnet-4-6",
 
               max_tokens:
-                500,
+                MAX_ANTHROPIC_TOKENS,
 
               system:
                 systemPrompt,
 
               messages:
-                messages.map(
-                  message => ({
-                    role:
-                      message.role,
-
-                    content:
-                      String(
-                        message.content || ""
-                      )
-                  })
-                )
+                claudeMessages
             })
         }
       );
@@ -652,10 +1041,7 @@ ${safeLanguage === "en"
 
 
     const rawAnswer =
-      anthropicData &&
-      anthropicData.content &&
-      anthropicData.content[0] &&
-      anthropicData.content[0].text
+      anthropicData?.content?.[0]?.text
         ? anthropicData.content[0].text
         : "";
 
@@ -667,6 +1053,12 @@ ${safeLanguage === "en"
       );
     }
 
+
+    /*
+    ==============================================
+    8. Detect unanswered
+    ==============================================
+    */
 
     const isUnanswered =
       rawAnswer.includes(
@@ -680,45 +1072,68 @@ ${safeLanguage === "en"
       );
 
 
-    await saveMessage(
-      conversation.id,
-      "assistant",
-      cleanAnswer,
+    /*
+    ==============================================
+    9. Save result operations in parallel
+    ==============================================
+    */
 
-      anthropicData.usage?.input_tokens ??
-        null,
+    const saveAssistantPromise =
+      saveMessage(
+        conversation.id,
+        "assistant",
+        cleanAnswer,
 
-      anthropicData.usage?.output_tokens ??
-        null
-    );
+        anthropicData.usage?.input_tokens ??
+          null,
 
-
-    if (isUnanswered) {
-
-      try {
-
-        await saveUnansweredQuestion(
-          client.id,
-          conversation.id,
-          latestUserMessage
-        );
-
-      } catch (unansweredError) {
-
-        console.error(
-          "UNANSWERED QUESTION LOG ERROR:",
-          unansweredError
-        );
-      }
-    }
+        anthropicData.usage?.output_tokens ??
+          null
+      );
 
 
-    const resolvedByAi =
-      await updateResolutionStatus(
+    const resolutionPromise =
+      updateResolutionStatus(
         conversation,
         isUnanswered
       );
 
+
+    const unansweredPromise =
+      isUnanswered
+        ? saveUnansweredQuestion(
+            client.id,
+            conversation.id,
+            latestUserMessage
+          ).catch(
+            error => {
+
+              console.error(
+                "UNANSWERED QUESTION LOG ERROR:",
+                error
+              );
+
+              return null;
+            }
+          )
+        : Promise.resolve(null);
+
+
+    const [
+      ,
+      resolvedByAi
+    ] = await Promise.all([
+      saveAssistantPromise,
+      resolutionPromise,
+      unansweredPromise
+    ]);
+
+
+    /*
+    ==============================================
+    10. Return clean response
+    ==============================================
+    */
 
     if (
       anthropicData.content &&
@@ -754,7 +1169,10 @@ ${safeLanguage === "en"
           resolvedByAi,
 
         knowledge_items:
-          knowledgeBase.length
+          knowledgeResult.length,
+
+        knowledge_items_used:
+          relevantKnowledge.length
       }
     });
 
