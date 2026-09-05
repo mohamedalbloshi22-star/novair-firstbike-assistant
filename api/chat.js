@@ -51,12 +51,16 @@ async function getClient() {
 
 async function getOrCreateConversation(
   clientId,
-  sessionId
+  sessionId,
+  language
 ) {
+  const safeLanguage =
+    language === "en" ? "en" : "ar";
+
   const existing = await supabaseRequest(
     `conversations?client_id=eq.${clientId}` +
     `&session_id=eq.${encodeURIComponent(sessionId)}` +
-    `&select=id,client_id,session_id,resolved_by_ai,human_handoff,callback_requested` +
+    `&select=id,client_id,session_id,resolved_by_ai,human_handoff,callback_requested,language` +
     `&limit=1`
   );
 
@@ -64,7 +68,24 @@ async function getOrCreateConversation(
     Array.isArray(existing) &&
     existing.length > 0
   ) {
-    return existing[0];
+    const conversation = existing[0];
+
+    if (conversation.language !== safeLanguage) {
+      await supabaseRequest(
+        `conversations?id=eq.${conversation.id}`,
+        {
+          method: "PATCH",
+          prefer: "return=minimal",
+          body: {
+            language: safeLanguage
+          }
+        }
+      );
+
+      conversation.language = safeLanguage;
+    }
+
+    return conversation;
   }
 
   const created = await supabaseRequest(
@@ -78,7 +99,8 @@ async function getOrCreateConversation(
         status: "open",
         resolved_by_ai: null,
         human_handoff: false,
-        callback_requested: false
+        callback_requested: false,
+        language: safeLanguage
       }
     }
   );
@@ -217,6 +239,9 @@ module.exports = async function handler(req, res) {
       session_id
     } = req.body || {};
 
+    const safeLanguage =
+      language === "en" ? "en" : "ar";
+
     if (
       !Array.isArray(messages) ||
       messages.length === 0
@@ -249,7 +274,8 @@ module.exports = async function handler(req, res) {
     const conversation =
       await getOrCreateConversation(
         client.id,
-        session_id
+        session_id,
+        safeLanguage
       );
 
     await saveMessage(
@@ -262,7 +288,6 @@ module.exports = async function handler(req, res) {
 أنت المساعد الذكي الرسمي لمحل First Bike للدراجات النارية في العين.
 
 معلومات First Bike المؤكدة:
-
 - النشاط: تأجير وتصليح الدراجات النارية وقطع الغيار.
 - الموقع: العين، السلامات، شارع الهيبة، بجانب كافيه 1 مليون.
 - ساعات العمل: يوميًا من الساعة 3 مساءً حتى 12 منتصف الليل.
@@ -278,7 +303,6 @@ module.exports = async function handler(req, res) {
 الأسعار تختلف حسب نوع العطل والقطعة والتركيب، ولا توجد أسعار ثابتة مؤكدة في المعلومات المتاحة.
 
 قواعد مهمة جدًا:
-
 1. أجب فقط بناءً على المعلومات المؤكدة المتاحة لك عن First Bike.
 2. لا تخترع سعرًا أو سياسة أو خدمة أو شرطًا أو معلومة غير موجودة.
 3. إذا كان السؤال يحتاج معلومة غير متوفرة لديك، أخبر العميل باختصار أن هذه المعلومة تحتاج تأكيدًا من First Bike.
@@ -291,7 +315,7 @@ ${UNANSWERED_MARKER}
 9. إذا كان العميل يحتاج موظفًا أو اتصالًا، أخبره أنه يستطيع استخدام زر التحدث مع مسؤول أو طلب اتصال الموجود في المحادثة.
 
 لغة المحادثة الحالية:
-${language === "en" ? "English" : "Arabic"}
+${safeLanguage === "en" ? "English" : "Arabic"}
 `;
 
     const anthropicResponse = await fetch(
@@ -395,6 +419,7 @@ ${language === "en" ? "English" : "Arabic"}
         client_id: client.id,
         conversation_id: conversation.id,
         session_id,
+        language: safeLanguage,
         unanswered: isUnanswered,
         resolved_by_ai: resolvedByAi
       }
