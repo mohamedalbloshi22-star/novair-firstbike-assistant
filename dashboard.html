@@ -257,6 +257,28 @@
   </div>
 
   <div class="section-title">
+    أوقات الذروة
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>الساعة</th>
+          <th>عدد المحادثات</th>
+          <th>عدد الرسائل</th>
+        </tr>
+      </thead>
+
+      <tbody id="peakHoursTable">
+        <tr>
+          <td colspan="3">جاري تحميل البيانات...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
     الإحصائيات اليومية
   </div>
 
@@ -328,6 +350,19 @@ function formatDate(value){
   );
 }
 
+function formatHour(hour){
+  const value = Number(hour);
+
+  if(Number.isNaN(value)){
+    return "-";
+  }
+
+  const suffix = value < 12 ? "ص" : "م";
+  const displayHour = value % 12 === 0 ? 12 : value % 12;
+
+  return displayHour + ":00 " + suffix;
+}
+
 async function loadDashboard(){
 
   const status =
@@ -341,6 +376,9 @@ async function loadDashboard(){
 
   const commonQuestionsTable =
     document.getElementById("commonQuestionsTable");
+
+  const peakHoursTable =
+    document.getElementById("peakHoursTable");
 
   try{
 
@@ -370,6 +408,11 @@ async function loadDashboard(){
     const commonQuestions =
       Array.isArray(data.common_questions)
         ? data.common_questions
+        : [];
+
+    const peakHours =
+      Array.isArray(data.peak_hours)
+        ? data.peak_hours
         : [];
 
     document.getElementById("totalConversations").textContent =
@@ -430,8 +473,6 @@ async function loadDashboard(){
       "%";
 
 
-    /* الأسئلة الأكثر تكرارًا */
-
     commonQuestionsTable.innerHTML = "";
 
     if(commonQuestions.length === 0){
@@ -484,7 +525,54 @@ async function loadDashboard(){
     }
 
 
-    /* الإحصائيات اليومية */
+    peakHoursTable.innerHTML = "";
+
+    if(peakHours.length === 0){
+
+      peakHoursTable.innerHTML = `
+        <tr>
+          <td colspan="3">
+            لا توجد بيانات كافية
+          </td>
+        </tr>
+      `;
+
+    }else{
+
+      peakHours.forEach(row => {
+
+        const tr =
+          document.createElement("tr");
+
+        const hourTd =
+          document.createElement("td");
+
+        hourTd.textContent =
+          formatHour(row.hour_of_day);
+
+        const conversationsTd =
+          document.createElement("td");
+
+        conversationsTd.className =
+          "count";
+
+        conversationsTd.textContent =
+          row.conversations ?? 0;
+
+        const messagesTd =
+          document.createElement("td");
+
+        messagesTd.textContent =
+          row.messages ?? 0;
+
+        tr.appendChild(hourTd);
+        tr.appendChild(conversationsTd);
+        tr.appendChild(messagesTd);
+
+        peakHoursTable.appendChild(tr);
+      });
+    }
+
 
     dailyTable.innerHTML = "";
 
@@ -528,8 +616,6 @@ async function loadDashboard(){
       });
     }
 
-
-    /* الأسئلة غير المجابة */
 
     unansweredTable.innerHTML = "";
 
@@ -604,6 +690,12 @@ async function loadDashboard(){
     status.classList.add("error");
 
     commonQuestionsTable.innerHTML = `
+      <tr>
+        <td colspan="3">تعذر تحميل البيانات</td>
+      </tr>
+    `;
+
+    peakHoursTable.innerHTML = `
       <tr>
         <td colspan="3">تعذر تحميل البيانات</td>
       </tr>
