@@ -85,6 +85,12 @@ select{
   font-weight:bold;
 }
 
+.error{
+  margin-top:12px;
+  color:#b91c1c;
+  font-size:14px;
+}
+
 .section-title{
   margin:0 0 16px;
 }
@@ -203,11 +209,12 @@ select{
 
 <h2>اختر العميل</h2>
 
-<select id="clientSelect" onchange="changeClient()">
+<select id="clientSelect">
 <option value="">جاري تحميل العملاء...</option>
 </select>
 
 <div id="currentClient" class="current-client"></div>
+<div id="clientError" class="error"></div>
 
 </div>
 
@@ -332,7 +339,7 @@ select{
 مؤشرات الذكاء الاصطناعي والاستخدام والتكلفة والإدارة الداخلية.
 </p>
 
-<a class="button" href="/admin.html">
+<a id="adminLink" class="button" href="/admin.html">
 فتح الإدارة
 </a>
 
@@ -353,159 +360,212 @@ NOVAIRE Digital — Smart Response
 
 <script>
 
-const STORAGE_KEY="novaire_control_client";
+const STORAGE_KEY =
+  "novaire_control_client";
+
+const clientSelect =
+  document.getElementById("clientSelect");
+
+const currentClient =
+  document.getElementById("currentClient");
+
+const clientError =
+  document.getElementById("clientError");
 
 
 async function loadClients(){
 
+  clientError.textContent = "";
+
+  clientSelect.innerHTML =
+    '<option value="">جاري تحميل العملاء...</option>';
+
   try{
 
-    const response=await fetch(
-      "/api/client-config?client=first-bike"
-    );
-
-    if(!response.ok){
-      throw new Error();
-    }
-
-    await loadAdminClients();
-
-  }catch{
-
-    await loadAdminClients();
-
-  }
-
-}
-
-
-async function loadAdminClients(){
-
-  /*
-  نستخدم كلمة مرور الإدارة فقط في صفحات الإدارة.
-  control.html لا يحتاج عرض بيانات سرية.
-
-  للحصول على قائمة العملاء نطلب slug معروف أولاً،
-  ثم نحاول client-admin فقط إذا كانت هناك جلسة مستقبلية.
-  حاليًا نستخدم قائمة العملاء المعروفة من النظام.
-  */
-
-  const knownClients=[
-    {
-      slug:"first-bike",
-      name:"First Bike"
-    },
-    {
-      slug:"demo-clinic",
-      name:"Demo Clinic"
-    },
-    {
-      slug:"novaire-test-center",
-      name:"NOVAIRE Test Center"
-    }
-  ];
-
-
-  const validClients=[];
-
-
-  for(const client of knownClients){
-
-    try{
-
-      const response=await fetch(
-        "/api/client-config?client="+
-        encodeURIComponent(client.slug)
+    const response =
+      await fetch(
+        "/api/public-clients",
+        {
+          method:"GET",
+          cache:"no-store"
+        }
       );
 
-      if(response.ok){
 
-        const data=await response.json();
+    const data =
+      await response.json();
 
-        validClients.push({
-          slug:client.slug,
-          name:
-            data.name ||
-            data.brand_name ||
-            client.name
-        });
 
-      }
+    if(!response.ok){
 
-    }catch{}
+      throw new Error(
+        data.error ||
+        "Unable to load clients"
+      );
+
+    }
+
+
+    const clients =
+      Array.isArray(data.clients)
+        ? data.clients
+        : [];
+
+
+    renderClients(clients);
+
+
+  }catch(error){
+
+    console.error(error);
+
+    clientSelect.innerHTML =
+      '<option value="">تعذر تحميل العملاء</option>';
+
+    clientError.textContent =
+      "تعذر تحميل قائمة العملاء.";
 
   }
-
-
-  renderClients(
-    validClients.length
-      ? validClients
-      : knownClients
-  );
 
 }
 
 
 function renderClients(clients){
 
-  const select=
-    document.getElementById("clientSelect");
-
-  select.innerHTML="";
+  clientSelect.innerHTML = "";
 
 
-  clients.forEach(client=>{
+  if(!clients.length){
 
-    const option=
+    clientSelect.innerHTML =
+      '<option value="">لا يوجد عملاء</option>';
+
+    currentClient.textContent = "";
+
+    return;
+
+  }
+
+
+  clients.forEach(function(client){
+
+    if(!client.slug){
+      return;
+    }
+
+
+    const option =
       document.createElement("option");
 
-    option.value=client.slug;
-    option.textContent=client.name;
 
-    select.appendChild(option);
+    option.value =
+      client.slug;
+
+
+    option.textContent =
+      client.name ||
+      client.brand_name ||
+      client.slug;
+
+
+    clientSelect.appendChild(option);
 
   });
 
 
-  const saved=
-    localStorage.getItem(STORAGE_KEY);
+  const urlParams =
+    new URLSearchParams(
+      window.location.search
+    );
 
 
-  const exists=
-    clients.some(
-      client=>client.slug===saved
+  const requested =
+    urlParams.get("client");
+
+
+  const saved =
+    localStorage.getItem(
+      STORAGE_KEY
+    );
+
+
+  const preferred =
+    requested ||
+    saved;
+
+
+  const exists =
+    Array.from(
+      clientSelect.options
+    ).some(
+      option =>
+        option.value === preferred
     );
 
 
   if(exists){
 
-    select.value=saved;
+    clientSelect.value =
+      preferred;
 
-  }else if(clients.length){
+  }else if(
+    clientSelect.options.length
+  ){
 
-    select.value=clients[0].slug;
+    clientSelect.selectedIndex = 0;
 
   }
 
+
+  saveCurrentClient();
 
   updateLinks();
 
 }
 
 
-function changeClient(){
+function saveCurrentClient(){
 
-  const slug=
-    document.getElementById("clientSelect").value;
+  const slug =
+    clientSelect.value;
 
-  if(slug){
 
-    localStorage.setItem(
-      STORAGE_KEY,
-      slug
+  if(!slug){
+    return;
+  }
+
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    slug
+  );
+
+
+  const url =
+    new URL(
+      window.location.href
     );
 
-  }
+
+  url.searchParams.set(
+    "client",
+    slug
+  );
+
+
+  history.replaceState(
+    {},
+    "",
+    url.pathname +
+    url.search
+  );
+
+}
+
+
+function changeClient(){
+
+  saveCurrentClient();
 
   updateLinks();
 
@@ -514,64 +574,90 @@ function changeClient(){
 
 function updateLinks(){
 
-  const select=
-    document.getElementById("clientSelect");
-
-  const slug=
-    select.value;
+  const slug =
+    clientSelect.value;
 
 
   if(!slug){
+
+    currentClient.textContent = "";
+
     return;
+
   }
 
 
-  const name=
-    select.options[
-      select.selectedIndex
-    ]?.textContent || slug;
+  const selectedOption =
+    clientSelect.options[
+      clientSelect.selectedIndex
+    ];
 
 
-  document.getElementById(
-    "currentClient"
-  ).textContent=
-    "العميل الحالي: "+name;
+  const name =
+    selectedOption
+      ? selectedOption.textContent
+      : slug;
 
 
-  const encoded=
-    encodeURIComponent(slug);
+  currentClient.textContent =
+    "العميل الحالي: " +
+    name;
+
+
+  const encoded =
+    encodeURIComponent(
+      slug
+    );
 
 
   document.getElementById(
     "assistantLink"
-  ).href=
-    "/?client="+encoded;
+  ).href =
+    "/?client=" +
+    encoded;
 
 
   document.getElementById(
     "knowledgeLink"
-  ).href=
-    "/knowledge.html?client="+encoded;
+  ).href =
+    "/knowledge.html?client=" +
+    encoded;
 
 
   document.getElementById(
     "unansweredLink"
-  ).href=
-    "/unanswered.html?client="+encoded;
+  ).href =
+    "/unanswered.html?client=" +
+    encoded;
 
 
   document.getElementById(
     "contactsLink"
-  ).href=
-    "/contacts.html?client="+encoded;
+  ).href =
+    "/contacts.html?client=" +
+    encoded;
 
 
   document.getElementById(
     "dashboardLink"
-  ).href=
-    "/dashboard.html?client="+encoded;
+  ).href =
+    "/dashboard.html?client=" +
+    encoded;
+
+
+  document.getElementById(
+    "adminLink"
+  ).href =
+    "/admin.html?client=" +
+    encoded;
 
 }
+
+
+clientSelect.addEventListener(
+  "change",
+  changeClient
+);
 
 
 loadClients();
