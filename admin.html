@@ -3,2252 +3,650 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>NOVAIRE Admin Dashboard</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:Arial,sans-serif;background:#0b1020;color:#fff;min-height:100vh}
+    .login-page{min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px}
+    .login-card{width:100%;max-width:430px;background:#151c31;border:1px solid #28334f;border-radius:18px;padding:35px;box-shadow:0 20px 50px rgba(0,0,0,.35)}
+    .brand{text-align:center;margin-bottom:30px}
+    .brand h1{font-size:30px;margin-bottom:8px}
+    .brand p,.section-subtitle,.topbar p{color:#9da9c5}
+    .internal-badge{display:inline-block;margin-top:15px;background:#3b2130;border:1px solid #7c3c55;color:#ffb9ce;padding:7px 12px;border-radius:20px;font-size:12px}
+    label{display:block;margin-bottom:8px;color:#d4dbeb}
+    input,textarea,select{width:100%;padding:14px;border-radius:10px;border:1px solid #35415f;background:#0e1528;color:#fff;font-size:16px;outline:none}
+    input,select{margin-bottom:15px}
+    textarea{min-height:110px;resize:vertical;font-family:Arial,sans-serif;line-height:1.6}
+    button{width:100%;padding:14px;border:0;border-radius:10px;cursor:pointer;font-size:16px;font-weight:bold;background:#fff;color:#111827}
+    button:disabled{opacity:.6;cursor:wait}
+    .error-message{min-height:22px;margin-top:15px;text-align:center;color:#ff8fa8;font-size:14px}
+    .dashboard{display:none;padding:25px;max-width:1450px;margin:auto}
+    .topbar{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:25px;flex-wrap:wrap}
+    .topbar h1{font-size:28px}
+    .topbar p{margin-top:6px}
+    .logout-btn{width:auto;padding:10px 18px;background:#263149;color:#fff}
+    .client-box{background:#151c31;border:1px solid #28334f;border-radius:14px;padding:18px;margin-bottom:25px}
+    .client-box select{margin-bottom:0}
+    .section-title{margin:30px 0 15px;font-size:21px}
+    .section-subtitle{margin-bottom:15px;line-height:1.7;font-size:14px}
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px}
+    .card,.question-card,.knowledge-card,.create-knowledge-card{background:#151c31;border:1px solid #28334f;border-radius:14px;padding:20px}
+    .card-title{color:#9da9c5;font-size:13px;margin-bottom:13px}
+    .card-value{font-size:27px;font-weight:bold;word-break:break-word}
+    .model-card{grid-column:span 2}
+    .cost-card{background:#18231e;border-color:#354d3d}
+    .questions-container,.knowledge-container{display:grid;gap:15px}
+    .create-knowledge-card{margin-bottom:18px;border-color:#3a496d;background:#11192e}
+    .create-title{font-size:18px;font-weight:bold;margin-bottom:15px}
+    .create-form{display:none;margin-top:15px}
+    .create-form.show{display:block}
+    .question-header,.knowledge-header{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap;margin-bottom:15px}
+    .question-text,.knowledge-title{font-size:17px;line-height:1.7;font-weight:bold}
+    .question-date,.knowledge-meta{color:#8996b3;font-size:12px;line-height:1.7}
+    .answer-label{margin-top:15px;margin-bottom:8px;color:#cbd5e1;font-size:14px}
+    .resolve-btn,.save-btn{margin-top:12px;background:#dce7df;color:#102017}
+    .question-status,.knowledge-status,.create-status{min-height:22px;margin-top:10px;font-size:13px}
+    .status-success{color:#7ee2a8}
+    .status-error{color:#ff8fa8}
+    .empty-state,.loading{padding:28px;text-align:center;color:#9da9c5}
+    .empty-state{background:#151c31;border:1px solid #28334f;border-radius:14px;line-height:1.8}
+    .knowledge-actions,.create-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .create-actions{grid-template-columns:1fr 1fr}
+    .toggle-btn,.cancel-btn{background:#263149;color:#fff}
+    .delete-btn{background:#5b2636;color:#ffd3df}
+    .active-badge,.inactive-badge{display:inline-block;padding:6px 10px;border-radius:20px;font-size:12px;margin-top:8px}
+    .active-badge{background:#173625;color:#86e9ab;border:1px solid #315b40}
+    .inactive-badge{background:#3a2d1c;color:#ffd590;border:1px solid #6b512c}
+    .security-note{margin-top:30px;padding:15px;background:#151c31;border:1px solid #28334f;border-radius:12px;color:#9da9c5;font-size:13px;line-height:1.8}
 
-    body {
-      font-family: Arial, sans-serif;
-      background: #0b1020;
-      color: #ffffff;
-      min-height: 100vh;
-    }
-
-    .login-page {
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-    }
-
-    .login-card {
-      width: 100%;
-      max-width: 430px;
-      background: #151c31;
-      border: 1px solid #28334f;
-      border-radius: 18px;
-      padding: 35px;
-      box-shadow: 0 20px 50px rgba(0,0,0,.35);
-    }
-
-    .brand {
-      text-align: center;
-      margin-bottom: 30px;
-    }
-
-    .brand h1 {
-      font-size: 30px;
-      margin-bottom: 8px;
-    }
-
-    .brand p {
-      color: #9da9c5;
-      font-size: 14px;
-    }
-
-    .internal-badge {
-      display: inline-block;
-      margin-top: 15px;
-      background: #3b2130;
-      border: 1px solid #7c3c55;
-      color: #ffb9ce;
-      padding: 7px 12px;
-      border-radius: 20px;
-      font-size: 12px;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 8px;
-      color: #d4dbeb;
-    }
-
-    input,
-    textarea,
-    select {
-      width: 100%;
-      padding: 14px;
-      border-radius: 10px;
-      border: 1px solid #35415f;
-      background: #0e1528;
-      color: white;
-      font-size: 16px;
-      outline: none;
-    }
-
-    input,
-    select {
-      margin-bottom: 15px;
-    }
-
-    textarea {
-      min-height: 110px;
-      resize: vertical;
-      font-family: Arial, sans-serif;
-      line-height: 1.6;
-    }
-
-    input:focus,
-    textarea:focus,
-    select:focus {
-      border-color: #7384b4;
-    }
-
-    button {
-      width: 100%;
-      padding: 14px;
-      border: 0;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 16px;
-      font-weight: bold;
-      background: #ffffff;
-      color: #111827;
-    }
-
-    button:disabled {
-      opacity: .6;
-      cursor: wait;
-    }
-
-    .error-message {
-      min-height: 22px;
-      margin-top: 15px;
-      text-align: center;
-      color: #ff8fa8;
-      font-size: 14px;
-    }
-
-    .dashboard {
-      display: none;
-      padding: 25px;
-      max-width: 1450px;
-      margin: auto;
-    }
-
-    .topbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 20px;
-      margin-bottom: 25px;
-      flex-wrap: wrap;
-    }
-
-    .topbar h1 {
-      font-size: 28px;
-    }
-
-    .topbar p {
-      margin-top: 6px;
-      color: #9da9c5;
-    }
-
-    .logout-btn {
-      width: auto;
-      padding: 10px 18px;
-      background: #263149;
-      color: white;
-    }
-
-    .section-title {
-      margin: 30px 0 15px;
-      font-size: 21px;
-    }
-
-    .section-subtitle {
-      color: #9da9c5;
-      margin-bottom: 15px;
-      line-height: 1.7;
-      font-size: 14px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-      gap: 15px;
-    }
-
-    .card {
-      background: #151c31;
-      border: 1px solid #28334f;
-      border-radius: 14px;
-      padding: 20px;
-    }
-
-    .card-title {
-      color: #9da9c5;
-      font-size: 13px;
-      margin-bottom: 13px;
-    }
-
-    .card-value {
-      font-size: 27px;
-      font-weight: bold;
-      word-break: break-word;
-    }
-
-    .model-card {
-      grid-column: span 2;
-    }
-
-    .cost-card {
-      background: #18231e;
-      border-color: #354d3d;
-    }
-
-    .questions-container,
-    .knowledge-container {
-      display: grid;
-      gap: 15px;
-    }
-
-    .question-card,
-    .knowledge-card,
-    .create-knowledge-card {
-      background: #151c31;
-      border: 1px solid #28334f;
-      border-radius: 14px;
-      padding: 20px;
-    }
-
-    .create-knowledge-card {
-      margin-bottom: 18px;
-      border-color: #3a496d;
-      background: #11192e;
-    }
-
-    .create-title {
-      font-size: 18px;
-      font-weight: bold;
-      margin-bottom: 15px;
-    }
-
-    .create-form {
-      display: none;
-      margin-top: 15px;
-    }
-
-    .create-form.show {
-      display: block;
-    }
-
-    .question-header,
-    .knowledge-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 15px;
-      flex-wrap: wrap;
-      margin-bottom: 15px;
-    }
-
-    .question-text,
-    .knowledge-title {
-      font-size: 17px;
-      line-height: 1.7;
-      font-weight: bold;
-    }
-
-    .question-date,
-    .knowledge-meta {
-      color: #8996b3;
-      font-size: 12px;
-      line-height: 1.7;
-    }
-
-    .answer-label {
-      margin-top: 15px;
-      margin-bottom: 8px;
-      color: #cbd5e1;
-      font-size: 14px;
-    }
-
-    .resolve-btn {
-      margin-top: 12px;
-      background: #dce7df;
-      color: #102017;
-    }
-
-    .question-status,
-    .knowledge-status,
-    .create-status {
-      min-height: 22px;
-      margin-top: 10px;
-      font-size: 13px;
-    }
-
-    .status-success {
-      color: #7ee2a8;
-    }
-
-    .status-error {
-      color: #ff8fa8;
-    }
-
-    .empty-state {
-      background: #151c31;
-      border: 1px solid #28334f;
-      border-radius: 14px;
-      padding: 28px;
-      text-align: center;
-      color: #9da9c5;
-      line-height: 1.8;
-    }
-
-    .loading {
-      text-align: center;
-      padding: 25px;
-      color: #9da9c5;
-    }
-
-    .knowledge-question-input {
-      margin-bottom: 12px;
-    }
-
-    .knowledge-actions {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .create-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .save-btn {
-      background: #dce7df;
-      color: #102017;
-    }
-
-    .toggle-btn {
-      background: #2b3652;
-      color: white;
-    }
-
-    .delete-btn {
-      background: #5b2636;
-      color: #ffd3df;
-    }
-
-    .add-btn {
-      background: #ffffff;
-      color: #111827;
-    }
-
-    .cancel-btn {
-      background: #263149;
-      color: white;
-    }
-
-    .active-badge,
-    .inactive-badge {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      margin-top: 8px;
-    }
-
-    .active-badge {
-      background: #173625;
-      color: #86e9ab;
-      border: 1px solid #315b40;
-    }
-
-    .inactive-badge {
-      background: #3a2d1c;
-      color: #ffd590;
-      border: 1px solid #6b512c;
-    }
-
-    .security-note {
-      margin-top: 30px;
-      padding: 15px;
-      background: #151c31;
-      border: 1px solid #28334f;
-      border-radius: 12px;
-      color: #9da9c5;
-      font-size: 13px;
-      line-height: 1.8;
-    }
-
-    @media (max-width: 650px) {
-      .dashboard {
-        padding: 15px;
-      }
-
-      .model-card {
-        grid-column: span 1;
-      }
-
-      .topbar h1 {
-        font-size: 23px;
-      }
-
-      .question-header,
-      .knowledge-header {
-        display: block;
-      }
-
-      .question-date,
-      .knowledge-meta {
-        margin-top: 8px;
-      }
-
-      .knowledge-actions,
-      .create-actions {
-        grid-template-columns: 1fr;
-      }
+    @media(max-width:650px){
+      .dashboard{padding:15px}
+      .model-card{grid-column:span 1}
+      .knowledge-actions,.create-actions{grid-template-columns:1fr}
     }
   </style>
 </head>
 
 <body>
 
-  <div id="loginPage" class="login-page">
-    <div class="login-card">
+<div id="loginPage" class="login-page">
+  <div class="login-card">
+    <div class="brand">
+      <h1>NOVAIRE</h1>
+      <p>لوحة الإدارة الداخلية</p>
+      <div class="internal-badge">للاستخدام الداخلي فقط</div>
+    </div>
 
-      <div class="brand">
-        <h1>NOVAIRE</h1>
-        <p>لوحة الإدارة الداخلية</p>
+    <form id="loginForm">
+      <label>كلمة مرور الإدارة</label>
+      <input id="password" type="password" required placeholder="أدخل كلمة المرور">
+      <button id="loginButton" type="submit">دخول</button>
+      <div id="loginError" class="error-message"></div>
+    </form>
+  </div>
+</div>
 
-        <div class="internal-badge">
-          للاستخدام الداخلي فقط
-        </div>
+<main id="dashboard" class="dashboard">
+
+  <div class="topbar">
+    <div>
+      <h1>NOVAIRE Admin Dashboard</h1>
+      <p id="clientName">لوحة الإدارة الداخلية</p>
+      <div class="internal-badge">بيانات داخلية — لا تعرض للعميل</div>
+    </div>
+
+    <button id="logoutButton" class="logout-btn">تسجيل الخروج</button>
+  </div>
+
+  <div class="client-box">
+    <label for="clientSelect">العميل الحالي</label>
+    <select id="clientSelect"></select>
+  </div>
+
+  <h2 class="section-title">المؤشرات التشغيلية</h2>
+
+  <section class="cards">
+    <div class="card"><div class="card-title">إجمالي المحادثات</div><div id="totalConversations" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">إجمالي الرسائل</div><div id="totalMessages" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">طلبات التواصل</div><div id="totalContactRequests" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">طلبات الاتصال</div><div id="callbackRequests" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">التحويل لموظف</div><div id="humanHandoff" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">الأسئلة غير المجابة</div><div id="unansweredQuestions" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">غير محلولة حتى الآن</div><div id="unresolvedQuestions" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">نسبة الحل بالذكاء الاصطناعي</div><div id="aiResolution" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">المحادثات العربية</div><div id="arabicConversations" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">المحادثات الإنجليزية</div><div id="englishConversations" class="card-value">-</div></div>
+  </section>
+
+  <h2 class="section-title">استهلاك الذكاء الاصطناعي والتكلفة</h2>
+
+  <section class="cards">
+    <div class="card model-card"><div class="card-title">نموذج الذكاء الاصطناعي</div><div id="aiModel" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">Input Tokens</div><div id="inputTokens" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">Output Tokens</div><div id="outputTokens" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">إجمالي Tokens</div><div id="totalTokens" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">سجلات استخدام AI</div><div id="usageRecords" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">تكلفة الإدخال</div><div id="inputCost" class="card-value">-</div></div>
+    <div class="card"><div class="card-title">تكلفة الإخراج</div><div id="outputCost" class="card-value">-</div></div>
+    <div class="card cost-card"><div class="card-title">إجمالي تكلفة AI بالدولار</div><div id="totalCostUsd" class="card-value">-</div></div>
+    <div class="card cost-card"><div class="card-title">إجمالي تكلفة AI بالدرهم</div><div id="totalCostAed" class="card-value">-</div></div>
+  </section>
+
+  <h2 class="section-title">إدارة الأسئلة غير المجابة</h2>
+  <p class="section-subtitle">اكتب الإجابة المعتمدة ثم اضغط «اعتماد وحل».</p>
+  <section id="questionsContainer" class="questions-container"></section>
+
+  <h2 class="section-title">قاعدة المعرفة</h2>
+  <p class="section-subtitle">إدارة قاعدة معرفة العميل المحدد فقط.</p>
+
+  <div class="create-knowledge-card">
+    <button id="showCreateKnowledgeButton">+ إضافة معلومة جديدة</button>
+
+    <div id="createKnowledgeForm" class="create-form">
+      <div class="create-title">إضافة معلومة جديدة</div>
+
+      <label>السؤال / الموضوع</label>
+      <textarea id="newKnowledgeQuestion"></textarea>
+
+      <label class="answer-label">الإجابة الرسمية</label>
+      <textarea id="newKnowledgeAnswer"></textarea>
+
+      <label class="answer-label">اللغة</label>
+      <select id="newKnowledgeLanguage">
+        <option value="ar">العربية</option>
+        <option value="en">English</option>
+      </select>
+
+      <div class="create-actions">
+        <button id="saveNewKnowledgeButton" class="save-btn">حفظ المعلومة</button>
+        <button id="cancelNewKnowledgeButton" class="cancel-btn">إلغاء</button>
       </div>
 
-      <form id="loginForm">
-
-        <label for="password">
-          كلمة مرور الإدارة
-        </label>
-
-        <input
-          id="password"
-          type="password"
-          autocomplete="current-password"
-          placeholder="أدخل كلمة المرور"
-          required
-        />
-
-        <button id="loginButton" type="submit">
-          دخول
-        </button>
-
-        <div id="loginError" class="error-message"></div>
-
-      </form>
-
+      <div id="createKnowledgeStatus" class="create-status"></div>
     </div>
   </div>
 
-
-  <main id="dashboard" class="dashboard">
-
-    <div class="topbar">
-
-      <div>
-        <h1>NOVAIRE Admin Dashboard</h1>
-
-        <p id="clientName">
-          لوحة الإدارة الداخلية
-        </p>
-
-        <div class="internal-badge">
-          بيانات داخلية — لا تعرض للعميل
-        </div>
-      </div>
-
-      <button
-        id="logoutButton"
-        class="logout-btn"
-        type="button"
-      >
-        تسجيل الخروج
-      </button>
-
-    </div>
-
-
-    <h2 class="section-title">
-      المؤشرات التشغيلية
-    </h2>
-
-    <section class="cards">
-
-      <div class="card">
-        <div class="card-title">إجمالي المحادثات</div>
-        <div id="totalConversations" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">إجمالي الرسائل</div>
-        <div id="totalMessages" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">طلبات التواصل</div>
-        <div id="totalContactRequests" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">طلبات الاتصال</div>
-        <div id="callbackRequests" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">التحويل لموظف</div>
-        <div id="humanHandoff" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">الأسئلة غير المجابة</div>
-        <div id="unansweredQuestions" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">غير محلولة حتى الآن</div>
-        <div id="unresolvedQuestions" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">نسبة الحل بالذكاء الاصطناعي</div>
-        <div id="aiResolution" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">المحادثات العربية</div>
-        <div id="arabicConversations" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">المحادثات الإنجليزية</div>
-        <div id="englishConversations" class="card-value">-</div>
-      </div>
-
-    </section>
-
-
-    <h2 class="section-title">
-      استهلاك الذكاء الاصطناعي والتكلفة
-    </h2>
-
-    <section class="cards">
-
-      <div class="card model-card">
-        <div class="card-title">نموذج الذكاء الاصطناعي</div>
-        <div id="aiModel" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Input Tokens</div>
-        <div id="inputTokens" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">Output Tokens</div>
-        <div id="outputTokens" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">إجمالي Tokens</div>
-        <div id="totalTokens" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">سجلات استخدام AI</div>
-        <div id="usageRecords" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">تكلفة الإدخال</div>
-        <div id="inputCost" class="card-value">-</div>
-      </div>
-
-      <div class="card">
-        <div class="card-title">تكلفة الإخراج</div>
-        <div id="outputCost" class="card-value">-</div>
-      </div>
-
-      <div class="card cost-card">
-        <div class="card-title">إجمالي تكلفة AI بالدولار</div>
-        <div id="totalCostUsd" class="card-value">-</div>
-      </div>
-
-      <div class="card cost-card">
-        <div class="card-title">إجمالي تكلفة AI بالدرهم</div>
-        <div id="totalCostAed" class="card-value">-</div>
-      </div>
-
-    </section>
-
-
-    <h2 class="section-title">
-      إدارة الأسئلة غير المجابة
-    </h2>
-
-    <p class="section-subtitle">
-      هنا تظهر الأسئلة التي لم يتمكن النظام من الإجابة عنها.
-      اكتب الإجابة المعتمدة ثم اضغط «اعتماد وحل».
-    </p>
-
-    <section
-      id="questionsContainer"
-      class="questions-container"
-    >
-      <div class="loading">
-        جاري تحميل الأسئلة...
-      </div>
-    </section>
-
-
-    <h2 class="section-title">
-      قاعدة المعرفة
-    </h2>
-
-    <p class="section-subtitle">
-      هذه هي المعلومات الرسمية التي يستخدمها Smart Response.
-      يمكنك إضافة معلومة جديدة، تعديلها، تعطيلها مؤقتًا، إعادة تفعيلها، أو حذفها.
-    </p>
-
-
-    <div class="create-knowledge-card">
-
-      <button
-        id="showCreateKnowledgeButton"
-        class="add-btn"
-        type="button"
-      >
-        + إضافة معلومة جديدة
-      </button>
-
-
-      <div
-        id="createKnowledgeForm"
-        class="create-form"
-      >
-
-        <div class="create-title">
-          إضافة معلومة جديدة
-        </div>
-
-        <label for="newKnowledgeQuestion">
-          السؤال / الموضوع
-        </label>
-
-        <textarea
-          id="newKnowledgeQuestion"
-          placeholder="مثال: هل يوجد حجز مسبق للدراجات؟"
-        ></textarea>
-
-
-        <label
-          for="newKnowledgeAnswer"
-          class="answer-label"
-        >
-          الإجابة الرسمية
-        </label>
-
-        <textarea
-          id="newKnowledgeAnswer"
-          placeholder="اكتب الإجابة الرسمية المعتمدة..."
-        ></textarea>
-
-
-        <label
-          for="newKnowledgeLanguage"
-          class="answer-label"
-        >
-          اللغة
-        </label>
-
-        <select id="newKnowledgeLanguage">
-          <option value="ar">العربية</option>
-          <option value="en">English</option>
-        </select>
-
-
-        <div class="create-actions">
-
-          <button
-            id="saveNewKnowledgeButton"
-            class="save-btn"
-            type="button"
-          >
-            حفظ المعلومة
-          </button>
-
-          <button
-            id="cancelNewKnowledgeButton"
-            class="cancel-btn"
-            type="button"
-          >
-            إلغاء
-          </button>
-
-        </div>
-
-        <div
-          id="createKnowledgeStatus"
-          class="create-status"
-        ></div>
-
-      </div>
-
-    </div>
-
-
-    <section
-      id="knowledgeContainer"
-      class="knowledge-container"
-    >
-      <div class="loading">
-        جاري تحميل قاعدة المعرفة...
-      </div>
-    </section>
-
-
-    <div class="security-note">
-      هذه الصفحة مخصصة لإدارة NOVAIRE فقط.
-      بيانات استهلاك الذكاء الاصطناعي والتكاليف وقاعدة المعرفة
-      لا يتم عرضها للعميل.
-    </div>
-
-  </main>
-
-
-  <script>
-
-    let adminPassword = "";
-
-
-    const loginPage =
-      document.getElementById("loginPage");
-
-    const dashboard =
-      document.getElementById("dashboard");
-
-    const loginForm =
-      document.getElementById("loginForm");
-
-    const loginButton =
-      document.getElementById("loginButton");
-
-    const loginError =
-      document.getElementById("loginError");
-
-    const passwordInput =
-      document.getElementById("password");
-
-    const logoutButton =
-      document.getElementById("logoutButton");
-
-    const questionsContainer =
-      document.getElementById("questionsContainer");
-
-    const knowledgeContainer =
-      document.getElementById("knowledgeContainer");
-
-    const showCreateKnowledgeButton =
-      document.getElementById("showCreateKnowledgeButton");
-
-    const createKnowledgeForm =
-      document.getElementById("createKnowledgeForm");
-
-    const newKnowledgeQuestion =
-      document.getElementById("newKnowledgeQuestion");
-
-    const newKnowledgeAnswer =
-      document.getElementById("newKnowledgeAnswer");
-
-    const newKnowledgeLanguage =
-      document.getElementById("newKnowledgeLanguage");
-
-    const saveNewKnowledgeButton =
-      document.getElementById("saveNewKnowledgeButton");
-
-    const cancelNewKnowledgeButton =
-      document.getElementById("cancelNewKnowledgeButton");
-
-    const createKnowledgeStatus =
-      document.getElementById("createKnowledgeStatus");
-
-
-    function setText(id, value) {
-
-      const element =
-        document.getElementById(id);
-
-      if (element) {
-        element.textContent =
-          value ?? "-";
-      }
-    }
-
-
-    function formatNumber(value) {
-
-      return Number(value || 0)
-        .toLocaleString("en-US");
-    }
-
-
-    function formatDate(value) {
-
-      if (!value) {
-        return "-";
-      }
-
-      try {
-
-        return new Intl.DateTimeFormat(
-          "ar-AE",
-          {
-            timeZone: "Asia/Dubai",
-            year: "numeric",
-            month: "2-digit",
-            day: "2-digit",
-            hour: "2-digit",
-            minute: "2-digit"
-          }
-        ).format(
-          new Date(value)
-        );
-
-      } catch (error) {
-
-        return value;
-      }
-    }
-
-
-    function resetCreateKnowledgeForm() {
-
-      newKnowledgeQuestion.value = "";
-      newKnowledgeAnswer.value = "";
-      newKnowledgeLanguage.value = "ar";
-
-      createKnowledgeStatus.textContent = "";
-      createKnowledgeStatus.className =
-        "create-status";
-    }
-
-
-    function showDashboard(data) {
-
-      const client =
-        data.client || {};
-
-      const operations =
-        data.operations || {};
-
-      const ai =
-        data.ai_usage || {};
-
-
-      setText(
-        "clientName",
-        `${client.client_name || "Client"} — Internal Dashboard`
-      );
-
-      setText(
-        "totalConversations",
-        formatNumber(
-          operations.total_conversations
-        )
-      );
-
-      setText(
-        "totalMessages",
-        formatNumber(
-          operations.total_messages
-        )
-      );
-
-      setText(
-        "totalContactRequests",
-        formatNumber(
-          operations.total_contact_requests
-        )
-      );
-
-      setText(
-        "callbackRequests",
-        formatNumber(
-          operations.callback_requests
-        )
-      );
-
-      setText(
-        "humanHandoff",
-        formatNumber(
-          operations.human_handoff_requests
-        )
-      );
-
-      setText(
-        "unansweredQuestions",
-        formatNumber(
-          operations.total_unanswered_questions
-        )
-      );
-
-      setText(
-        "unresolvedQuestions",
-        formatNumber(
-          operations.unresolved_unanswered_questions
-        )
-      );
-
-      setText(
-        "aiResolution",
-        `${Number(
-          operations.ai_resolution_rate_percent || 0
-        ).toFixed(1)}%`
-      );
-
-      setText(
-        "arabicConversations",
-        formatNumber(
-          operations.arabic_conversations
-        )
-      );
-
-      setText(
-        "englishConversations",
-        formatNumber(
-          operations.english_conversations
-        )
-      );
-
-      setText(
-        "aiModel",
-        ai.model || "-"
-      );
-
-      setText(
-        "inputTokens",
-        formatNumber(
-          ai.total_input_tokens
-        )
-      );
-
-      setText(
-        "outputTokens",
-        formatNumber(
-          ai.total_output_tokens
-        )
-      );
-
-      setText(
-        "totalTokens",
-        formatNumber(
-          ai.total_tokens
-        )
-      );
-
-      setText(
-        "usageRecords",
-        formatNumber(
-          ai.ai_usage_records
-        )
-      );
-
-      setText(
-        "inputCost",
-        `$${Number(
-          ai.input_cost_usd || 0
-        ).toFixed(6)}`
-      );
-
-      setText(
-        "outputCost",
-        `$${Number(
-          ai.output_cost_usd || 0
-        ).toFixed(6)}`
-      );
-
-      setText(
-        "totalCostUsd",
-        `$${Number(
-          ai.total_cost_usd || 0
-        ).toFixed(6)}`
-      );
-
-      setText(
-        "totalCostAed",
-        `${Number(
-          ai.total_cost_aed || 0
-        ).toFixed(4)} AED`
-      );
-
-
-      loginPage.style.display =
-        "none";
-
-      dashboard.style.display =
-        "block";
-    }
-
-
-    async function loadAdminDashboard() {
-
-      const response =
-        await fetch(
-          "/api/admin-dashboard",
-          {
-            method: "POST",
-
-            headers: {
-              "Content-Type":
-                "application/json"
-            },
-
-            body:
-              JSON.stringify({
-                password:
-                  adminPassword
-              })
-          }
-        );
-
-
-      const data =
-        await response.json();
-
-
-      if (!response.ok) {
-
-        throw new Error(
-          data.error ||
-          "Unable to load dashboard"
-        );
-      }
-
-
-      showDashboard(data);
-    }
-
-
-    async function loadQuestions() {
-
-      questionsContainer.innerHTML =
-        `
-          <div class="loading">
-            جاري تحميل الأسئلة...
-          </div>
-        `;
-
-
-      try {
-
-        const response =
-          await fetch(
-            "/api/unanswered-admin",
-            {
-              method: "POST",
-
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
-
-              body:
-                JSON.stringify({
-                  password:
-                    adminPassword,
-
-                  action:
-                    "list"
-                })
-            }
-          );
-
-
-        const data =
-          await response.json();
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.error ||
-            "Unable to load questions"
-          );
-        }
-
-
-        renderQuestions(
-          data.questions || []
-        );
-
-
-      } catch (error) {
-
-        console.error(error);
-
-        questionsContainer.innerHTML =
-          `
-            <div class="empty-state">
-              تعذر تحميل الأسئلة غير المجابة.
-            </div>
-          `;
-      }
-    }
-
-
-    function renderQuestions(questions) {
-
-      if (
-        !Array.isArray(questions) ||
-        questions.length === 0
-      ) {
-
-        questionsContainer.innerHTML =
-          `
-            <div class="empty-state">
-              لا توجد أسئلة غير محلولة حاليًا.
-            </div>
-          `;
-
+  <section id="knowledgeContainer" class="knowledge-container"></section>
+
+  <div class="security-note">
+    هذه الصفحة مخصصة لإدارة NOVAIRE فقط. جميع البيانات معزولة حسب العميل المحدد.
+  </div>
+
+</main>
+
+<script>
+let adminPassword = "";
+
+const loginPage = document.getElementById("loginPage");
+const dashboard = document.getElementById("dashboard");
+const loginForm = document.getElementById("loginForm");
+const loginButton = document.getElementById("loginButton");
+const loginError = document.getElementById("loginError");
+const passwordInput = document.getElementById("password");
+const logoutButton = document.getElementById("logoutButton");
+const clientSelect = document.getElementById("clientSelect");
+const questionsContainer = document.getElementById("questionsContainer");
+const knowledgeContainer = document.getElementById("knowledgeContainer");
+
+const showCreateKnowledgeButton = document.getElementById("showCreateKnowledgeButton");
+const createKnowledgeForm = document.getElementById("createKnowledgeForm");
+const newKnowledgeQuestion = document.getElementById("newKnowledgeQuestion");
+const newKnowledgeAnswer = document.getElementById("newKnowledgeAnswer");
+const newKnowledgeLanguage = document.getElementById("newKnowledgeLanguage");
+const saveNewKnowledgeButton = document.getElementById("saveNewKnowledgeButton");
+const cancelNewKnowledgeButton = document.getElementById("cancelNewKnowledgeButton");
+const createKnowledgeStatus = document.getElementById("createKnowledgeStatus");
+
+function requestedClient() {
+  const params = new URLSearchParams(location.search);
+
+  return (
+    params.get("client") ||
+    localStorage.getItem("novaire_control_client") ||
+    "first-bike"
+  );
+}
+
+function currentClient() {
+  return clientSelect.value || requestedClient();
+}
+
+function rememberClient(slug) {
+  localStorage.setItem("novaire_control_client", slug);
+
+  const url = new URL(location.href);
+  url.searchParams.set("client", slug);
+  history.replaceState({}, "", url);
+}
+
+function setText(id,value) {
+  const el=document.getElementById(id);
+  if(el) el.textContent=value ?? "-";
+}
+
+function formatNumber(value) {
+  return Number(value||0).toLocaleString("en-US");
+}
+
+function formatDate(value) {
+  if(!value) return "-";
+
+  try {
+    return new Intl.DateTimeFormat("ar-AE",{
+      timeZone:"Asia/Dubai",
+      year:"numeric",
+      month:"2-digit",
+      day:"2-digit",
+      hour:"2-digit",
+      minute:"2-digit"
+    }).format(new Date(value));
+  } catch {
+    return value;
+  }
+}
+
+async function api(url,body) {
+  const response=await fetch(url,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      password:adminPassword,
+      client_slug:currentClient(),
+      ...body
+    })
+  });
+
+  const data=await response.json();
+
+  if(!response.ok)
+    throw new Error(data.error||"Request failed");
+
+  return data;
+}
+
+async function loadClients() {
+  const response=await fetch("/api/client-admin",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      password:adminPassword,
+      action:"list"
+    })
+  });
+
+  const data=await response.json();
+
+  if(!response.ok)
+    throw new Error(data.error||"Unable to load clients");
+
+  const clients=data.clients||data.items||[];
+
+  clientSelect.innerHTML="";
+
+  clients.forEach(client=>{
+    const option=document.createElement("option");
+
+    option.value=client.slug;
+    option.textContent=
+      client.name ||
+      client.config?.brand_name ||
+      client.slug;
+
+    clientSelect.appendChild(option);
+  });
+
+  const wanted=requestedClient();
+
+  if([...clientSelect.options].some(o=>o.value===wanted))
+    clientSelect.value=wanted;
+
+  if(!clientSelect.value && clientSelect.options.length)
+    clientSelect.selectedIndex=0;
+
+  rememberClient(currentClient());
+}
+
+function showDashboard(data) {
+  const client=data.client||{};
+  const operations=data.operations||{};
+  const ai=data.ai_usage||{};
+
+  setText("clientName",
+    `${client.client_name||client.slug||"Client"} — Internal Dashboard`
+  );
+
+  setText("totalConversations",formatNumber(operations.total_conversations));
+  setText("totalMessages",formatNumber(operations.total_messages));
+  setText("totalContactRequests",formatNumber(operations.total_contact_requests));
+  setText("callbackRequests",formatNumber(operations.callback_requests));
+  setText("humanHandoff",formatNumber(operations.human_handoff_requests));
+  setText("unansweredQuestions",formatNumber(operations.total_unanswered_questions));
+  setText("unresolvedQuestions",formatNumber(operations.unresolved_unanswered_questions));
+  setText("aiResolution",`${Number(operations.ai_resolution_rate_percent||0).toFixed(1)}%`);
+  setText("arabicConversations",formatNumber(operations.arabic_conversations));
+  setText("englishConversations",formatNumber(operations.english_conversations));
+
+  setText("aiModel",ai.model||"-");
+  setText("inputTokens",formatNumber(ai.total_input_tokens));
+  setText("outputTokens",formatNumber(ai.total_output_tokens));
+  setText("totalTokens",formatNumber(ai.total_tokens));
+  setText("usageRecords",formatNumber(ai.ai_usage_records));
+  setText("inputCost",`$${Number(ai.input_cost_usd||0).toFixed(6)}`);
+  setText("outputCost",`$${Number(ai.output_cost_usd||0).toFixed(6)}`);
+  setText("totalCostUsd",`$${Number(ai.total_cost_usd||0).toFixed(6)}`);
+  setText("totalCostAed",`${Number(ai.total_cost_aed||0).toFixed(4)} AED`);
+
+  loginPage.style.display="none";
+  dashboard.style.display="block";
+}
+
+async function loadAdminDashboard() {
+  const data=await api("/api/admin-dashboard",{});
+  showDashboard(data);
+}
+
+async function loadQuestions() {
+  questionsContainer.innerHTML='<div class="loading">جاري تحميل الأسئلة...</div>';
+
+  try {
+    const data=await api("/api/unanswered-admin",{action:"list"});
+    renderQuestions(data.questions||[]);
+  } catch(e) {
+    console.error(e);
+    questionsContainer.innerHTML='<div class="empty-state">تعذر تحميل الأسئلة غير المجابة.</div>';
+  }
+}
+
+function renderQuestions(questions) {
+  if(!questions.length) {
+    questionsContainer.innerHTML='<div class="empty-state">لا توجد أسئلة غير محلولة حاليًا.</div>';
+    return;
+  }
+
+  questionsContainer.innerHTML="";
+
+  questions.forEach(question=>{
+    const card=document.createElement("div");
+    card.className="question-card";
+
+    const header=document.createElement("div");
+    header.className="question-header";
+
+    const text=document.createElement("div");
+    text.className="question-text";
+    text.textContent=question.question||"-";
+
+    const date=document.createElement("div");
+    date.className="question-date";
+    date.textContent=formatDate(question.created_at);
+
+    header.append(text,date);
+
+    const textarea=document.createElement("textarea");
+    textarea.value=question.approved_answer||"";
+    textarea.placeholder="اكتب الإجابة الصحيحة...";
+
+    const button=document.createElement("button");
+    button.className="resolve-btn";
+    button.textContent="اعتماد وحل";
+
+    const status=document.createElement("div");
+    status.className="question-status";
+
+    button.onclick=async()=>{
+      const answer=textarea.value.trim();
+
+      if(!answer) {
+        status.textContent="اكتب الإجابة أولًا.";
+        status.className="question-status status-error";
         return;
       }
 
-
-      questionsContainer.innerHTML = "";
-
-
-      questions.forEach(
-        function(question) {
-
-          const card =
-            document.createElement("div");
-
-          card.className =
-            "question-card";
-
-
-          const header =
-            document.createElement("div");
-
-          header.className =
-            "question-header";
-
-
-          const questionText =
-            document.createElement("div");
-
-          questionText.className =
-            "question-text";
-
-          questionText.textContent =
-            question.question || "-";
-
-
-          const questionDate =
-            document.createElement("div");
-
-          questionDate.className =
-            "question-date";
-
-          questionDate.textContent =
-            formatDate(
-              question.created_at
-            );
-
-
-          header.appendChild(
-            questionText
-          );
-
-          header.appendChild(
-            questionDate
-          );
-
-
-          const label =
-            document.createElement("div");
-
-          label.className =
-            "answer-label";
-
-          label.textContent =
-            "الإجابة المعتمدة";
-
-
-          const textarea =
-            document.createElement("textarea");
-
-          textarea.placeholder =
-            "اكتب الإجابة الصحيحة التي تريد اعتمادها...";
-
-          textarea.value =
-            question.approved_answer || "";
-
-
-          const button =
-            document.createElement("button");
-
-          button.type =
-            "button";
-
-          button.className =
-            "resolve-btn";
-
-          button.textContent =
-            "اعتماد وحل";
-
-
-          const status =
-            document.createElement("div");
-
-          status.className =
-            "question-status";
-
-
-          button.addEventListener(
-            "click",
-            async function() {
-
-              const answer =
-                textarea.value.trim();
-
-
-              status.textContent = "";
-
-              status.className =
-                "question-status";
-
-
-              if (!answer) {
-
-                status.textContent =
-                  "اكتب الإجابة أولًا.";
-
-                status.classList.add(
-                  "status-error"
-                );
-
-                return;
-              }
-
-
-              button.disabled =
-                true;
-
-              button.textContent =
-                "جاري الحفظ...";
-
-
-              try {
-
-                const response =
-                  await fetch(
-                    "/api/unanswered-admin",
-                    {
-                      method: "POST",
-
-                      headers: {
-                        "Content-Type":
-                          "application/json"
-                      },
-
-                      body:
-                        JSON.stringify({
-                          password:
-                            adminPassword,
-
-                          action:
-                            "resolve",
-
-                          question_id:
-                            question.id,
-
-                          approved_answer:
-                            answer
-                        })
-                    }
-                  );
-
-
-                const data =
-                  await response.json();
-
-
-                if (!response.ok) {
-
-                  throw new Error(
-                    data.error ||
-                    "Unable to resolve question"
-                  );
-                }
-
-
-                status.textContent =
-                  "تم اعتماد الإجابة وحفظها في قاعدة المعرفة.";
-
-                status.classList.add(
-                  "status-success"
-                );
-
-
-                await loadAdminDashboard();
-
-                await loadKnowledge();
-
-
-                setTimeout(
-                  function() {
-                    loadQuestions();
-                  },
-                  400
-                );
-
-
-              } catch (error) {
-
-                console.error(error);
-
-                status.textContent =
-                  "تعذر حفظ الإجابة.";
-
-                status.classList.add(
-                  "status-error"
-                );
-
-
-              } finally {
-
-                button.disabled =
-                  false;
-
-                button.textContent =
-                  "اعتماد وحل";
-              }
-            }
-          );
-
-
-          card.appendChild(header);
-          card.appendChild(label);
-          card.appendChild(textarea);
-          card.appendChild(button);
-          card.appendChild(status);
-
-
-          questionsContainer.appendChild(
-            card
-          );
-        }
-      );
-    }
-
-
-    async function loadKnowledge() {
-
-      knowledgeContainer.innerHTML =
-        `
-          <div class="loading">
-            جاري تحميل قاعدة المعرفة...
-          </div>
-        `;
-
+      button.disabled=true;
 
       try {
+        await api("/api/unanswered-admin",{
+          action:"resolve",
+          question_id:question.id,
+          approved_answer:answer
+        });
 
-        const response =
-          await fetch(
-            "/api/knowledge-admin",
-            {
-              method: "POST",
+        status.textContent="تم اعتماد الإجابة.";
+        status.className="question-status status-success";
 
-              headers: {
-                "Content-Type":
-                  "application/json"
-              },
+        await Promise.all([
+          loadAdminDashboard(),
+          loadKnowledge()
+        ]);
 
-              body:
-                JSON.stringify({
-                  password:
-                    adminPassword,
+        await loadQuestions();
 
-                  action:
-                    "list"
-                })
-            }
-          );
-
-
-        const data =
-          await response.json();
-
-
-        if (!response.ok) {
-
-          throw new Error(
-            data.error ||
-            "Unable to load knowledge base"
-          );
-        }
-
-
-        renderKnowledge(
-          data.items || []
-        );
-
-
-      } catch (error) {
-
-        console.error(error);
-
-        knowledgeContainer.innerHTML =
-          `
-            <div class="empty-state">
-              تعذر تحميل قاعدة المعرفة.
-            </div>
-          `;
-      }
-    }
-
-
-    function renderKnowledge(items) {
-
-      if (
-        !Array.isArray(items) ||
-        items.length === 0
-      ) {
-
-        knowledgeContainer.innerHTML =
-          `
-            <div class="empty-state">
-              لا توجد معلومات معتمدة في قاعدة المعرفة حاليًا.
-            </div>
-          `;
-
-        return;
+      } catch(e) {
+        status.textContent="تعذر حفظ الإجابة.";
+        status.className="question-status status-error";
       }
 
-
-      knowledgeContainer.innerHTML = "";
-
-
-      items.forEach(
-        function(item) {
-
-          const card =
-            document.createElement("div");
-
-          card.className =
-            "knowledge-card";
-
-
-          const header =
-            document.createElement("div");
-
-          header.className =
-            "knowledge-header";
-
-
-          const title =
-            document.createElement("div");
-
-          title.className =
-            "knowledge-title";
-
-          title.textContent =
-            item.language === "en"
-              ? "Approved Knowledge"
-              : "معلومة معتمدة";
-
-
-          const meta =
-            document.createElement("div");
-
-          meta.className =
-            "knowledge-meta";
-
-          meta.innerHTML =
-            `
-              آخر تحديث:
-              ${formatDate(item.updated_at)}
-              <br>
-              اللغة:
-              ${item.language === "en" ? "English" : "العربية"}
-              <br>
-              المصدر:
-              ${item.source || "admin"}
-            `;
-
-
-          header.appendChild(title);
-          header.appendChild(meta);
-
-
-          const badge =
-            document.createElement("div");
-
-          badge.className =
-            item.active
-              ? "active-badge"
-              : "inactive-badge";
-
-          badge.textContent =
-            item.active
-              ? "مفعّلة"
-              : "معطّلة";
-
-
-          const questionLabel =
-            document.createElement("div");
-
-          questionLabel.className =
-            "answer-label";
-
-          questionLabel.textContent =
-            "السؤال / الموضوع";
-
-
-          const questionInput =
-            document.createElement("textarea");
-
-          questionInput.className =
-            "knowledge-question-input";
-
-          questionInput.value =
-            item.question || "";
-
-          questionInput.placeholder =
-            "السؤال أو الموضوع";
-
-
-          const answerLabel =
-            document.createElement("div");
-
-          answerLabel.className =
-            "answer-label";
-
-          answerLabel.textContent =
-            "الإجابة الرسمية";
-
-
-          const answerInput =
-            document.createElement("textarea");
-
-          answerInput.value =
-            item.answer || "";
-
-          answerInput.placeholder =
-            "الإجابة الرسمية المعتمدة";
-
-
-          const actions =
-            document.createElement("div");
-
-          actions.className =
-            "knowledge-actions";
-
-
-          const saveButton =
-            document.createElement("button");
-
-          saveButton.type =
-            "button";
-
-          saveButton.className =
-            "save-btn";
-
-          saveButton.textContent =
-            "حفظ التعديل";
-
-
-          const toggleButton =
-            document.createElement("button");
-
-          toggleButton.type =
-            "button";
-
-          toggleButton.className =
-            "toggle-btn";
-
-          toggleButton.textContent =
-            item.active
-              ? "تعطيل"
-              : "تفعيل";
-
-
-          const deleteButton =
-            document.createElement("button");
-
-          deleteButton.type =
-            "button";
-
-          deleteButton.className =
-            "delete-btn";
-
-          deleteButton.textContent =
-            "حذف";
-
-
-          const status =
-            document.createElement("div");
-
-          status.className =
-            "knowledge-status";
-
-
-          saveButton.addEventListener(
-            "click",
-            async function() {
-
-              const question =
-                questionInput.value.trim();
-
-              const answer =
-                answerInput.value.trim();
-
-
-              status.textContent = "";
-
-              status.className =
-                "knowledge-status";
-
-
-              if (!question || !answer) {
-
-                status.textContent =
-                  "السؤال والإجابة مطلوبان.";
-
-                status.classList.add(
-                  "status-error"
-                );
-
-                return;
-              }
-
-
-              saveButton.disabled =
-                true;
-
-              saveButton.textContent =
-                "جاري الحفظ...";
-
-
-              try {
-
-                const response =
-                  await fetch(
-                    "/api/knowledge-admin",
-                    {
-                      method: "POST",
-
-                      headers: {
-                        "Content-Type":
-                          "application/json"
-                      },
-
-                      body:
-                        JSON.stringify({
-                          password:
-                            adminPassword,
-
-                          action:
-                            "update",
-
-                          id:
-                            item.id,
-
-                          question,
-
-                          answer
-                        })
-                    }
-                  );
-
-
-                const data =
-                  await response.json();
-
-
-                if (!response.ok) {
-
-                  throw new Error(
-                    data.error ||
-                    "Unable to update item"
-                  );
-                }
-
-
-                status.textContent =
-                  "تم حفظ التعديل.";
-
-                status.classList.add(
-                  "status-success"
-                );
-
-
-                setTimeout(
-                  function() {
-                    loadKnowledge();
-                  },
-                  500
-                );
-
-
-              } catch (error) {
-
-                console.error(error);
-
-                status.textContent =
-                  "تعذر حفظ التعديل.";
-
-                status.classList.add(
-                  "status-error"
-                );
-
-
-              } finally {
-
-                saveButton.disabled =
-                  false;
-
-                saveButton.textContent =
-                  "حفظ التعديل";
-              }
-            }
-          );
-
-
-          toggleButton.addEventListener(
-            "click",
-            async function() {
-
-              toggleButton.disabled =
-                true;
-
-              toggleButton.textContent =
-                "جاري التنفيذ...";
-
-
-              try {
-
-                const response =
-                  await fetch(
-                    "/api/knowledge-admin",
-                    {
-                      method: "POST",
-
-                      headers: {
-                        "Content-Type":
-                          "application/json"
-                      },
-
-                      body:
-                        JSON.stringify({
-                          password:
-                            adminPassword,
-
-                          action:
-                            "toggle",
-
-                          id:
-                            item.id,
-
-                          active:
-                            !item.active
-                        })
-                    }
-                  );
-
-
-                const data =
-                  await response.json();
-
-
-                if (!response.ok) {
-
-                  throw new Error(
-                    data.error ||
-                    "Unable to toggle item"
-                  );
-                }
-
-
-                await loadKnowledge();
-
-
-              } catch (error) {
-
-                console.error(error);
-
-                status.textContent =
-                  "تعذر تغيير حالة المعلومة.";
-
-                status.classList.add(
-                  "status-error"
-                );
-
-
-              } finally {
-
-                toggleButton.disabled =
-                  false;
-              }
-            }
-          );
-
-
-          deleteButton.addEventListener(
-            "click",
-            async function() {
-
-              const confirmed =
-                window.confirm(
-                  "هل أنت متأكد من حذف هذه المعلومة نهائيًا؟"
-                );
-
-
-              if (!confirmed) {
-                return;
-              }
-
-
-              deleteButton.disabled =
-                true;
-
-              deleteButton.textContent =
-                "جاري الحذف...";
-
-
-              try {
-
-                const response =
-                  await fetch(
-                    "/api/knowledge-admin",
-                    {
-                      method: "POST",
-
-                      headers: {
-                        "Content-Type":
-                          "application/json"
-                      },
-
-                      body:
-                        JSON.stringify({
-                          password:
-                            adminPassword,
-
-                          action:
-                            "delete",
-
-                          id:
-                            item.id
-                        })
-                    }
-                  );
-
-
-                const data =
-                  await response.json();
-
-
-                if (!response.ok) {
-
-                  throw new Error(
-                    data.error ||
-                    "Unable to delete item"
-                  );
-                }
-
-
-                await loadKnowledge();
-
-
-              } catch (error) {
-
-                console.error(error);
-
-                status.textContent =
-                  "تعذر حذف المعلومة.";
-
-                status.classList.add(
-                  "status-error"
-                );
-
-
-              } finally {
-
-                deleteButton.disabled =
-                  false;
-              }
-            }
-          );
-
-
-          actions.appendChild(saveButton);
-          actions.appendChild(toggleButton);
-          actions.appendChild(deleteButton);
-
-          card.appendChild(header);
-          card.appendChild(badge);
-          card.appendChild(questionLabel);
-          card.appendChild(questionInput);
-          card.appendChild(answerLabel);
-          card.appendChild(answerInput);
-          card.appendChild(actions);
-          card.appendChild(status);
-
-          knowledgeContainer.appendChild(card);
-        }
-      );
-    }
-
-
-    showCreateKnowledgeButton.addEventListener(
-      "click",
-      function() {
-
-        createKnowledgeForm.classList.add(
-          "show"
-        );
-
-        showCreateKnowledgeButton.style.display =
-          "none";
-
-        newKnowledgeQuestion.focus();
+      button.disabled=false;
+    };
+
+    card.append(header,textarea,button,status);
+    questionsContainer.appendChild(card);
+  });
+}
+
+async function loadKnowledge() {
+  knowledgeContainer.innerHTML='<div class="loading">جاري تحميل قاعدة المعرفة...</div>';
+
+  try {
+    const data=await api("/api/knowledge-admin",{action:"list"});
+    renderKnowledge(data.items||[]);
+  } catch(e) {
+    console.error(e);
+    knowledgeContainer.innerHTML='<div class="empty-state">تعذر تحميل قاعدة المعرفة.</div>';
+  }
+}
+
+function renderKnowledge(items) {
+  if(!items.length) {
+    knowledgeContainer.innerHTML='<div class="empty-state">لا توجد معلومات معتمدة حاليًا.</div>';
+    return;
+  }
+
+  knowledgeContainer.innerHTML="";
+
+  items.forEach(item=>{
+    const card=document.createElement("div");
+    card.className="knowledge-card";
+
+    const header=document.createElement("div");
+    header.className="knowledge-header";
+
+    const title=document.createElement("div");
+    title.className="knowledge-title";
+    title.textContent=item.language==="en"?"Approved Knowledge":"معلومة معتمدة";
+
+    const meta=document.createElement("div");
+    meta.className="knowledge-meta";
+    meta.textContent=`آخر تحديث: ${formatDate(item.updated_at)}`;
+
+    header.append(title,meta);
+
+    const badge=document.createElement("div");
+    badge.className=item.active?"active-badge":"inactive-badge";
+    badge.textContent=item.active?"مفعّلة":"معطّلة";
+
+    const question=document.createElement("textarea");
+    question.value=item.question||"";
+
+    const answer=document.createElement("textarea");
+    answer.value=item.answer||"";
+
+    const actions=document.createElement("div");
+    actions.className="knowledge-actions";
+
+    const save=document.createElement("button");
+    save.className="save-btn";
+    save.textContent="حفظ التعديل";
+
+    const toggle=document.createElement("button");
+    toggle.className="toggle-btn";
+    toggle.textContent=item.active?"تعطيل":"تفعيل";
+
+    const del=document.createElement("button");
+    del.className="delete-btn";
+    del.textContent="حذف";
+
+    const status=document.createElement("div");
+    status.className="knowledge-status";
+
+    save.onclick=async()=>{
+      if(!question.value.trim()||!answer.value.trim()) return;
+
+      try {
+        await api("/api/knowledge-admin",{
+          action:"update",
+          id:item.id,
+          question:question.value.trim(),
+          answer:answer.value.trim()
+        });
+
+        status.textContent="تم حفظ التعديل.";
+        status.className="knowledge-status status-success";
+      } catch {
+        status.textContent="تعذر حفظ التعديل.";
+        status.className="knowledge-status status-error";
       }
-    );
+    };
 
+    toggle.onclick=async()=>{
+      try {
+        await api("/api/knowledge-admin",{
+          action:"toggle",
+          id:item.id,
+          active:!item.active
+        });
 
-    cancelNewKnowledgeButton.addEventListener(
-      "click",
-      function() {
-
-        resetCreateKnowledgeForm();
-
-        createKnowledgeForm.classList.remove(
-          "show"
-        );
-
-        showCreateKnowledgeButton.style.display =
-          "block";
+        await loadKnowledge();
+      } catch {
+        status.textContent="تعذر تغيير الحالة.";
+        status.className="knowledge-status status-error";
       }
-    );
+    };
 
+    del.onclick=async()=>{
+      if(!confirm("هل أنت متأكد من الحذف؟")) return;
 
-    saveNewKnowledgeButton.addEventListener(
-      "click",
-      async function() {
+      try {
+        await api("/api/knowledge-admin",{
+          action:"delete",
+          id:item.id
+        });
 
-        const question =
-          newKnowledgeQuestion.value.trim();
-
-        const answer =
-          newKnowledgeAnswer.value.trim();
-
-        const language =
-          newKnowledgeLanguage.value === "en"
-            ? "en"
-            : "ar";
-
-
-        createKnowledgeStatus.textContent = "";
-
-        createKnowledgeStatus.className =
-          "create-status";
-
-
-        if (!question || !answer) {
-
-          createKnowledgeStatus.textContent =
-            "اكتب السؤال والإجابة أولًا.";
-
-          createKnowledgeStatus.classList.add(
-            "status-error"
-          );
-
-          return;
-        }
-
-
-        saveNewKnowledgeButton.disabled =
-          true;
-
-        saveNewKnowledgeButton.textContent =
-          "جاري الحفظ...";
-
-
-        try {
-
-          const response =
-            await fetch(
-              "/api/knowledge-admin",
-              {
-                method: "POST",
-
-                headers: {
-                  "Content-Type":
-                    "application/json"
-                },
-
-                body:
-                  JSON.stringify({
-                    password:
-                      adminPassword,
-
-                    action:
-                      "create",
-
-                    question,
-
-                    answer,
-
-                    language
-                  })
-              }
-            );
-
-
-          const data =
-            await response.json();
-
-
-          if (response.status === 409) {
-
-            createKnowledgeStatus.textContent =
-              "هذه المعلومة موجودة مسبقًا.";
-
-            createKnowledgeStatus.classList.add(
-              "status-error"
-            );
-
-            return;
-          }
-
-
-          if (!response.ok) {
-
-            throw new Error(
-              data.error ||
-              "Unable to create knowledge item"
-            );
-          }
-
-
-          createKnowledgeStatus.textContent =
-            "تمت إضافة المعلومة بنجاح.";
-
-          createKnowledgeStatus.classList.add(
-            "status-success"
-          );
-
-
-          await loadKnowledge();
-
-
-          setTimeout(
-            function() {
-
-              resetCreateKnowledgeForm();
-
-              createKnowledgeForm.classList.remove(
-                "show"
-              );
-
-              showCreateKnowledgeButton.style.display =
-                "block";
-
-            },
-            700
-          );
-
-
-        } catch (error) {
-
-          console.error(error);
-
-          createKnowledgeStatus.textContent =
-            "تعذر إضافة المعلومة.";
-
-          createKnowledgeStatus.classList.add(
-            "status-error"
-          );
-
-
-        } finally {
-
-          saveNewKnowledgeButton.disabled =
-            false;
-
-          saveNewKnowledgeButton.textContent =
-            "حفظ المعلومة";
-        }
+        await loadKnowledge();
+      } catch {
+        status.textContent="تعذر الحذف.";
+        status.className="knowledge-status status-error";
       }
-    );
+    };
 
+    actions.append(save,toggle,del);
+    card.append(header,badge,question,answer,actions,status);
+    knowledgeContainer.appendChild(card);
+  });
+}
 
-    loginForm.addEventListener(
-      "submit",
-      async function(event) {
+showCreateKnowledgeButton.onclick=()=>{
+  createKnowledgeForm.classList.add("show");
+  showCreateKnowledgeButton.style.display="none";
+};
 
-        event.preventDefault();
+cancelNewKnowledgeButton.onclick=()=>{
+  createKnowledgeForm.classList.remove("show");
+  showCreateKnowledgeButton.style.display="block";
+};
 
-        loginError.textContent = "";
+saveNewKnowledgeButton.onclick=async()=>{
+  const question=newKnowledgeQuestion.value.trim();
+  const answer=newKnowledgeAnswer.value.trim();
 
+  if(!question||!answer) {
+    createKnowledgeStatus.textContent="اكتب السؤال والإجابة أولًا.";
+    return;
+  }
 
-        const password =
-          passwordInput.value;
+  try {
+    await api("/api/knowledge-admin",{
+      action:"create",
+      question,
+      answer,
+      language:newKnowledgeLanguage.value
+    });
 
+    newKnowledgeQuestion.value="";
+    newKnowledgeAnswer.value="";
 
-        if (!password) {
+    createKnowledgeStatus.textContent="تمت إضافة المعلومة بنجاح.";
+    createKnowledgeStatus.className="create-status status-success";
 
-          loginError.textContent =
-            "أدخل كلمة المرور.";
+    await loadKnowledge();
 
-          return;
-        }
+  } catch(e) {
+    createKnowledgeStatus.textContent="تعذر إضافة المعلومة.";
+    createKnowledgeStatus.className="create-status status-error";
+  }
+};
 
+async function loadSelectedClient() {
+  rememberClient(currentClient());
 
-        loginButton.disabled =
-          true;
+  await Promise.all([
+    loadAdminDashboard(),
+    loadQuestions(),
+    loadKnowledge()
+  ]);
+}
 
-        loginButton.textContent =
-          "جاري الدخول...";
+clientSelect.onchange=loadSelectedClient;
 
+loginForm.onsubmit=async event=>{
+  event.preventDefault();
 
-        try {
+  const password=passwordInput.value;
 
-          adminPassword =
-            password;
+  if(!password) return;
 
+  adminPassword=password;
+  loginButton.disabled=true;
+  loginError.textContent="";
 
-          const response =
-            await fetch(
-              "/api/admin-dashboard",
-              {
-                method: "POST",
+  try {
+    await loadClients();
+    await loadSelectedClient();
 
-                headers: {
-                  "Content-Type":
-                    "application/json"
-                },
+    passwordInput.value="";
 
-                body:
-                  JSON.stringify({
-                    password:
-                      adminPassword
-                  })
-              }
-            );
+  } catch(e) {
+    console.error(e);
 
+    if(String(e.message).toLowerCase().includes("unauthorized"))
+      loginError.textContent="كلمة المرور غير صحيحة.";
+    else
+      loginError.textContent="تعذر تحميل لوحة الإدارة.";
 
-          if (response.status === 401) {
+    adminPassword="";
+  }
 
-            adminPassword = "";
+  loginButton.disabled=false;
+};
 
-            loginError.textContent =
-              "كلمة المرور غير صحيحة.";
+logoutButton.onclick=()=>{
+  adminPassword="";
+  dashboard.style.display="none";
+  loginPage.style.display="flex";
+  passwordInput.value="";
+};
 
-            return;
-          }
-
-
-          const data =
-            await response.json();
-
-
-          if (!response.ok) {
-
-            adminPassword = "";
-
-            console.error(data);
-
-            loginError.textContent =
-              "تعذر تحميل لوحة الإدارة.";
-
-            return;
-          }
-
-
-          passwordInput.value = "";
-
-
-          showDashboard(data);
-
-
-          await Promise.all([
-            loadQuestions(),
-            loadKnowledge()
-          ]);
-
-
-        } catch (error) {
-
-          adminPassword = "";
-
-          console.error(error);
-
-          loginError.textContent =
-            "حدث خطأ في الاتصال.";
-
-
-        } finally {
-
-          loginButton.disabled =
-            false;
-
-          loginButton.textContent =
-            "دخول";
-        }
-      }
-    );
-
-
-    logoutButton.addEventListener(
-      "click",
-      function() {
-
-        adminPassword = "";
-
-        dashboard.style.display =
-          "none";
-
-        loginPage.style.display =
-          "flex";
-
-        passwordInput.value = "";
-
-        loginError.textContent = "";
-
-        questionsContainer.innerHTML = "";
-
-        knowledgeContainer.innerHTML = "";
-
-        resetCreateKnowledgeForm();
-
-        createKnowledgeForm.classList.remove(
-          "show"
-        );
-
-        showCreateKnowledgeButton.style.display =
-          "block";
-
-        passwordInput.focus();
-      }
-    );
-
-  </script>
-
+</script>
 </body>
 </html>
