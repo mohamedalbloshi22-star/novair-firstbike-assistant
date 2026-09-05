@@ -1,639 +1,761 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NOVAIRE | الإحصائيات</title>
 
-  <title>NOVAIRE Dashboard — First Bike</title>
+<style>
+*{box-sizing:border-box}
 
-  <style>
-    :root{
-      --bg:#171717;
-      --card:#232323;
-      --line:#3a3a3a;
-      --gold:#f2a93b;
-      --text:#f5f1e8;
-      --muted:#b9b2a7;
-    }
+body{
+  margin:0;
+  font-family:Arial,Tahoma,sans-serif;
+  background:#f4f6f8;
+  color:#111827;
+}
 
-    *{
-      box-sizing:border-box;
-    }
+.header{
+  background:#111827;
+  color:white;
+  padding:22px;
+}
 
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:Arial,Tahoma,sans-serif;
-    }
+.header-inner{
+  max-width:1200px;
+  margin:auto;
+}
 
-    .container{
-      width:min(1100px,calc(100% - 32px));
-      margin:auto;
-      padding:32px 0 50px;
-    }
+.header h1{
+  margin:0 0 6px;
+  font-size:25px;
+}
 
-    .header{
-      margin-bottom:28px;
-    }
+.header p{
+  margin:0;
+  color:#d1d5db;
+}
 
-    .header h1{
-      margin:0;
-      font-size:30px;
-    }
+.container{
+  max-width:1200px;
+  margin:auto;
+  padding:24px;
+}
 
-    .header p{
-      color:var(--muted);
-      margin-top:8px;
-    }
+.top{
+  background:white;
+  border-radius:14px;
+  padding:18px;
+  margin-bottom:20px;
+  border:1px solid #e5e7eb;
+}
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:16px;
-    }
+select,button{
+  width:100%;
+  padding:11px;
+  margin-top:8px;
+  border-radius:8px;
+  border:1px solid #d1d5db;
+  font-size:15px;
+}
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:20px;
-    }
+button{
+  background:#111827;
+  color:white;
+  border:0;
+  cursor:pointer;
+  font-weight:bold;
+}
 
-    .label{
-      color:var(--muted);
-      font-size:14px;
-      margin-bottom:12px;
-    }
+.grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:15px;
+}
 
-    .value{
-      font-size:34px;
-      font-weight:bold;
-      color:var(--gold);
-    }
+.card{
+  background:white;
+  border-radius:14px;
+  padding:18px;
+  border:1px solid #e5e7eb;
+  box-shadow:0 3px 10px rgba(0,0,0,.04);
+}
 
-    .small{
-      font-size:14px;
-      color:var(--muted);
-      margin-top:6px;
-    }
+.card .label{
+  color:#6b7280;
+  font-size:14px;
+}
 
-    .section-title{
-      margin-top:34px;
-      margin-bottom:14px;
-      font-size:20px;
-    }
+.card .value{
+  font-size:28px;
+  font-weight:bold;
+  margin-top:8px;
+}
 
-    .table-wrap{
-      overflow-x:auto;
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:12px;
-    }
+.section{
+  background:white;
+  border-radius:14px;
+  padding:20px;
+  margin-top:20px;
+  border:1px solid #e5e7eb;
+}
 
-    table{
-      width:100%;
-      border-collapse:collapse;
-      min-width:700px;
-    }
+.section h2{
+  margin-top:0;
+}
 
-    th,
-    td{
-      padding:13px 12px;
-      border-bottom:1px solid var(--line);
-      text-align:center;
-      font-size:13px;
-    }
+table{
+  width:100%;
+  border-collapse:collapse;
+}
 
-    th{
-      color:var(--gold);
-      background:#1d1d1d;
-    }
+th,td{
+  padding:11px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:right;
+}
 
-    tr:last-child td{
-      border-bottom:none;
-    }
+th{
+  background:#f9fafb;
+}
 
-    .question-cell{
-      text-align:right;
-      min-width:320px;
-    }
+.message{
+  display:none;
+  padding:12px;
+  margin-bottom:15px;
+  border-radius:8px;
+}
 
-    .count{
-      font-weight:bold;
-      color:var(--gold);
-      font-size:16px;
-    }
+.error{
+  display:block;
+  background:#fee2e2;
+  color:#991b1b;
+}
 
-    .status-badge{
-      display:inline-block;
-      padding:5px 9px;
-      border-radius:20px;
-      font-size:11px;
-      font-weight:bold;
-    }
+.back{
+  display:inline-block;
+  margin-bottom:18px;
+  text-decoration:none;
+  color:#111827;
+  font-weight:bold;
+}
 
-    .status-unresolved{
-      color:#ff8d7a;
-      border:1px solid #7c3b31;
-    }
+@media(max-width:900px){
+  .grid{grid-template-columns:repeat(2,1fr)}
+}
 
-    .status-resolved{
-      color:#82d39f;
-      border:1px solid #37634a;
-    }
-
-    .status{
-      margin-top:25px;
-      padding:14px;
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:10px;
-      color:var(--muted);
-    }
-
-    .error{
-      color:#ff8170;
-    }
-
-    @media(max-width:800px){
-      .grid{
-        grid-template-columns:1fr 1fr;
-      }
-    }
-
-    @media(max-width:500px){
-      .grid{
-        grid-template-columns:1fr;
-      }
-    }
-  </style>
+@media(max-width:550px){
+  .grid{grid-template-columns:1fr}
+  .container{padding:14px}
+}
+</style>
 </head>
 
 <body>
 
+<header class="header">
+<div class="header-inner">
+<h1>NOVAIRE | الإحصائيات</h1>
+<p>Smart Response — مؤشرات أداء العميل</p>
+</div>
+</header>
+
 <main class="container">
 
-  <div class="header">
-    <h1>NOVAIRE Smart Response</h1>
-    <p>First Bike — لوحة الأداء وخدمة العملاء</p>
-  </div>
+<a class="back" href="/control.html">← العودة إلى لوحة التحكم</a>
 
-  <div class="grid">
+<div id="message" class="message"></div>
 
-    <div class="card">
-      <div class="label">إجمالي المحادثات</div>
-      <div class="value" id="totalConversations">-</div>
-    </div>
+<div class="top">
 
-    <div class="card">
-      <div class="label">إجمالي الرسائل</div>
-      <div class="value" id="totalMessages">-</div>
-    </div>
+<label><strong>العميل</strong></label>
 
-    <div class="card">
-      <div class="label">نسبة الحل بالذكاء الاصطناعي</div>
-      <div class="value" id="aiResolutionRate">-</div>
-      <div class="small" id="aiResolutionDetails">-</div>
-    </div>
+<select id="clientSelect" onchange="changeClient()">
+<option value="">جاري تحميل العملاء...</option>
+</select>
 
-    <div class="card">
-      <div class="label">إجمالي طلبات التواصل</div>
-      <div class="value" id="totalContactRequests">-</div>
-    </div>
+<button onclick="loadDashboard()">تحديث الإحصائيات</button>
 
-    <div class="card">
-      <div class="label">طلبات الاتصال</div>
-      <div class="value" id="callbackRequests">-</div>
-      <div class="small" id="callbackRate">-</div>
-    </div>
+</div>
 
-    <div class="card">
-      <div class="label">التحويل لموظف</div>
-      <div class="value" id="handoffRequests">-</div>
-      <div class="small" id="handoffRate">-</div>
-    </div>
+<div class="grid">
 
-    <div class="card">
-      <div class="label">الأسئلة غير المجابة</div>
-      <div class="value" id="unansweredQuestions">-</div>
-      <div class="small" id="unresolvedQuestions">-</div>
-    </div>
+<div class="card">
+<div class="label">إجمالي المحادثات</div>
+<div id="conversations" class="value">—</div>
+</div>
 
-    <div class="card">
-      <div class="label">المحادثات العربية</div>
-      <div class="value" id="arabicConversations">-</div>
-      <div class="small" id="arabicRate">-</div>
-    </div>
+<div class="card">
+<div class="label">إجمالي الرسائل</div>
+<div id="messages" class="value">—</div>
+</div>
 
-    <div class="card">
-      <div class="label">المحادثات الإنجليزية</div>
-      <div class="value" id="englishConversations">-</div>
-      <div class="small" id="englishRate">-</div>
-    </div>
+<div class="card">
+<div class="label">حلها الذكاء الاصطناعي</div>
+<div id="resolution" class="value">—</div>
+</div>
 
-  </div>
+<div class="card">
+<div class="label">الأسئلة غير المجابة</div>
+<div id="unanswered" class="value">—</div>
+</div>
 
-  <div class="section-title">
-    الأسئلة الأكثر تكرارًا
-  </div>
+<div class="card">
+<div class="label">تحويل لموظف</div>
+<div id="handoff" class="value">—</div>
+</div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>السؤال</th>
-          <th>عدد مرات السؤال</th>
-          <th>آخر مرة</th>
-        </tr>
-      </thead>
-      <tbody id="commonQuestionsTable"></tbody>
-    </table>
-  </div>
+<div class="card">
+<div class="label">طلبات معاودة الاتصال</div>
+<div id="callback" class="value">—</div>
+</div>
 
-  <div class="section-title">
-    أوقات الذروة
-  </div>
+<div class="card">
+<div class="label">العربية</div>
+<div id="arabic" class="value">—</div>
+</div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>الساعة</th>
-          <th>المحادثات</th>
-          <th>الرسائل</th>
-        </tr>
-      </thead>
-      <tbody id="peakHoursTable"></tbody>
-    </table>
-  </div>
+<div class="card">
+<div class="label">الإنجليزية</div>
+<div id="english" class="value">—</div>
+</div>
 
-  <div class="section-title">
-    الإحصائيات اليومية
-  </div>
+</div>
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>التاريخ</th>
-          <th>المحادثات</th>
-          <th>الرسائل</th>
-          <th>طلبات الاتصال</th>
-          <th>التحويل لموظف</th>
-        </tr>
-      </thead>
-      <tbody id="dailyTable"></tbody>
-    </table>
-  </div>
 
-  <div class="section-title">
-    آخر الأسئلة غير المجابة
-  </div>
+<div class="section">
 
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>السؤال</th>
-          <th>الحالة</th>
-          <th>التاريخ</th>
-        </tr>
-      </thead>
-      <tbody id="unansweredTable"></tbody>
-    </table>
-  </div>
+<h2>الأسئلة الأكثر شيوعًا</h2>
 
-  <div class="status" id="status">
-    جاري تحميل البيانات...
-  </div>
+<div style="overflow-x:auto">
+
+<table>
+<thead>
+<tr>
+<th>السؤال</th>
+<th>العدد</th>
+</tr>
+</thead>
+
+<tbody id="questionsTable">
+<tr>
+<td colspan="2">جاري التحميل...</td>
+</tr>
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+
+<div class="section">
+
+<h2>أوقات الذروة</h2>
+
+<div style="overflow-x:auto">
+
+<table>
+<thead>
+<tr>
+<th>الساعة</th>
+<th>عدد المحادثات</th>
+</tr>
+</thead>
+
+<tbody id="hoursTable">
+<tr>
+<td colspan="2">جاري التحميل...</td>
+</tr>
+</tbody>
+
+</table>
+
+</div>
+</div>
+
+
+<div class="section">
+
+<h2>الإحصائيات اليومية</h2>
+
+<div style="overflow-x:auto">
+
+<table>
+<thead>
+<tr>
+<th>التاريخ</th>
+<th>المحادثات</th>
+<th>الرسائل</th>
+</tr>
+</thead>
+
+<tbody id="dailyTable">
+<tr>
+<td colspan="3">جاري التحميل...</td>
+</tr>
+</tbody>
+
+</table>
+
+</div>
+</div>
 
 </main>
 
+
 <script>
 
-function formatNumber(value){
-  return Number(value || 0).toLocaleString("en-US");
+const knownClients=[
+  {slug:"first-bike",name:"First Bike"},
+  {slug:"demo-clinic",name:"Demo Clinic"},
+  {slug:"novaire-test-center",name:"NOVAIRE Test Center"}
+];
+
+function requestedClient(){
+  return (
+    new URLSearchParams(window.location.search)
+      .get("client") || ""
+  ).trim().toLowerCase();
 }
 
-function formatDate(value){
-  if(!value) return "-";
+async function loadClients(){
 
-  const date = new Date(value);
+  const select=document.getElementById("clientSelect");
+  const valid=[];
 
-  if(Number.isNaN(date.getTime())){
-    return value;
+  for(const client of knownClients){
+
+    try{
+
+      const response=await fetch(
+        "/api/client-config?client="+
+        encodeURIComponent(client.slug)
+      );
+
+      if(response.ok){
+
+        const data=await response.json();
+
+        valid.push({
+          slug:client.slug,
+          name:
+            data.name ||
+            data.brand_name ||
+            client.name
+        });
+      }
+
+    }catch{}
   }
 
-  return date.toLocaleString("ar-AE",{
-    dateStyle:"medium",
-    timeStyle:"short"
+  const clients=valid.length ? valid : knownClients;
+
+  select.innerHTML="";
+
+  clients.forEach(client=>{
+
+    const option=document.createElement("option");
+
+    option.value=client.slug;
+    option.textContent=client.name;
+
+    select.appendChild(option);
   });
-}
 
-function formatHour(hour){
-  const value = Number(hour);
+  const wanted=requestedClient();
 
-  if(Number.isNaN(value)){
-    return "-";
+  if(clients.some(c=>c.slug===wanted)){
+    select.value=wanted;
+  }else if(clients.length){
+    select.value=clients[0].slug;
   }
 
-  const suffix = value < 12 ? "ص" : "م";
-  const displayHour = value % 12 === 0 ? 12 : value % 12;
-
-  return displayHour + ":00 " + suffix;
+  await loadDashboard();
 }
+
+
+function changeClient(){
+
+  const slug=
+    document.getElementById("clientSelect").value;
+
+  if(!slug) return;
+
+  const url=new URL(window.location.href);
+
+  url.searchParams.set("client",slug);
+
+  history.replaceState(
+    {},
+    "",
+    url.pathname+url.search
+  );
+
+  loadDashboard();
+}
+
 
 async function loadDashboard(){
 
-  const status =
-    document.getElementById("status");
+  const slug=
+    document.getElementById("clientSelect").value;
 
-  const commonQuestionsTable =
-    document.getElementById("commonQuestionsTable");
+  if(!slug) return;
 
-  const peakHoursTable =
-    document.getElementById("peakHoursTable");
-
-  const dailyTable =
-    document.getElementById("dailyTable");
-
-  const unansweredTable =
-    document.getElementById("unansweredTable");
+  clearMessage();
 
   try{
 
-    const response =
-      await fetch("/api/dashboard");
+    const response=await fetch(
+      "/api/dashboard?client="+
+      encodeURIComponent(slug)
+    );
+
+    const data=await response.json();
 
     if(!response.ok){
-      throw new Error("Dashboard API failed");
+      throw new Error(
+        data.error ||
+        data.details ||
+        "تعذر تحميل الإحصائيات"
+      );
     }
 
-    const data =
-      await response.json();
-
-    const summary = data.summary || {};
-
-    const daily =
-      Array.isArray(data.daily)
-        ? data.daily
-        : [];
-
-    const unanswered =
-      Array.isArray(data.recent_unanswered_questions)
-        ? data.recent_unanswered_questions
-        : [];
-
-    const commonQuestions =
-      Array.isArray(data.common_questions)
-        ? data.common_questions
-        : [];
-
-    const peakHours =
-      Array.isArray(data.peak_hours)
-        ? data.peak_hours
-        : [];
-
-    document.getElementById("totalConversations").textContent =
-      formatNumber(summary.total_conversations);
-
-    document.getElementById("totalMessages").textContent =
-      formatNumber(summary.total_messages);
-
-    document.getElementById("aiResolutionRate").textContent =
-      (summary.ai_resolution_rate_percent ?? 0) + "%";
-
-    document.getElementById("aiResolutionDetails").textContent =
-      "تم الحل تلقائيًا: " +
-      formatNumber(summary.ai_resolved_conversations) +
-      " من " +
-      formatNumber(summary.evaluated_conversations);
-
-    document.getElementById("totalContactRequests").textContent =
-      formatNumber(summary.total_contact_requests);
-
-    document.getElementById("callbackRequests").textContent =
-      formatNumber(summary.callback_requests);
-
-    document.getElementById("callbackRate").textContent =
-      "النسبة: " +
-      (summary.callback_rate_percent ?? 0) +
-      "%";
-
-    document.getElementById("handoffRequests").textContent =
-      formatNumber(summary.human_handoff_requests);
-
-    document.getElementById("handoffRate").textContent =
-      "النسبة: " +
-      (summary.human_handoff_rate_percent ?? 0) +
-      "%";
-
-    document.getElementById("unansweredQuestions").textContent =
-      formatNumber(summary.total_unanswered_questions);
-
-    document.getElementById("unresolvedQuestions").textContent =
-      "بانتظار المعالجة: " +
-      formatNumber(summary.unresolved_unanswered_questions);
-
-    document.getElementById("arabicConversations").textContent =
-      formatNumber(summary.arabic_conversations);
-
-    document.getElementById("arabicRate").textContent =
-      (summary.arabic_rate_percent ?? 0) + "%";
-
-    document.getElementById("englishConversations").textContent =
-      formatNumber(summary.english_conversations);
-
-    document.getElementById("englishRate").textContent =
-      (summary.english_rate_percent ?? 0) + "%";
-
-
-    commonQuestionsTable.innerHTML = "";
-
-    if(commonQuestions.length === 0){
-
-      commonQuestionsTable.innerHTML =
-        `<tr><td colspan="3">لا توجد بيانات</td></tr>`;
-
-    }else{
-
-      commonQuestions.forEach(row => {
-
-        const tr = document.createElement("tr");
-
-        const questionTd = document.createElement("td");
-        questionTd.className = "question-cell";
-        questionTd.textContent = row.question ?? "-";
-
-        const countTd = document.createElement("td");
-        countTd.className = "count";
-        countTd.textContent =
-          formatNumber(row.times_asked);
-
-        const dateTd = document.createElement("td");
-        dateTd.textContent =
-          formatDate(row.last_asked_at);
-
-        tr.append(
-          questionTd,
-          countTd,
-          dateTd
-        );
-
-        commonQuestionsTable.appendChild(tr);
-      });
-    }
-
-
-    peakHoursTable.innerHTML = "";
-
-    if(peakHours.length === 0){
-
-      peakHoursTable.innerHTML =
-        `<tr><td colspan="3">لا توجد بيانات</td></tr>`;
-
-    }else{
-
-      peakHours.forEach(row => {
-
-        const tr = document.createElement("tr");
-
-        const hourTd = document.createElement("td");
-        hourTd.textContent =
-          formatHour(row.hour_of_day);
-
-        const conversationsTd =
-          document.createElement("td");
-
-        conversationsTd.className = "count";
-
-        conversationsTd.textContent =
-          formatNumber(row.conversations);
-
-        const messagesTd =
-          document.createElement("td");
-
-        messagesTd.textContent =
-          formatNumber(row.messages);
-
-        tr.append(
-          hourTd,
-          conversationsTd,
-          messagesTd
-        );
-
-        peakHoursTable.appendChild(tr);
-      });
-    }
-
-
-    dailyTable.innerHTML = "";
-
-    if(daily.length === 0){
-
-      dailyTable.innerHTML =
-        `<tr><td colspan="5">لا توجد بيانات</td></tr>`;
-
-    }else{
-
-      daily.forEach(row => {
-
-        const tr = document.createElement("tr");
-
-        [
-          row.day ?? "-",
-          row.conversations ?? 0,
-          row.messages ?? 0,
-          row.callback_conversations ?? 0,
-          row.human_handoff_conversations ?? 0
-        ].forEach(value => {
-
-          const td =
-            document.createElement("td");
-
-          td.textContent = value;
-
-          tr.appendChild(td);
-        });
-
-        dailyTable.appendChild(tr);
-      });
-    }
-
-
-    unansweredTable.innerHTML = "";
-
-    if(unanswered.length === 0){
-
-      unansweredTable.innerHTML =
-        `<tr><td colspan="3">لا توجد أسئلة غير مجابة</td></tr>`;
-
-    }else{
-
-      unanswered.forEach(row => {
-
-        const tr =
-          document.createElement("tr");
-
-        const questionTd =
-          document.createElement("td");
-
-        questionTd.className =
-          "question-cell";
-
-        questionTd.textContent =
-          row.question ?? "-";
-
-        const statusTd =
-          document.createElement("td");
-
-        const badge =
-          document.createElement("span");
-
-        badge.className =
-          row.resolved
-            ? "status-badge status-resolved"
-            : "status-badge status-unresolved";
-
-        badge.textContent =
-          row.resolved
-            ? "تمت المعالجة"
-            : "بانتظار المعالجة";
-
-        statusTd.appendChild(badge);
-
-        const dateTd =
-          document.createElement("td");
-
-        dateTd.textContent =
-          formatDate(row.created_at);
-
-        tr.append(
-          questionTd,
-          statusTd,
-          dateTd
-        );
-
-        unansweredTable.appendChild(tr);
-      });
-    }
-
-    status.textContent =
-      "تم تحديث البيانات بنجاح";
+    renderDashboard(data);
 
   }catch(error){
 
-    console.error(error);
+    showError(error.message);
 
-    status.textContent =
-      "تعذر تحميل بيانات لوحة الإحصائيات";
-
-    status.classList.add("error");
   }
 }
 
-loadDashboard();
+
+function pick(obj,names,fallback=0){
+
+  for(const name of names){
+
+    if(
+      obj &&
+      obj[name] !== undefined &&
+      obj[name] !== null
+    ){
+      return obj[name];
+    }
+  }
+
+  return fallback;
+}
+
+
+function renderDashboard(data){
+
+  const summary=
+    data.summary ||
+    data.stats ||
+    data.dashboard ||
+    data;
+
+  setValue(
+    "conversations",
+    pick(summary,[
+      "total_conversations",
+      "conversations"
+    ])
+  );
+
+  setValue(
+    "messages",
+    pick(summary,[
+      "total_messages",
+      "messages"
+    ])
+  );
+
+  let resolution=pick(summary,[
+    "ai_resolution_rate",
+    "resolution_rate",
+    "resolved_by_ai_rate"
+  ],0);
+
+  if(
+    typeof resolution==="number" &&
+    resolution<=1 &&
+    resolution>0
+  ){
+    resolution=resolution*100;
+  }
+
+  setValue(
+    "resolution",
+    formatPercent(resolution)
+  );
+
+  setValue(
+    "unanswered",
+    pick(summary,[
+      "unanswered_questions",
+      "unanswered_count",
+      "total_unanswered"
+    ])
+  );
+
+  setValue(
+    "handoff",
+    pick(summary,[
+      "human_handoff",
+      "human_handoff_count",
+      "handoffs"
+    ])
+  );
+
+  setValue(
+    "callback",
+    pick(summary,[
+      "callback_requested",
+      "callback_count",
+      "callbacks"
+    ])
+  );
+
+
+  const language=
+    data.languages ||
+    data.language_stats ||
+    {};
+
+  setValue(
+    "arabic",
+    pick(language,[
+      "ar",
+      "arabic",
+      "arabic_count"
+    ],pick(summary,[
+      "arabic",
+      "arabic_count"
+    ],0))
+  );
+
+  setValue(
+    "english",
+    pick(language,[
+      "en",
+      "english",
+      "english_count"
+    ],pick(summary,[
+      "english",
+      "english_count"
+    ],0))
+  );
+
+
+  renderQuestions(
+    data.common_questions ||
+    data.top_questions ||
+    []
+  );
+
+  renderHours(
+    data.peak_hours ||
+    data.hours ||
+    []
+  );
+
+  renderDaily(
+    data.daily_stats ||
+    data.daily ||
+    []
+  );
+}
+
+
+function setValue(id,value){
+
+  document.getElementById(id).textContent=
+    value ?? 0;
+}
+
+
+function formatPercent(value){
+
+  if(
+    typeof value==="string" &&
+    value.includes("%")
+  ){
+    return value;
+  }
+
+  const number=Number(value);
+
+  if(Number.isNaN(number)){
+    return "0%";
+  }
+
+  return number.toFixed(1)+"%";
+}
+
+
+function renderQuestions(items){
+
+  const table=
+    document.getElementById("questionsTable");
+
+  table.innerHTML="";
+
+  if(!Array.isArray(items) || !items.length){
+
+    table.innerHTML=
+      '<tr><td colspan="2">لا توجد بيانات.</td></tr>';
+
+    return;
+  }
+
+  items.forEach(item=>{
+
+    const row=document.createElement("tr");
+
+    row.innerHTML=
+      "<td>"+
+      escapeHtml(
+        item.question ||
+        item.content ||
+        item.text ||
+        ""
+      )+
+      "</td>"+
+      "<td>"+
+      escapeHtml(
+        item.count ||
+        item.total ||
+        item.frequency ||
+        0
+      )+
+      "</td>";
+
+    table.appendChild(row);
+  });
+}
+
+
+function renderHours(items){
+
+  const table=
+    document.getElementById("hoursTable");
+
+  table.innerHTML="";
+
+  if(!Array.isArray(items) || !items.length){
+
+    table.innerHTML=
+      '<tr><td colspan="2">لا توجد بيانات.</td></tr>';
+
+    return;
+  }
+
+  items.forEach(item=>{
+
+    const row=document.createElement("tr");
+
+    row.innerHTML=
+      "<td>"+
+      escapeHtml(
+        item.hour ??
+        item.hour_uae ??
+        ""
+      )+
+      "</td>"+
+      "<td>"+
+      escapeHtml(
+        item.count ??
+        item.conversations ??
+        item.total ??
+        0
+      )+
+      "</td>";
+
+    table.appendChild(row);
+  });
+}
+
+
+function renderDaily(items){
+
+  const table=
+    document.getElementById("dailyTable");
+
+  table.innerHTML="";
+
+  if(!Array.isArray(items) || !items.length){
+
+    table.innerHTML=
+      '<tr><td colspan="3">لا توجد بيانات.</td></tr>';
+
+    return;
+  }
+
+  items.forEach(item=>{
+
+    const row=document.createElement("tr");
+
+    row.innerHTML=
+      "<td>"+
+      escapeHtml(
+        item.date ||
+        item.day ||
+        ""
+      )+
+      "</td>"+
+      "<td>"+
+      escapeHtml(
+        item.conversations ??
+        item.total_conversations ??
+        0
+      )+
+      "</td>"+
+      "<td>"+
+      escapeHtml(
+        item.messages ??
+        item.total_messages ??
+        0
+      )+
+      "</td>";
+
+    table.appendChild(row);
+  });
+}
+
+
+function showError(text){
+
+  const box=document.getElementById("message");
+
+  box.textContent=text;
+  box.className="message error";
+}
+
+
+function clearMessage(){
+
+  const box=document.getElementById("message");
+
+  box.textContent="";
+  box.className="message";
+}
+
+
+function escapeHtml(value){
+
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+
+loadClients();
 
 </script>
 
