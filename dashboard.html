@@ -176,7 +176,7 @@
 
   <div class="header">
     <h1>NOVAIRE Smart Response</h1>
-    <p>First Bike — لوحة الإحصائيات</p>
+    <p>First Bike — لوحة الأداء وخدمة العملاء</p>
   </div>
 
   <div class="grid">
@@ -209,7 +209,7 @@
     </div>
 
     <div class="card">
-      <div class="label">التحدث مع مسؤول</div>
+      <div class="label">التحويل لموظف</div>
       <div class="value" id="handoffRequests">-</div>
       <div class="small" id="handoffRate">-</div>
     </div>
@@ -227,43 +227,9 @@
     </div>
 
     <div class="card">
-      <div class="label">English Conversations</div>
+      <div class="label">المحادثات الإنجليزية</div>
       <div class="value" id="englishConversations">-</div>
       <div class="small" id="englishRate">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Input Tokens</div>
-      <div class="value" id="inputTokens">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">Output Tokens</div>
-      <div class="value" id="outputTokens">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">إجمالي Tokens</div>
-      <div class="value" id="totalTokens">-</div>
-      <div class="small" id="aiUsageRecords">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">تكلفة الذكاء الاصطناعي بالدولار</div>
-      <div class="value" id="aiCostUsd">-</div>
-      <div class="small" id="aiModel">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">تكلفة الذكاء الاصطناعي بالدرهم</div>
-      <div class="value" id="aiCostAed">-</div>
-      <div class="small">تكلفة الاستخدام المسجلة حتى الآن</div>
-    </div>
-
-    <div class="card">
-      <div class="label">أسعار النموذج</div>
-      <div class="value" style="font-size:22px" id="aiPricing">-</div>
-      <div class="small">لكل مليون Token</div>
     </div>
 
   </div>
@@ -314,7 +280,7 @@
           <th>المحادثات</th>
           <th>الرسائل</th>
           <th>طلبات الاتصال</th>
-          <th>التحويل لمسؤول</th>
+          <th>التحويل لموظف</th>
         </tr>
       </thead>
       <tbody id="dailyTable"></tbody>
@@ -348,10 +314,6 @@
 
 function formatNumber(value){
   return Number(value || 0).toLocaleString("en-US");
-}
-
-function formatMoney(value, decimals = 4){
-  return Number(value || 0).toFixed(decimals);
 }
 
 function formatDate(value){
@@ -412,7 +374,11 @@ async function loadDashboard(){
       await response.json();
 
     const summary = data.summary || {};
-    const daily = Array.isArray(data.daily) ? data.daily : [];
+
+    const daily =
+      Array.isArray(data.daily)
+        ? data.daily
+        : [];
 
     const unanswered =
       Array.isArray(data.recent_unanswered_questions)
@@ -439,7 +405,7 @@ async function loadDashboard(){
       (summary.ai_resolution_rate_percent ?? 0) + "%";
 
     document.getElementById("aiResolutionDetails").textContent =
-      "حُلّت بالذكاء الاصطناعي: " +
+      "تم الحل تلقائيًا: " +
       formatNumber(summary.ai_resolved_conversations) +
       " من " +
       formatNumber(summary.evaluated_conversations);
@@ -467,7 +433,7 @@ async function loadDashboard(){
       formatNumber(summary.total_unanswered_questions);
 
     document.getElementById("unresolvedQuestions").textContent =
-      "غير محلولة: " +
+      "بانتظار المعالجة: " +
       formatNumber(summary.unresolved_unanswered_questions);
 
     document.getElementById("arabicConversations").textContent =
@@ -481,35 +447,6 @@ async function loadDashboard(){
 
     document.getElementById("englishRate").textContent =
       (summary.english_rate_percent ?? 0) + "%";
-
-    document.getElementById("inputTokens").textContent =
-      formatNumber(summary.total_input_tokens);
-
-    document.getElementById("outputTokens").textContent =
-      formatNumber(summary.total_output_tokens);
-
-    document.getElementById("totalTokens").textContent =
-      formatNumber(summary.total_tokens);
-
-    document.getElementById("aiUsageRecords").textContent =
-      "عمليات AI: " +
-      formatNumber(summary.ai_usage_records);
-
-    document.getElementById("aiCostUsd").textContent =
-      "$" + formatMoney(summary.ai_cost_usd, 4);
-
-    document.getElementById("aiCostAed").textContent =
-      formatMoney(summary.ai_cost_aed, 2) + " AED";
-
-    document.getElementById("aiModel").textContent =
-      summary.ai_model || "-";
-
-    document.getElementById("aiPricing").textContent =
-      "$" +
-      (summary.input_price_per_million_usd ?? 0) +
-      " Input / $" +
-      (summary.output_price_per_million_usd ?? 0) +
-      " Output";
 
 
     commonQuestionsTable.innerHTML = "";
@@ -531,12 +468,19 @@ async function loadDashboard(){
 
         const countTd = document.createElement("td");
         countTd.className = "count";
-        countTd.textContent = formatNumber(row.times_asked);
+        countTd.textContent =
+          formatNumber(row.times_asked);
 
         const dateTd = document.createElement("td");
-        dateTd.textContent = formatDate(row.last_asked_at);
+        dateTd.textContent =
+          formatDate(row.last_asked_at);
 
-        tr.append(questionTd,countTd,dateTd);
+        tr.append(
+          questionTd,
+          countTd,
+          dateTd
+        );
+
         commonQuestionsTable.appendChild(tr);
       });
     }
@@ -556,16 +500,29 @@ async function loadDashboard(){
         const tr = document.createElement("tr");
 
         const hourTd = document.createElement("td");
-        hourTd.textContent = formatHour(row.hour_of_day);
+        hourTd.textContent =
+          formatHour(row.hour_of_day);
 
-        const conversationsTd = document.createElement("td");
+        const conversationsTd =
+          document.createElement("td");
+
         conversationsTd.className = "count";
-        conversationsTd.textContent = formatNumber(row.conversations);
 
-        const messagesTd = document.createElement("td");
-        messagesTd.textContent = formatNumber(row.messages);
+        conversationsTd.textContent =
+          formatNumber(row.conversations);
 
-        tr.append(hourTd,conversationsTd,messagesTd);
+        const messagesTd =
+          document.createElement("td");
+
+        messagesTd.textContent =
+          formatNumber(row.messages);
+
+        tr.append(
+          hourTd,
+          conversationsTd,
+          messagesTd
+        );
+
         peakHoursTable.appendChild(tr);
       });
     }
@@ -592,8 +549,11 @@ async function loadDashboard(){
           row.human_handoff_conversations ?? 0
         ].forEach(value => {
 
-          const td = document.createElement("td");
+          const td =
+            document.createElement("td");
+
           td.textContent = value;
+
           tr.appendChild(td);
         });
 
@@ -613,15 +573,23 @@ async function loadDashboard(){
 
       unanswered.forEach(row => {
 
-        const tr = document.createElement("tr");
+        const tr =
+          document.createElement("tr");
 
-        const questionTd = document.createElement("td");
-        questionTd.className = "question-cell";
-        questionTd.textContent = row.question ?? "-";
+        const questionTd =
+          document.createElement("td");
 
-        const statusTd = document.createElement("td");
+        questionTd.className =
+          "question-cell";
 
-        const badge = document.createElement("span");
+        questionTd.textContent =
+          row.question ?? "-";
+
+        const statusTd =
+          document.createElement("td");
+
+        const badge =
+          document.createElement("span");
 
         badge.className =
           row.resolved
@@ -631,14 +599,22 @@ async function loadDashboard(){
         badge.textContent =
           row.resolved
             ? "تمت المعالجة"
-            : "غير محلول";
+            : "بانتظار المعالجة";
 
         statusTd.appendChild(badge);
 
-        const dateTd = document.createElement("td");
-        dateTd.textContent = formatDate(row.created_at);
+        const dateTd =
+          document.createElement("td");
 
-        tr.append(questionTd,statusTd,dateTd);
+        dateTd.textContent =
+          formatDate(row.created_at);
+
+        tr.append(
+          questionTd,
+          statusTd,
+          dateTd
+        );
+
         unansweredTable.appendChild(tr);
       });
     }
