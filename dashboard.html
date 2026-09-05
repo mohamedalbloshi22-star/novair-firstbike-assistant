@@ -119,6 +119,12 @@
       min-width:320px;
     }
 
+    .count{
+      font-weight:bold;
+      color:var(--gold);
+      font-size:16px;
+    }
+
     .status-badge{
       display:inline-block;
       padding:5px 9px;
@@ -229,6 +235,28 @@
   </div>
 
   <div class="section-title">
+    الأسئلة الأكثر تكرارًا
+  </div>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>السؤال</th>
+          <th>عدد مرات السؤال</th>
+          <th>آخر مرة</th>
+        </tr>
+      </thead>
+
+      <tbody id="commonQuestionsTable">
+        <tr>
+          <td colspan="3">جاري تحميل البيانات...</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="section-title">
     الإحصائيات اليومية
   </div>
 
@@ -283,9 +311,7 @@
 <script>
 
 function formatDate(value){
-  if(!value){
-    return "-";
-  }
+  if(!value) return "-";
 
   const date = new Date(value);
 
@@ -313,6 +339,9 @@ async function loadDashboard(){
   const unansweredTable =
     document.getElementById("unansweredTable");
 
+  const commonQuestionsTable =
+    document.getElementById("commonQuestionsTable");
+
   try{
 
     const response =
@@ -336,6 +365,11 @@ async function loadDashboard(){
     const unanswered =
       Array.isArray(data.recent_unanswered_questions)
         ? data.recent_unanswered_questions
+        : [];
+
+    const commonQuestions =
+      Array.isArray(data.common_questions)
+        ? data.common_questions
         : [];
 
     document.getElementById("totalConversations").textContent =
@@ -395,6 +429,63 @@ async function loadDashboard(){
       (summary.english_rate_percent ?? 0) +
       "%";
 
+
+    /* الأسئلة الأكثر تكرارًا */
+
+    commonQuestionsTable.innerHTML = "";
+
+    if(commonQuestions.length === 0){
+
+      commonQuestionsTable.innerHTML = `
+        <tr>
+          <td colspan="3">
+            لا توجد أسئلة متكررة حتى الآن
+          </td>
+        </tr>
+      `;
+
+    }else{
+
+      commonQuestions.forEach(row => {
+
+        const tr =
+          document.createElement("tr");
+
+        const questionTd =
+          document.createElement("td");
+
+        questionTd.className =
+          "question-cell";
+
+        questionTd.textContent =
+          row.question ?? "-";
+
+        const countTd =
+          document.createElement("td");
+
+        countTd.className =
+          "count";
+
+        countTd.textContent =
+          row.times_asked ?? 0;
+
+        const dateTd =
+          document.createElement("td");
+
+        dateTd.textContent =
+          formatDate(row.last_asked_at);
+
+        tr.appendChild(questionTd);
+        tr.appendChild(countTd);
+        tr.appendChild(dateTd);
+
+        commonQuestionsTable.appendChild(tr);
+      });
+    }
+
+
+    /* الإحصائيات اليومية */
+
     dailyTable.innerHTML = "";
 
     if(daily.length === 0){
@@ -423,14 +514,22 @@ async function loadDashboard(){
         ];
 
         cells.forEach(value => {
-          const td = document.createElement("td");
-          td.textContent = value;
+
+          const td =
+            document.createElement("td");
+
+          td.textContent =
+            value;
+
           tr.appendChild(td);
         });
 
         dailyTable.appendChild(tr);
       });
     }
+
+
+    /* الأسئلة غير المجابة */
 
     unansweredTable.innerHTML = "";
 
@@ -504,19 +603,21 @@ async function loadDashboard(){
 
     status.classList.add("error");
 
+    commonQuestionsTable.innerHTML = `
+      <tr>
+        <td colspan="3">تعذر تحميل البيانات</td>
+      </tr>
+    `;
+
     dailyTable.innerHTML = `
       <tr>
-        <td colspan="5">
-          تعذر تحميل البيانات
-        </td>
+        <td colspan="5">تعذر تحميل البيانات</td>
       </tr>
     `;
 
     unansweredTable.innerHTML = `
       <tr>
-        <td colspan="3">
-          تعذر تحميل البيانات
-        </td>
+        <td colspan="3">تعذر تحميل البيانات</td>
       </tr>
     `;
   }
