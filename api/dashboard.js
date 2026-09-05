@@ -73,6 +73,10 @@ module.exports = async function handler(req, res) {
       `common_questions_dashboard_stats?client_id=eq.${clientId}&select=question,times_asked,last_asked_at&order=times_asked.desc,last_asked_at.desc&limit=10`
     );
 
+    const peakHoursRows = await supabaseRequest(
+      `peak_hours_dashboard_stats?client_id=eq.${clientId}&select=hour_of_day,conversations,messages&order=conversations.desc,messages.desc&limit=10`
+    );
+
     const unanswered =
       Array.isArray(unansweredRows) && unansweredRows.length > 0
         ? unansweredRows[0]
@@ -139,6 +143,11 @@ module.exports = async function handler(req, res) {
       common_questions:
         Array.isArray(commonQuestionsRows)
           ? commonQuestionsRows
+          : [],
+
+      peak_hours:
+        Array.isArray(peakHoursRows)
+          ? peakHoursRows
           : []
     });
 
