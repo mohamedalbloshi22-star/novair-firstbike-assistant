@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>NOVAIRE | طلبات التواصل</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Tahoma, sans-serif;
+      background: #f4f6f8;
+      color: #1f2937;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: auto;
+      padding: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px rgba(0,0,0,.06);
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+    }
+
+    .muted {
+      color: #6b7280;
+      font-size: 14px;
+    }
+
+    input,
+    select,
+    button {
+      width: 100%;
+      padding: 11px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+      margin-top: 7px;
+      margin-bottom: 12px;
+    }
+
+    button {
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .primary {
+      background: #111827;
+      color: white;
+    }
+
+    .secondary {
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .success {
+      background: #047857;
+      color: white;
+    }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1fr 160px;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .request-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 17px;
+      margin-bottom: 15px;
+      background: #fafafa;
+    }
+
+    .request-card p {
+      margin: 7px 0;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-bottom: 10px;
+    }
+
+    .new {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .in_progress {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    .completed {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .closed {
+      background: #e5e7eb;
+      color: #374151;
+    }
+
+    .counter {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: #eef2ff;
+      color: #3730a3;
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 30px;
+      color: #6b7280;
+    }
+
+    #app {
+      display: none;
+    }
+
+    #message {
+      display: none;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+
+    #message.ok {
+      display: block;
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    #message.error {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .phone {
+      direction: ltr;
+      display: inline-block;
+    }
+
+    @media (max-width: 700px) {
+      .top {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <div class="card" id="loginBox">
+
+    <h1>NOVAIRE</h1>
+    <h2>إدارة طلبات التواصل</h2>
+
+    <p class="muted">
+      متابعة طلبات التواصل ومعاودة الاتصال لكل عميل بشكل مستقل.
+    </p>
+
+    <label>كلمة مرور الإدارة</label>
+
+    <input
+      id="password"
+      type="password"
+      placeholder="أدخل كلمة مرور الإدارة"
+    >
+
+    <button
+      class="primary"
+      onclick="login()"
+    >
+      دخول
+    </button>
+
+  </div>
+
+
+  <div id="app">
+
+    <div id="message"></div>
+
+
+    <div class="card">
+
+      <div class="top">
+
+        <div>
+
+          <label>اختر العميل</label>
+
+          <select
+            id="clientSelect"
+            onchange="loadRequests()"
+          >
+            <option value="">
+              اختر العميل
+            </option>
+          </select>
+
+        </div>
+
+
+        <button
+          class="secondary"
+          onclick="logout()"
+        >
+          تسجيل الخروج
+        </button>
+
+      </div>
+
+    </div>
+
+
+    <div class="card">
+
+      <h2>طلبات التواصل</h2>
+
+      <p
+        id="clientInfo"
+        class="muted"
+      >
+        اختر العميل أولًا.
+      </p>
+
+      <div id="requestCount"></div>
+
+      <div id="requestsList"></div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<script>
+
+let adminPassword = "";
+let currentRequests = [];
+
+
+/*
+==================================================
+Messages
+==================================================
+*/
+
+function showMessage(text, type = "ok") {
+
+  const box =
+    document.getElementById("message");
+
+  box.textContent = text;
+  box.className = type;
+  box.style.display = "block";
+
+  setTimeout(() => {
+    box.style.display = "none";
+    box.className = "";
+  }, 4000);
+}
+
+
+/*
+==================================================
+API
+==================================================
+*/
+
+async function postAPI(url, payload) {
+
+  const response =
+    await fetch(url, {
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+        password: adminPassword,
+        ...payload
+      })
+    });
+
+
+  let data = {};
+
+  try {
+    data = await response.json();
+  } catch {
+    data = {};
+  }
+
+
+  if (!response.ok) {
+    throw new Error(
+      data.error ||
+      data.details ||
+      "حدث خطأ في الاتصال"
+    );
+  }
+
+  return data;
+}
+
+
+/*
+==================================================
+Login
+==================================================
+*/
+
+async function login() {
+
+  const password =
+    document
+      .getElementById("password")
+      .value
+      .trim();
+
+
+  if (!password) {
+    alert("أدخل كلمة مرور الإدارة");
+    return;
+  }
+
+
+  adminPassword = password;
+
+
+  try {
+
+    await loadClients();
+
+    document
+      .getElementById("loginBox")
+      .style.display = "none";
+
+    document
+      .getElementById("app")
+      .style.display = "block";
+
+  } catch (error) {
+
+    adminPassword = "";
+
+    alert(
+      "تعذر تسجيل الدخول: " +
+      error.message
+    );
+  }
+}
+
+
+/*
+==================================================
+Logout
+==================================================
+*/
+
+function logout() {
+
+  adminPassword = "";
+  currentRequests = [];
+
+  document
+    .getElementById("password")
+    .value = "";
+
+  document
+    .getElementById("app")
+    .style.display = "none";
+
+  document
+    .getElementById("loginBox")
+    .style.display = "block";
+}
+
+
+/*
+==================================================
+Clients
+==================================================
+*/
+
+async function loadClients() {
+
+  const data =
+    await postAPI(
+      "/api/client-admin",
+      {
+        action: "list"
+      }
+    );
+
+
+  const clients =
+    Array.isArray(data.clients)
+      ? data.clients
+      : Array.isArray(data.items)
+        ? data.items
+        : Array.isArray(data)
+          ? data
+          : [];
+
+
+  const select =
+    document.getElementById(
+      "clientSelect"
+    );
+
+
+  select.innerHTML =
+    '<option value="">اختر العميل</option>';
+
+
+  clients.forEach(client => {
+
+    const option =
+      document.createElement("option");
+
+    option.value =
+      client.slug;
+
+    option.textContent =
+      client.name ||
+      client.config?.brand_name ||
+      client.slug;
+
+    select.appendChild(option);
+  });
+
+
+  const firstBike =
+    clients.find(
+      client =>
+        client.slug === "first-bike"
+    );
+
+
+  if (firstBike) {
+
+    select.value =
+      "first-bike";
+
+    await loadRequests();
+  }
+}
+
+
+/*
+==================================================
+Load Requests
+==================================================
+*/
+
+async function loadRequests() {
+
+  const clientSlug =
+    document
+      .getElementById("clientSelect")
+      .value;
+
+
+  const list =
+    document.getElementById(
+      "requestsList"
+    );
+
+
+  const counter =
+    document.getElementById(
+      "requestCount"
+    );
+
+
+  if (!clientSlug) {
+
+    currentRequests = [];
+
+    list.innerHTML = "";
+    counter.innerHTML = "";
+
+    document
+      .getElementById("clientInfo")
+      .textContent =
+        "اختر العميل أولًا.";
+
+    return;
+  }
+
+
+  list.innerHTML =
+    "<p>جاري التحميل...</p>";
+
+
+  try {
+
+    const data =
+      await postAPI(
+        "/api/contact-admin",
+        {
+          action: "list",
+          client_slug: clientSlug
+        }
+      );
+
+
+    currentRequests =
+      Array.isArray(data.requests)
+        ? data.requests
+        : [];
+
+
+    document
+      .getElementById("clientInfo")
+      .textContent =
+        `العميل: ${
+          data.client?.name ||
+          clientSlug
+        }`;
+
+
+    counter.innerHTML =
+      `<span class="counter">
+        إجمالي الطلبات:
+        ${currentRequests.length}
+      </span>`;
+
+
+    renderRequests();
+
+  } catch (error) {
+
+    list.innerHTML = "";
+
+    showMessage(
+      error.message,
+      "error"
+    );
+  }
+}
+
+
+/*
+==================================================
+Render
+==================================================
+*/
+
+function renderRequests() {
+
+  const list =
+    document.getElementById(
+      "requestsList"
+    );
+
+
+  list.innerHTML = "";
+
+
+  if (currentRequests.length === 0) {
+
+    list.innerHTML =
+      `<div class="empty">
+        لا توجد طلبات تواصل لهذا العميل.
+      </div>`;
+
+    return;
+  }
+
+
+  currentRequests.forEach(item => {
+
+    const card =
+      document.createElement("div");
+
+    card.className =
+      "request-card";
+
+
+    const typeLabel =
+      item.request_type === "callback"
+        ? "طلب معاودة اتصال"
+        : "طلب التواصل مع موظف";
+
+
+    const statusLabel =
+      getStatusLabel(item.status);
+
+
+    const createdAt =
+      item.created_at
+        ? new Date(item.created_at)
+            .toLocaleString("ar-AE")
+        : "";
+
+
+    card.innerHTML = `
+
+      <span class="badge ${escapeHtml(item.status || "new")}">
+        ${escapeHtml(statusLabel)}
+      </span>
+
+      <h3>
+        ${escapeHtml(typeLabel)}
+      </h3>
+
+      <p>
+        <strong>الاسم:</strong>
+        ${escapeHtml(item.customer_name)}
+      </p>
+
+      <p>
+        <strong>الهاتف:</strong>
+        <span class="phone">
+          ${escapeHtml(item.phone)}
+        </span>
+      </p>
+
+      <p>
+        <strong>السبب:</strong>
+        ${escapeHtml(item.reason || "غير محدد")}
+      </p>
+
+      <p class="muted">
+        ${escapeHtml(createdAt)}
+      </p>
+
+      <label>
+        حالة الطلب
+      </label>
+
+      <select
+        id="status-${item.id}"
+      >
+        <option
+          value="new"
+          ${item.status === "new" ? "selected" : ""}
+        >
+          جديد
+        </option>
+
+        <option
+          value="in_progress"
+          ${item.status === "in_progress" ? "selected" : ""}
+        >
+          قيد المتابعة
+        </option>
+
+        <option
+          value="completed"
+          ${item.status === "completed" ? "selected" : ""}
+        >
+          مكتمل
+        </option>
+
+        <option
+          value="closed"
+          ${item.status === "closed" ? "selected" : ""}
+        >
+          مغلق
+        </option>
+      </select>
+
+      <button
+        class="success"
+        onclick="updateStatus('${item.id}')"
+      >
+        حفظ الحالة
+      </button>
+    `;
+
+
+    list.appendChild(card);
+  });
+}
+
+
+/*
+==================================================
+Status
+==================================================
+*/
+
+function getStatusLabel(status) {
+
+  if (status === "in_progress") {
+    return "قيد المتابعة";
+  }
+
+  if (status === "completed") {
+    return "مكتمل";
+  }
+
+  if (status === "closed") {
+    return "مغلق";
+  }
+
+  return "جديد";
+}
+
+
+async function updateStatus(requestId) {
+
+  const clientSlug =
+    document
+      .getElementById("clientSelect")
+      .value;
+
+
+  const select =
+    document.getElementById(
+      `status-${requestId}`
+    );
+
+
+  if (!select) {
+    return;
+  }
+
+
+  try {
+
+    await postAPI(
+      "/api/contact-admin",
+      {
+        action: "update_status",
+        client_slug: clientSlug,
+        request_id: requestId,
+        status: select.value
+      }
+    );
+
+
+    showMessage(
+      "تم تحديث حالة الطلب بنجاح."
+    );
+
+
+    await loadRequests();
+
+  } catch (error) {
+
+    showMessage(
+      error.message,
+      "error"
+    );
+  }
+}
+
+
+/*
+==================================================
+Escape HTML
+==================================================
+*/
+
+function escapeHtml(value) {
+
+  const div =
+    document.createElement("div");
+
+  div.textContent =
+    value == null
+      ? ""
+      : String(value);
+
+  return div.innerHTML;
+}
+
+
+/*
+==================================================
+Enter Login
+==================================================
+*/
+
+document
+  .getElementById("password")
+  .addEventListener(
+    "keydown",
+    event => {
+
+      if (event.key === "Enter") {
+        login();
+      }
+    }
+  );
+
+</script>
+
+</body>
+</html>
