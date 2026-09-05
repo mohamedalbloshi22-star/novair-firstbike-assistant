@@ -7,9 +7,7 @@
 <title>NOVAIRE | لوحة التحكم</title>
 
 <style>
-*{
-  box-sizing:border-box;
-}
+*{box-sizing:border-box}
 
 body{
   margin:0;
@@ -20,7 +18,7 @@ body{
 
 .header{
   background:#111827;
-  color:white;
+  color:#fff;
   padding:22px;
 }
 
@@ -47,16 +45,44 @@ body{
 }
 
 .status{
-  background:white;
+  background:#fff;
   border-radius:14px;
   padding:18px 20px;
-  margin-bottom:22px;
-  box-shadow:0 3px 12px rgba(0,0,0,.05);
+  margin-bottom:18px;
   border:1px solid #e5e7eb;
+  box-shadow:0 3px 12px rgba(0,0,0,.05);
 }
 
 .status strong{
   color:#047857;
+}
+
+.client-box{
+  background:#fff;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:24px;
+  border:2px solid #111827;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+}
+
+.client-box h2{
+  margin-top:0;
+}
+
+select{
+  width:100%;
+  padding:12px;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  font-size:16px;
+  background:white;
+}
+
+.current-client{
+  margin-top:12px;
+  color:#047857;
+  font-weight:bold;
 }
 
 .section-title{
@@ -70,20 +96,15 @@ body{
 }
 
 .card{
-  background:white;
+  background:#fff;
   border-radius:14px;
   padding:20px;
-  box-shadow:0 3px 12px rgba(0,0,0,.06);
   border:1px solid #e5e7eb;
-}
-
-.primary-card{
-  border:2px solid #111827;
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
 }
 
 .card h2{
-  margin-top:0;
-  margin-bottom:8px;
+  margin:0 0 8px;
   font-size:19px;
 }
 
@@ -108,14 +129,17 @@ body{
 
 .button{
   display:block;
+  width:100%;
   text-align:center;
   text-decoration:none;
   background:#111827;
-  color:white;
+  color:#fff;
   padding:11px;
   border-radius:8px;
   font-weight:bold;
   margin-top:12px;
+  border:0;
+  cursor:pointer;
 }
 
 .button:hover{
@@ -143,19 +167,13 @@ body{
   .container{
     padding:16px;
   }
-
-  .header{
-    padding:18px;
-  }
 }
 </style>
-
 </head>
 
 <body>
 
 <header class="header">
-
 <div class="header-inner">
 
 <h1>NOVAIRE | نوفاير</h1>
@@ -165,7 +183,6 @@ body{
 </p>
 
 </div>
-
 </header>
 
 
@@ -173,43 +190,47 @@ body{
 
 <div class="status">
 
-<strong>
-● النظام يعمل
-</strong>
+<strong>● النظام يعمل</strong>
 
-<div style="margin-top:6px;color:#6b7280;font-size:14px;">
-إدارة عملاء NOVAIRE Smart Response من مكان واحد.
+<div style="margin-top:6px;color:#6b7280;font-size:14px">
+إدارة عملاء NOVAIRE Smart Response من مكان واحد
 </div>
+
+</div>
+
+
+<div class="client-box">
+
+<h2>اختر العميل</h2>
+
+<select id="clientSelect" onchange="changeClient()">
+<option value="">جاري تحميل العملاء...</option>
+</select>
+
+<div id="currentClient" class="current-client"></div>
 
 </div>
 
 
 <h2 class="section-title">
-إدارة النظام
+إدارة العميل
 </h2>
 
 
 <div class="grid">
 
 
-<div class="card primary-card">
+<div class="card">
 
-<div class="icon">
-👥
-</div>
+<div class="icon">👥</div>
 
-<h2>
-العملاء
-</h2>
+<h2>بيانات العملاء</h2>
 
 <p>
-إضافة العملاء وتعديل بياناتهم وتشغيل أو إيقاف المساعد وفتح مساعد كل عميل.
+إضافة عميل جديد أو تعديل بيانات العملاء وتشغيل أو إيقاف المساعد.
 </p>
 
-<a
-class="button"
-href="/clients.html"
->
+<a class="button" href="/clients.html">
 إدارة العملاء
 </a>
 
@@ -218,22 +239,32 @@ href="/clients.html"
 
 <div class="card">
 
-<div class="icon">
-📚
-</div>
+<div class="icon">💬</div>
 
-<h2>
-قاعدة المعرفة
-</h2>
+<h2>مساعد العميل</h2>
 
 <p>
-إدارة معلومات وأسئلة وأجوبة كل عميل بشكل مستقل.
+فتح المساعد الخاص بالعميل المختار واختباره مباشرة.
 </p>
 
-<a
-class="button"
-href="/knowledge.html"
->
+<a id="assistantLink" class="button" href="/">
+فتح المساعد
+</a>
+
+</div>
+
+
+<div class="card">
+
+<div class="icon">📚</div>
+
+<h2>قاعدة المعرفة</h2>
+
+<p>
+إدارة المعلومات والأسئلة والإجابات الخاصة بالعميل المختار.
+</p>
+
+<a id="knowledgeLink" class="button" href="/knowledge.html">
 فتح قاعدة المعرفة
 </a>
 
@@ -242,22 +273,15 @@ href="/knowledge.html"
 
 <div class="card">
 
-<div class="icon">
-❓
-</div>
+<div class="icon">❓</div>
 
-<h2>
-الأسئلة غير المجابة
-</h2>
+<h2>الأسئلة غير المجابة</h2>
 
 <p>
-مراجعة الأسئلة التي لم يعرف المساعد إجابتها وتحويلها إلى معرفة معتمدة.
+مراجعة الأسئلة التي لم يعرف المساعد إجابتها واعتماد الإجابات.
 </p>
 
-<a
-class="button"
-href="/unanswered.html"
->
+<a id="unansweredLink" class="button" href="/unanswered.html">
 مراجعة الأسئلة
 </a>
 
@@ -266,22 +290,15 @@ href="/unanswered.html"
 
 <div class="card">
 
-<div class="icon">
-☎️
-</div>
+<div class="icon">☎️</div>
 
-<h2>
-طلبات التواصل
-</h2>
+<h2>طلبات التواصل</h2>
 
 <p>
-متابعة طلبات الموظف ومعاودة الاتصال وتحديث حالة كل طلب.
+متابعة طلبات الموظف ومعاودة الاتصال الخاصة بالعميل المختار.
 </p>
 
-<a
-class="button"
-href="/contacts.html"
->
+<a id="contactsLink" class="button" href="/contacts.html">
 فتح طلبات التواصل
 </a>
 
@@ -290,22 +307,15 @@ href="/contacts.html"
 
 <div class="card">
 
-<div class="icon">
-📊
-</div>
+<div class="icon">📊</div>
 
-<h2>
-الإحصائيات
-</h2>
+<h2>الإحصائيات</h2>
 
 <p>
-متابعة المحادثات والرسائل ومؤشرات أداء المساعد.
+عرض مؤشرات المحادثات والرسائل والأداء.
 </p>
 
-<a
-class="button"
-href="/dashboard.html"
->
+<a id="dashboardLink" class="button" href="/dashboard.html">
 فتح الإحصائيات
 </a>
 
@@ -314,47 +324,16 @@ href="/dashboard.html"
 
 <div class="card">
 
-<div class="icon">
-⚙️
-</div>
+<div class="icon">⚙️</div>
 
-<h2>
-الإدارة المتقدمة
-</h2>
+<h2>الإدارة المتقدمة</h2>
 
 <p>
-الوصول إلى لوحة الإدارة الحالية ومؤشرات الذكاء الاصطناعي والتكلفة.
+مؤشرات الذكاء الاصطناعي والاستخدام والتكلفة والإدارة الداخلية.
 </p>
 
-<a
-class="button"
-href="/admin.html"
->
+<a class="button" href="/admin.html">
 فتح الإدارة
-</a>
-
-</div>
-
-
-<div class="card">
-
-<div class="icon">
-💬
-</div>
-
-<h2>
-تجربة المساعد
-</h2>
-
-<p>
-فتح مساعد Smart Response واختبار تجربة العميل مباشرة.
-</p>
-
-<a
-class="button"
-href="/"
->
-فتح المساعد
 </a>
 
 </div>
@@ -366,14 +345,238 @@ href="/"
 
 
 <div class="footer">
-
 NOVAIRE | نوفاير للحلول والدراسات ودعم القرار
-
 <br>
-
 NOVAIRE Digital — Smart Response
-
 </div>
+
+
+<script>
+
+const STORAGE_KEY="novaire_control_client";
+
+
+async function loadClients(){
+
+  try{
+
+    const response=await fetch(
+      "/api/client-config?client=first-bike"
+    );
+
+    if(!response.ok){
+      throw new Error();
+    }
+
+    await loadAdminClients();
+
+  }catch{
+
+    await loadAdminClients();
+
+  }
+
+}
+
+
+async function loadAdminClients(){
+
+  /*
+  نستخدم كلمة مرور الإدارة فقط في صفحات الإدارة.
+  control.html لا يحتاج عرض بيانات سرية.
+
+  للحصول على قائمة العملاء نطلب slug معروف أولاً،
+  ثم نحاول client-admin فقط إذا كانت هناك جلسة مستقبلية.
+  حاليًا نستخدم قائمة العملاء المعروفة من النظام.
+  */
+
+  const knownClients=[
+    {
+      slug:"first-bike",
+      name:"First Bike"
+    },
+    {
+      slug:"demo-clinic",
+      name:"Demo Clinic"
+    },
+    {
+      slug:"novaire-test-center",
+      name:"NOVAIRE Test Center"
+    }
+  ];
+
+
+  const validClients=[];
+
+
+  for(const client of knownClients){
+
+    try{
+
+      const response=await fetch(
+        "/api/client-config?client="+
+        encodeURIComponent(client.slug)
+      );
+
+      if(response.ok){
+
+        const data=await response.json();
+
+        validClients.push({
+          slug:client.slug,
+          name:
+            data.name ||
+            data.brand_name ||
+            client.name
+        });
+
+      }
+
+    }catch{}
+
+  }
+
+
+  renderClients(
+    validClients.length
+      ? validClients
+      : knownClients
+  );
+
+}
+
+
+function renderClients(clients){
+
+  const select=
+    document.getElementById("clientSelect");
+
+  select.innerHTML="";
+
+
+  clients.forEach(client=>{
+
+    const option=
+      document.createElement("option");
+
+    option.value=client.slug;
+    option.textContent=client.name;
+
+    select.appendChild(option);
+
+  });
+
+
+  const saved=
+    localStorage.getItem(STORAGE_KEY);
+
+
+  const exists=
+    clients.some(
+      client=>client.slug===saved
+    );
+
+
+  if(exists){
+
+    select.value=saved;
+
+  }else if(clients.length){
+
+    select.value=clients[0].slug;
+
+  }
+
+
+  updateLinks();
+
+}
+
+
+function changeClient(){
+
+  const slug=
+    document.getElementById("clientSelect").value;
+
+  if(slug){
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      slug
+    );
+
+  }
+
+  updateLinks();
+
+}
+
+
+function updateLinks(){
+
+  const select=
+    document.getElementById("clientSelect");
+
+  const slug=
+    select.value;
+
+
+  if(!slug){
+    return;
+  }
+
+
+  const name=
+    select.options[
+      select.selectedIndex
+    ]?.textContent || slug;
+
+
+  document.getElementById(
+    "currentClient"
+  ).textContent=
+    "العميل الحالي: "+name;
+
+
+  const encoded=
+    encodeURIComponent(slug);
+
+
+  document.getElementById(
+    "assistantLink"
+  ).href=
+    "/?client="+encoded;
+
+
+  document.getElementById(
+    "knowledgeLink"
+  ).href=
+    "/knowledge.html?client="+encoded;
+
+
+  document.getElementById(
+    "unansweredLink"
+  ).href=
+    "/unanswered.html?client="+encoded;
+
+
+  document.getElementById(
+    "contactsLink"
+  ).href=
+    "/contacts.html?client="+encoded;
+
+
+  document.getElementById(
+    "dashboardLink"
+  ).href=
+    "/dashboard.html?client="+encoded;
+
+}
+
+
+loadClients();
+
+</script>
 
 </body>
 </html>
