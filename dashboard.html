@@ -7,40 +7,12 @@
 
 <style>
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:Arial,Tahoma,sans-serif;
-  background:#f4f6f8;
-  color:#111827;
-}
-
-.header{
-  background:#111827;
-  color:#fff;
-  padding:22px;
-}
-
-.header-inner{
-  max-width:1200px;
-  margin:auto;
-}
-
-.header h1{
-  margin:0 0 6px;
-  font-size:25px;
-}
-
-.header p{
-  margin:0;
-  color:#d1d5db;
-}
-
-.container{
-  max-width:1200px;
-  margin:auto;
-  padding:24px;
-}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#111827}
+.header{background:#111827;color:#fff;padding:22px}
+.header-inner{max-width:1200px;margin:auto}
+.header h1{margin:0 0 6px;font-size:25px}
+.header p{margin:0;color:#d1d5db}
+.container{max-width:1200px;margin:auto;padding:24px}
 
 .login-box{
   max-width:460px;
@@ -49,11 +21,7 @@ body{
   border-radius:14px;
   padding:24px;
   border:1px solid #e5e7eb;
-  box-shadow:0 3px 12px rgba(0,0,0,.06);
-}
-
-.login-box h2{
-  margin-top:0;
+  box-shadow:0 3px 12px rgba(0,0,0,.06)
 }
 
 input,select,button{
@@ -62,7 +30,7 @@ input,select,button{
   margin-top:8px;
   border-radius:8px;
   border:1px solid #d1d5db;
-  font-size:15px;
+  font-size:15px
 }
 
 button{
@@ -70,38 +38,36 @@ button{
   color:#fff;
   border:0;
   cursor:pointer;
-  font-weight:bold;
+  font-weight:bold
 }
 
-button:hover{
-  opacity:.9;
-}
+button:hover{opacity:.9}
 
 .top{
   background:#fff;
   border-radius:14px;
   padding:18px;
   margin-bottom:20px;
-  border:1px solid #e5e7eb;
+  border:1px solid #e5e7eb
 }
 
 .top-actions{
   display:grid;
   grid-template-columns:1fr auto;
   gap:10px;
-  align-items:end;
+  align-items:end
 }
 
 .logout{
   width:auto;
   min-width:110px;
-  background:#991b1b;
+  background:#991b1b
 }
 
 .grid{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:15px;
+  gap:15px
 }
 
 .card{
@@ -109,64 +75,35 @@ button:hover{
   border-radius:14px;
   padding:18px;
   border:1px solid #e5e7eb;
-  box-shadow:0 3px 10px rgba(0,0,0,.04);
+  box-shadow:0 3px 10px rgba(0,0,0,.04)
 }
 
-.card .label{
-  color:#6b7280;
-  font-size:14px;
-}
-
-.card .value{
-  font-size:28px;
-  font-weight:bold;
-  margin-top:8px;
-}
+.card .label{color:#6b7280;font-size:14px}
+.card .value{font-size:28px;font-weight:bold;margin-top:8px}
 
 .section{
   background:#fff;
   border-radius:14px;
   padding:20px;
   margin-top:20px;
-  border:1px solid #e5e7eb;
+  border:1px solid #e5e7eb
 }
 
-.section h2{
-  margin-top:0;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th,td{
-  padding:11px;
-  border-bottom:1px solid #e5e7eb;
-  text-align:right;
-}
-
-th{
-  background:#f9fafb;
-}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:right}
+th{background:#f9fafb}
 
 .message{
   display:none;
   padding:12px;
   margin-bottom:15px;
-  border-radius:8px;
+  border-radius:8px
 }
 
 .error{
   display:block;
   background:#fee2e2;
-  color:#991b1b;
-}
-
-.success{
-  display:block;
-  background:#d1fae5;
-  color:#065f46;
+  color:#991b1b
 }
 
 .back{
@@ -174,35 +111,20 @@ th{
   margin-bottom:18px;
   text-decoration:none;
   color:#111827;
-  font-weight:bold;
+  font-weight:bold
 }
 
-.hidden{
-  display:none !important;
-}
+.hidden{display:none!important}
 
 @media(max-width:900px){
-  .grid{
-    grid-template-columns:repeat(2,1fr);
-  }
+  .grid{grid-template-columns:repeat(2,1fr)}
 }
 
 @media(max-width:550px){
-  .grid{
-    grid-template-columns:1fr;
-  }
-
-  .container{
-    padding:14px;
-  }
-
-  .top-actions{
-    grid-template-columns:1fr;
-  }
-
-  .logout{
-    width:100%;
-  }
+  .grid{grid-template-columns:1fr}
+  .container{padding:14px}
+  .top-actions{grid-template-columns:1fr}
+  .logout{width:100%}
 }
 </style>
 </head>
@@ -218,17 +140,12 @@ th{
 
 <main class="container">
 
-<a class="back" href="/control.html">
-← العودة إلى لوحة التحكم
-</a>
+<a class="back" href="/control.html">← العودة إلى لوحة التحكم</a>
 
 <div id="loginBox" class="login-box">
 
 <h2>دخول الإدارة</h2>
-
-<p>
-أدخل كلمة مرور NOVAIRE لعرض إحصائيات العملاء.
-</p>
+<p>أدخل كلمة مرور NOVAIRE لعرض إحصائيات العملاء.</p>
 
 <input
   id="passwordInput"
@@ -237,15 +154,9 @@ th{
   autocomplete="current-password"
 >
 
-<button id="loginButton" type="button">
-دخول
-</button>
+<button id="loginButton" type="button">دخول</button>
 
-<div
-  id="loginMessage"
-  class="message"
-  style="margin-top:12px"
-></div>
+<div id="loginMessage" class="message" style="margin-top:12px"></div>
 
 </div>
 
@@ -259,33 +170,20 @@ th{
 <div class="top-actions">
 
 <div>
-
-<label>
-<strong>العميل</strong>
-</label>
+<label><strong>العميل</strong></label>
 
 <select id="clientSelect">
-<option value="">
-جاري تحميل العملاء...
-</option>
+<option value="">جاري تحميل العملاء...</option>
 </select>
-
 </div>
 
-<button
-  id="logoutButton"
-  class="logout"
-  type="button"
->
+<button id="logoutButton" class="logout" type="button">
 تسجيل الخروج
 </button>
 
 </div>
 
-<button
-  id="refreshButton"
-  type="button"
->
+<button id="refreshButton" type="button">
 تحديث الإحصائيات
 </button>
 
@@ -338,67 +236,39 @@ th{
 
 
 <div class="section">
-
 <h2>الأسئلة الأكثر شيوعًا</h2>
-
 <div style="overflow-x:auto">
-
 <table>
-
 <thead>
-<tr>
-<th>السؤال</th>
-<th>العدد</th>
-</tr>
+<tr><th>السؤال</th><th>العدد</th></tr>
 </thead>
-
 <tbody id="questionsTable">
-<tr>
-<td colspan="2">—</td>
-</tr>
+<tr><td colspan="2">—</td></tr>
 </tbody>
-
 </table>
-
 </div>
 </div>
 
 
 <div class="section">
-
 <h2>أوقات الذروة</h2>
-
 <div style="overflow-x:auto">
-
 <table>
-
 <thead>
-<tr>
-<th>الساعة</th>
-<th>عدد المحادثات</th>
-</tr>
+<tr><th>الساعة</th><th>عدد المحادثات</th></tr>
 </thead>
-
 <tbody id="hoursTable">
-<tr>
-<td colspan="2">—</td>
-</tr>
+<tr><td colspan="2">—</td></tr>
 </tbody>
-
 </table>
-
 </div>
 </div>
 
 
 <div class="section">
-
 <h2>الإحصائيات اليومية</h2>
-
 <div style="overflow-x:auto">
-
 <table>
-
 <thead>
 <tr>
 <th>التاريخ</th>
@@ -406,15 +276,10 @@ th{
 <th>الرسائل</th>
 </tr>
 </thead>
-
 <tbody id="dailyTable">
-<tr>
-<td colspan="3">—</td>
-</tr>
+<tr><td colspan="3">—</td></tr>
 </tbody>
-
 </table>
-
 </div>
 </div>
 
@@ -422,111 +287,190 @@ th{
 
 </main>
 
-
 <script>
 
-const STORAGE_KEY =
-  "novaire_control_client";
+const STORAGE_KEY="novaire_control_client";
 
-let adminPassword = "";
+let adminPassword="";
 
-
-const loginBox =
-  document.getElementById("loginBox");
-
-const dashboardContent =
-  document.getElementById(
-    "dashboardContent"
-  );
-
-const passwordInput =
-  document.getElementById(
-    "passwordInput"
-  );
-
-const loginButton =
-  document.getElementById(
-    "loginButton"
-  );
-
-const loginMessage =
-  document.getElementById(
-    "loginMessage"
-  );
-
-const clientSelect =
-  document.getElementById(
-    "clientSelect"
-  );
+const loginBox=document.getElementById("loginBox");
+const dashboardContent=document.getElementById("dashboardContent");
+const passwordInput=document.getElementById("passwordInput");
+const loginButton=document.getElementById("loginButton");
+const loginMessage=document.getElementById("loginMessage");
+const clientSelect=document.getElementById("clientSelect");
 
 
 function requestedClient(){
 
-  const params =
-    new URLSearchParams(
-      window.location.search
-    );
+  const params=new URLSearchParams(window.location.search);
 
-  const fromUrl =
-    String(
-      params.get("client") || ""
-    )
-    .trim()
-    .toLowerCase();
+  const fromUrl=String(
+    params.get("client") || ""
+  ).trim().toLowerCase();
 
-  if(fromUrl){
-    return fromUrl;
-  }
+  if(fromUrl) return fromUrl;
 
   return String(
-    localStorage.getItem(
-      STORAGE_KEY
-    ) || ""
-  )
-  .trim()
-  .toLowerCase();
+    localStorage.getItem(STORAGE_KEY) || ""
+  ).trim().toLowerCase();
+}
+
+
+async function getClients(){
+
+  const response=await fetch(
+    "/api/public-clients",
+    {
+      method:"GET",
+      cache:"no-store"
+    }
+  );
+
+  const data=await response.json();
+
+  if(!response.ok){
+    throw new Error(
+      data.error || "تعذر تحميل العملاء."
+    );
+  }
+
+  const clients=Array.isArray(data.clients)
+    ? data.clients
+    : [];
+
+  if(!clients.length){
+    throw new Error("لا يوجد عملاء.");
+  }
+
+  return clients;
+}
+
+
+function fillClients(clients){
+
+  clientSelect.innerHTML="";
+
+  clients.forEach(client=>{
+
+    if(!client.slug) return;
+
+    const option=document.createElement("option");
+
+    option.value=client.slug;
+
+    option.textContent=
+      client.name ||
+      client.brand_name ||
+      client.slug;
+
+    clientSelect.appendChild(option);
+  });
+
+  const wanted=requestedClient();
+
+  const exists=Array.from(
+    clientSelect.options
+  ).some(option=>option.value===wanted);
+
+  if(exists){
+    clientSelect.value=wanted;
+  }else{
+    clientSelect.selectedIndex=0;
+  }
+
+  if(!clientSelect.value){
+    throw new Error("لا يوجد عميل صالح.");
+  }
+}
+
+
+async function requestDashboard(slug,password){
+
+  const response=await fetch(
+    "/api/dashboard",
+    {
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify({
+        password:password,
+        client_slug:slug
+      })
+    }
+  );
+
+  let data={};
+
+  try{
+    data=await response.json();
+  }catch{}
+
+  if(response.status===401){
+    throw new Error("كلمة المرور غير صحيحة.");
+  }
+
+  if(!response.ok){
+    throw new Error(
+      data.error ||
+      "تعذر تحميل الإحصائيات."
+    );
+  }
+
+  return data;
 }
 
 
 async function login(){
 
-  const password =
-    passwordInput.value;
+  const password=passwordInput.value;
 
   if(!password){
-
-    showLoginError(
-      "أدخل كلمة المرور."
-    );
-
+    showLoginError("أدخل كلمة المرور.");
     return;
   }
 
-
-  adminPassword = password;
-
-  loginButton.disabled = true;
-  loginButton.textContent =
-    "جاري التحقق...";
-
+  loginButton.disabled=true;
+  loginButton.textContent="جاري التحقق...";
   clearLoginMessage();
-
 
   try{
 
-    await loadClients();
+    const clients=await getClients();
 
-    loginBox.classList.add(
-      "hidden"
+    fillClients(clients);
+
+    /*
+      أهم إصلاح:
+      لا نفتح اللوحة قبل نجاح طلب API المحمي.
+    */
+
+    const data=await requestDashboard(
+      clientSelect.value,
+      password
     );
 
-    dashboardContent.classList.remove(
-      "hidden"
+    adminPassword=password;
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      clientSelect.value
     );
+
+    updateUrl(clientSelect.value);
+
+    renderDashboard(data);
+
+    loginBox.classList.add("hidden");
+    dashboardContent.classList.remove("hidden");
 
   }catch(error){
 
-    adminPassword = "";
+    adminPassword="";
+
+    dashboardContent.classList.add("hidden");
+    loginBox.classList.remove("hidden");
 
     showLoginError(
       error.message ||
@@ -535,296 +479,93 @@ async function login(){
 
   }finally{
 
-    loginButton.disabled = false;
-    loginButton.textContent =
-      "دخول";
-
+    loginButton.disabled=false;
+    loginButton.textContent="دخول";
   }
 }
 
 
-async function loadClients(){
+async function loadDashboard(){
 
-  const response =
-    await fetch(
-      "/api/public-clients",
-      {
-        method:"GET",
-        cache:"no-store"
-      }
+  if(!adminPassword) return;
+
+  const slug=clientSelect.value;
+
+  if(!slug) return;
+
+  clearMessage();
+
+  try{
+
+    const data=await requestDashboard(
+      slug,
+      adminPassword
     );
 
+    renderDashboard(data);
 
-  const data =
-    await response.json();
+  }catch(error){
 
+    if(
+      error.message ===
+      "كلمة المرور غير صحيحة."
+    ){
 
-  if(!response.ok){
+      logout();
 
-    throw new Error(
-      data.error ||
-      "تعذر تحميل العملاء."
-    );
+      showLoginError(
+        "انتهت صلاحية الدخول أو كلمة المرور غير صحيحة."
+      );
 
-  }
-
-
-  const clients =
-    Array.isArray(data.clients)
-      ? data.clients
-      : [];
-
-
-  if(!clients.length){
-
-    throw new Error(
-      "لا يوجد عملاء."
-    );
-
-  }
-
-
-  clientSelect.innerHTML = "";
-
-
-  clients.forEach(function(client){
-
-    if(!client.slug){
       return;
     }
 
-
-    const option =
-      document.createElement(
-        "option"
-      );
-
-
-    option.value =
-      client.slug;
-
-
-    option.textContent =
-      client.name ||
-      client.brand_name ||
-      client.slug;
-
-
-    clientSelect.appendChild(
-      option
-    );
-
-  });
-
-
-  const wanted =
-    requestedClient();
-
-
-  const exists =
-    Array.from(
-      clientSelect.options
-    ).some(
-      option =>
-        option.value === wanted
-    );
-
-
-  if(exists){
-
-    clientSelect.value =
-      wanted;
-
-  }else{
-
-    clientSelect.selectedIndex = 0;
-
+    showError(error.message);
   }
+}
 
 
-  if(!clientSelect.value){
+function changeClient(){
 
-    throw new Error(
-      "لا يوجد عميل صالح."
-    );
+  const slug=clientSelect.value;
 
-  }
-
+  if(!slug) return;
 
   localStorage.setItem(
     STORAGE_KEY,
-    clientSelect.value
+    slug
   );
 
+  updateUrl(slug);
 
-  updateUrl(
-    clientSelect.value
-  );
-
-
-  /*
-    هذه العملية تتحقق فعليًا
-    من كلمة المرور.
-  */
-
-  await loadDashboard();
-
+  loadDashboard();
 }
 
 
 function updateUrl(slug){
 
-  const url =
-    new URL(
-      window.location.href
-    );
-
+  const url=new URL(
+    window.location.href
+  );
 
   url.searchParams.set(
     "client",
     slug
   );
 
-
   history.replaceState(
     {},
     "",
-    url.pathname +
-    url.search
+    url.pathname+url.search
   );
-
-}
-
-
-function changeClient(){
-
-  const slug =
-    clientSelect.value;
-
-
-  if(!slug){
-    return;
-  }
-
-
-  localStorage.setItem(
-    STORAGE_KEY,
-    slug
-  );
-
-
-  updateUrl(slug);
-
-  loadDashboard();
-
-}
-
-
-async function loadDashboard(){
-
-  const slug =
-    clientSelect.value;
-
-
-  if(
-    !slug ||
-    !adminPassword
-  ){
-    return;
-  }
-
-
-  clearMessage();
-
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/dashboard",
-        {
-          method:"POST",
-
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-
-          body:JSON.stringify({
-            password:
-              adminPassword,
-
-            client_slug:
-              slug
-          })
-        }
-      );
-
-
-    const data =
-      await response.json();
-
-
-    if(response.status === 401){
-
-      adminPassword = "";
-
-      dashboardContent.classList.add(
-        "hidden"
-      );
-
-      loginBox.classList.remove(
-        "hidden"
-      );
-
-      passwordInput.value = "";
-
-      throw new Error(
-        "كلمة المرور غير صحيحة."
-      );
-
-    }
-
-
-    if(!response.ok){
-
-      throw new Error(
-        data.error ||
-        "تعذر تحميل الإحصائيات."
-      );
-
-    }
-
-
-    renderDashboard(data);
-
-
-  }catch(error){
-
-    if(!adminPassword){
-
-      showLoginError(
-        error.message
-      );
-
-      return;
-    }
-
-
-    showError(
-      error.message
-    );
-
-  }
-
 }
 
 
 function logout(){
 
-  adminPassword = "";
+  adminPassword="";
 
-  passwordInput.value = "";
+  passwordInput.value="";
 
   dashboardContent.classList.add(
     "hidden"
@@ -835,16 +576,10 @@ function logout(){
   );
 
   clearMessage();
-  clearLoginMessage();
-
 }
 
 
-function pick(
-  obj,
-  names,
-  fallback=0
-){
+function pick(obj,names,fallback=0){
 
   for(const name of names){
 
@@ -855,7 +590,6 @@ function pick(
     ){
       return obj[name];
     }
-
   }
 
   return fallback;
@@ -864,139 +598,100 @@ function pick(
 
 function renderDashboard(data){
 
-  const summary =
+  const summary=
     data.summary ||
     data.stats ||
     data.dashboard ||
     data;
 
-
   setValue(
     "conversations",
-    pick(
-      summary,
-      [
-        "total_conversations",
-        "conversations"
-      ]
-    )
+    pick(summary,[
+      "total_conversations",
+      "conversations"
+    ])
   );
-
 
   setValue(
     "messages",
-    pick(
-      summary,
-      [
-        "total_messages",
-        "messages"
-      ]
-    )
+    pick(summary,[
+      "total_messages",
+      "messages"
+    ])
   );
 
-
-  let resolution =
-    pick(
-      summary,
-      [
-        "ai_resolution_rate",
-        "resolution_rate",
-        "resolved_by_ai_rate"
-      ],
-      0
-    );
-
+  let resolution=pick(
+    summary,
+    [
+      "ai_resolution_rate",
+      "resolution_rate",
+      "resolved_by_ai_rate"
+    ],
+    0
+  );
 
   if(
-    typeof resolution === "number" &&
-    resolution <= 1 &&
-    resolution > 0
+    typeof resolution==="number" &&
+    resolution<=1 &&
+    resolution>0
   ){
-    resolution =
-      resolution * 100;
+    resolution=resolution*100;
   }
-
 
   setValue(
     "resolution",
-    formatPercent(
-      resolution
-    )
+    formatPercent(resolution)
   );
-
 
   setValue(
     "unanswered",
-    pick(
-      summary,
-      [
-        "unanswered_questions",
-        "unanswered_count",
-        "total_unanswered"
-      ]
-    )
+    pick(summary,[
+      "unanswered_questions",
+      "unanswered_count",
+      "total_unanswered"
+    ])
   );
-
 
   setValue(
     "handoff",
-    pick(
-      summary,
-      [
-        "human_handoff",
-        "human_handoff_count",
-        "handoffs"
-      ]
-    )
+    pick(summary,[
+      "human_handoff",
+      "human_handoff_count",
+      "handoffs"
+    ])
   );
-
 
   setValue(
     "callback",
-    pick(
-      summary,
-      [
-        "callback_requested",
-        "callback_count",
-        "callbacks"
-      ]
-    )
+    pick(summary,[
+      "callback_requested",
+      "callback_count",
+      "callbacks"
+    ])
   );
 
-
-  const language =
+  const language=
     data.languages ||
     data.language_stats ||
     {};
 
-
   setValue(
     "arabic",
-    pick(
-      language,
-      [
-        "ar",
-        "arabic",
-        "arabic_count"
-      ],
-      0
-    )
+    pick(language,[
+      "ar",
+      "arabic",
+      "arabic_count"
+    ],0)
   );
-
 
   setValue(
     "english",
-    pick(
-      language,
-      [
-        "en",
-        "english",
-        "english_count"
-      ],
-      0
-    )
+    pick(language,[
+      "en",
+      "english",
+      "english_count"
+    ],0)
   );
-
 
   renderQuestions(
     data.common_questions ||
@@ -1004,303 +699,216 @@ function renderDashboard(data){
     []
   );
 
-
   renderHours(
     data.peak_hours ||
     data.hours ||
     []
   );
 
-
   renderDaily(
     data.daily_stats ||
     data.daily ||
     []
   );
-
 }
 
 
 function setValue(id,value){
-
-  document.getElementById(
-    id
-  ).textContent =
+  document.getElementById(id).textContent=
     value ?? 0;
-
 }
 
 
 function formatPercent(value){
 
   if(
-    typeof value === "string" &&
+    typeof value==="string" &&
     value.includes("%")
   ){
     return value;
   }
 
+  const number=Number(value);
 
-  const number =
-    Number(value);
-
-
-  if(
-    Number.isNaN(number)
-  ){
+  if(Number.isNaN(number)){
     return "0%";
   }
 
-
-  return (
-    number.toFixed(1) +
-    "%"
-  );
-
+  return number.toFixed(1)+"%";
 }
 
 
 function renderQuestions(items){
 
-  const table =
-    document.getElementById(
-      "questionsTable"
-    );
+  const table=document.getElementById(
+    "questionsTable"
+  );
 
+  table.innerHTML="";
 
-  table.innerHTML = "";
-
-
-  if(
-    !Array.isArray(items) ||
-    !items.length
-  ){
-
-    table.innerHTML =
+  if(!Array.isArray(items) || !items.length){
+    table.innerHTML=
       '<tr><td colspan="2">لا توجد بيانات.</td></tr>';
-
     return;
   }
 
+  items.forEach(item=>{
 
-  items.forEach(function(item){
+    const row=document.createElement("tr");
 
-    const row =
-      document.createElement(
-        "tr"
-      );
-
-
-    row.innerHTML =
-      "<td>" +
+    row.innerHTML=
+      "<td>"+
       escapeHtml(
         item.question ||
         item.content ||
         item.text ||
         ""
-      ) +
-      "</td>" +
-      "<td>" +
+      )+
+      "</td>"+
+      "<td>"+
       escapeHtml(
         item.count ||
         item.total ||
         item.frequency ||
         0
-      ) +
+      )+
       "</td>";
 
-
     table.appendChild(row);
-
   });
-
 }
 
 
 function renderHours(items){
 
-  const table =
-    document.getElementById(
-      "hoursTable"
-    );
+  const table=document.getElementById(
+    "hoursTable"
+  );
 
+  table.innerHTML="";
 
-  table.innerHTML = "";
-
-
-  if(
-    !Array.isArray(items) ||
-    !items.length
-  ){
-
-    table.innerHTML =
+  if(!Array.isArray(items) || !items.length){
+    table.innerHTML=
       '<tr><td colspan="2">لا توجد بيانات.</td></tr>';
-
     return;
   }
 
+  items.forEach(item=>{
 
-  items.forEach(function(item){
+    const row=document.createElement("tr");
 
-    const row =
-      document.createElement(
-        "tr"
-      );
-
-
-    row.innerHTML =
-      "<td>" +
+    row.innerHTML=
+      "<td>"+
       escapeHtml(
         item.hour ??
         item.hour_uae ??
         ""
-      ) +
-      "</td>" +
-      "<td>" +
+      )+
+      "</td>"+
+      "<td>"+
       escapeHtml(
         item.count ??
         item.conversations ??
         item.total ??
         0
-      ) +
+      )+
       "</td>";
 
-
     table.appendChild(row);
-
   });
-
 }
 
 
 function renderDaily(items){
 
-  const table =
-    document.getElementById(
-      "dailyTable"
-    );
+  const table=document.getElementById(
+    "dailyTable"
+  );
 
+  table.innerHTML="";
 
-  table.innerHTML = "";
-
-
-  if(
-    !Array.isArray(items) ||
-    !items.length
-  ){
-
-    table.innerHTML =
+  if(!Array.isArray(items) || !items.length){
+    table.innerHTML=
       '<tr><td colspan="3">لا توجد بيانات.</td></tr>';
-
     return;
   }
 
+  items.forEach(item=>{
 
-  items.forEach(function(item){
+    const row=document.createElement("tr");
 
-    const row =
-      document.createElement(
-        "tr"
-      );
-
-
-    row.innerHTML =
-      "<td>" +
+    row.innerHTML=
+      "<td>"+
       escapeHtml(
         item.date ||
         item.day ||
         ""
-      ) +
-      "</td>" +
-      "<td>" +
+      )+
+      "</td>"+
+      "<td>"+
       escapeHtml(
         item.conversations ??
         item.total_conversations ??
         0
-      ) +
-      "</td>" +
-      "<td>" +
+      )+
+      "</td>"+
+      "<td>"+
       escapeHtml(
         item.messages ??
         item.total_messages ??
         0
-      ) +
+      )+
       "</td>";
 
-
     table.appendChild(row);
-
   });
-
 }
 
 
 function showError(text){
 
-  const box =
-    document.getElementById(
-      "message"
-    );
+  const box=document.getElementById(
+    "message"
+  );
 
-
-  box.textContent =
-    text;
-
-
-  box.className =
-    "message error";
-
+  box.textContent=text;
+  box.className="message error";
 }
 
 
 function clearMessage(){
 
-  const box =
-    document.getElementById(
-      "message"
-    );
+  const box=document.getElementById(
+    "message"
+  );
 
-
-  box.textContent = "";
-
-  box.className =
-    "message";
-
+  box.textContent="";
+  box.className="message";
 }
 
 
 function showLoginError(text){
 
-  loginMessage.textContent =
-    text;
-
-
-  loginMessage.className =
-    "message error";
-
+  loginMessage.textContent=text;
+  loginMessage.className="message error";
 }
 
 
 function clearLoginMessage(){
 
-  loginMessage.textContent = "";
-
-  loginMessage.className =
-    "message";
-
+  loginMessage.textContent="";
+  loginMessage.className="message";
 }
 
 
 function escapeHtml(value){
 
   return String(value)
-
     .replace(/&/g,"&amp;")
     .replace(/</g,"&lt;")
     .replace(/>/g,"&gt;")
     .replace(/"/g,"&quot;")
     .replace(/'/g,"&#039;");
-
 }
 
 
@@ -1309,24 +917,19 @@ loginButton.addEventListener(
   login
 );
 
-
 passwordInput.addEventListener(
   "keydown",
-  function(event){
-
-    if(event.key === "Enter"){
+  event=>{
+    if(event.key==="Enter"){
       login();
     }
-
   }
 );
-
 
 clientSelect.addEventListener(
   "change",
   changeClient
 );
-
 
 document.getElementById(
   "refreshButton"
@@ -1334,7 +937,6 @@ document.getElementById(
   "click",
   loadDashboard
 );
-
 
 document.getElementById(
   "logoutButton"
