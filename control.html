@@ -1,297 +1,427 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NOVAIRE | طلبات التواصل</title>
 
-  <title>NOVAIRE | لوحة التحكم</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, Tahoma, sans-serif;
-      background: #f4f6f8;
-      color: #111827;
-    }
-
-    .header {
-      background: #111827;
-      color: white;
-      padding: 22px;
-    }
-
-    .header-inner {
-      max-width: 1200px;
-      margin: auto;
-    }
-
-    .header h1 {
-      margin: 0 0 6px;
-      font-size: 25px;
-    }
-
-    .header p {
-      margin: 0;
-      color: #d1d5db;
-      font-size: 14px;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: auto;
-      padding: 24px;
-    }
-
-    .section-title {
-      margin: 0 0 16px;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 20px;
-      box-shadow: 0 3px 12px rgba(0,0,0,.06);
-      border: 1px solid #e5e7eb;
-    }
-
-    .card h2 {
-      margin-top: 0;
-      margin-bottom: 8px;
-      font-size: 19px;
-    }
-
-    .card p {
-      color: #6b7280;
-      line-height: 1.7;
-      min-height: 50px;
-      font-size: 14px;
-    }
-
-    .icon {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: #f3f4f6;
-      border-radius: 10px;
-      font-size: 21px;
-      margin-bottom: 14px;
-    }
-
-    .button {
-      display: block;
-      text-align: center;
-      text-decoration: none;
-      background: #111827;
-      color: white;
-      padding: 11px;
-      border-radius: 8px;
-      font-weight: bold;
-      margin-top: 12px;
-    }
-
-    .button:hover {
-      opacity: .9;
-    }
-
-    .primary-card {
-      border: 2px solid #111827;
-    }
-
-    .status {
-      background: white;
-      border-radius: 14px;
-      padding: 18px 20px;
-      margin-bottom: 22px;
-      box-shadow: 0 3px 12px rgba(0,0,0,.05);
-      border: 1px solid #e5e7eb;
-    }
-
-    .status strong {
-      color: #047857;
-    }
-
-    .footer {
-      text-align: center;
-      color: #6b7280;
-      font-size: 13px;
-      padding: 25px;
-    }
-
-    @media (max-width: 900px) {
-      .grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media (max-width: 600px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .container {
-        padding: 16px;
-      }
-
-      .header {
-        padding: 18px;
-      }
-    }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#1f2937}
+.container{max-width:1050px;margin:auto;padding:24px}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+.request{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;background:#fafafa}
+input,select,button{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin:6px 0 12px}
+button{border:0;cursor:pointer;font-weight:bold}
+.primary{background:#111827;color:white}
+.secondary{background:#e5e7eb;color:#111827}
+.success{background:#047857;color:white}
+.muted{color:#6b7280;font-size:14px}
+.badge{display:inline-block;padding:5px 10px;border-radius:20px;font-size:12px;background:#e5e7eb}
+#app{display:none}
+#message{display:none;padding:12px;border-radius:8px;margin-bottom:15px}
+#message.ok{display:block;background:#d1fae5;color:#065f46}
+#message.error{display:block;background:#fee2e2;color:#991b1b}
+</style>
 </head>
 
 <body>
 
-  <header class="header">
-    <div class="header-inner">
-      <h1>NOVAIRE | نوفاير</h1>
-      <p>لوحة التحكم المركزية — Smart Response</p>
-    </div>
-  </header>
+<div class="container">
+
+<div class="card" id="loginBox">
+<h1>NOVAIRE</h1>
+<h2>طلبات التواصل</h2>
+
+<input id="password" type="password" placeholder="كلمة مرور الإدارة">
+
+<button class="primary" onclick="login()">دخول</button>
+</div>
+
+<div id="app">
+
+<div id="message"></div>
+
+<div class="card">
+
+<label>العميل</label>
+
+<select id="clientSelect" onchange="clientChanged()">
+<option value="">اختر العميل</option>
+</select>
+
+<button class="secondary" onclick="logout()">تسجيل الخروج</button>
+
+</div>
+
+<div class="card">
+
+<h2>طلبات التواصل</h2>
+
+<div id="count" class="muted"></div>
+
+<div id="list">اختر العميل.</div>
+
+</div>
+
+</div>
+</div>
+
+<script>
+
+let adminPassword="";
+
+const params=new URLSearchParams(window.location.search);
+const requestedClient=params.get("client")||"";
 
 
-  <main class="container">
+async function api(url,payload){
 
-    <div class="status">
-      <strong>● النظام يعمل</strong>
-      <div style="margin-top:6px;color:#6b7280;font-size:14px;">
-        إدارة عملاء NOVAIRE Smart Response من مكان واحد.
-      </div>
-    </div>
+const response=await fetch(url,{
+method:"POST",
+headers:{"Content-Type":"application/json"},
+body:JSON.stringify({
+password:adminPassword,
+...payload
+})
+});
 
+let data={};
 
-    <h2 class="section-title">
-      إدارة النظام
-    </h2>
+try{
+data=await response.json();
+}catch{}
 
+if(!response.ok){
+throw new Error(data.error||data.details||"حدث خطأ");
+}
 
-    <div class="grid">
-
-      <div class="card primary-card">
-        <div class="icon">👥</div>
-
-        <h2>العملاء</h2>
-
-        <p>
-          إضافة العملاء وتعديل بياناتهم وتشغيل أو إيقاف المساعد وفتح مساعد كل عميل.
-        </p>
-
-        <a class="button" href="/clients.html">
-          إدارة العملاء
-        </a>
-      </div>
+return data;
+}
 
 
-      <div class="card">
-        <div class="icon">📚</div>
+function showMessage(text,type="ok"){
 
-        <h2>قاعدة المعرفة</h2>
+const box=document.getElementById("message");
 
-        <p>
-          إدارة معلومات وأسئلة وأجوبة كل عميل بشكل مستقل.
-        </p>
+box.textContent=text;
+box.className=type;
+box.style.display="block";
 
-        <a class="button" href="/knowledge.html">
-          فتح قاعدة المعرفة
-        </a>
-      </div>
+setTimeout(()=>{
+box.style.display="none";
+},3000);
 
-
-      <div class="card">
-        <div class="icon">❓</div>
-
-        <h2>الأسئلة غير المجابة</h2>
-
-        <p>
-          مراجعة الأسئلة التي لم يعرف المساعد إجابتها وتحويلها إلى معرفة معتمدة.
-        </p>
-
-        <a class="button" href="/unanswered.html">
-          مراجعة الأسئلة
-        </a>
-      </div>
+}
 
 
-      <div class="card">
-        <div class="icon">☎️</div>
+async function login(){
 
-        <h2>طلبات التواصل</h2>
+const value=document.getElementById("password").value.trim();
 
-        <p>
-          متابعة طلبات الموظف ومعاودة الاتصال وتحديث حالة كل طلب.
-        </p>
+if(!value){
+alert("أدخل كلمة المرور");
+return;
+}
 
-        <a class="button" href="/contacts.html">
-          فتح طلبات التواصل
-        </a>
-      </div>
+adminPassword=value;
 
+try{
 
-      <div class="card">
-        <div class="icon">📊</div>
+await loadClients();
 
-        <h2>الإحصائيات</h2>
+document.getElementById("loginBox").style.display="none";
+document.getElementById("app").style.display="block";
 
-        <p>
-          متابعة المحادثات والرسائل ومؤشرات أداء المساعد.
-        </p>
+}catch(error){
 
-        <a class="button" href="/dashboard.html">
-          فتح الإحصائيات
-        </a>
-      </div>
+adminPassword="";
+alert(error.message);
+
+}
+
+}
 
 
-      <div class="card">
-        <div class="icon">⚙️</div>
+function logout(){
 
-        <h2>الإدارة المتقدمة</h2>
+adminPassword="";
 
-        <p>
-          الوصول إلى لوحة الإدارة الحالية ومؤشرات الذكاء الاصطناعي والتكلفة.
-        </p>
+document.getElementById("app").style.display="none";
+document.getElementById("loginBox").style.display="block";
 
-        <a class="button" href="/admin.html">
-          فتح الإدارة
-        </a>
-      </div>
+}
 
 
-      <div class="card">
-        <div class="icon">💬</div>
+async function loadClients(){
 
-        <h2>تجربة المساعد</h2>
+const data=await api("/api/client-admin",{
+action:"list"
+});
 
-        <p>
-          فتح مساعد Smart Response واختبار تجربة العميل مباشرة.
-        </p>
+const clients=
+Array.isArray(data.clients)
+?data.clients
+:Array.isArray(data.items)
+?data.items
+:Array.isArray(data)
+?data
+:[];
 
-        <a class="button" href="/">
-          فتح المساعد
-        </a>
-      </div>
+const select=document.getElementById("clientSelect");
 
-    </div>
+select.innerHTML='<option value="">اختر العميل</option>';
 
-  </main>
+clients.forEach(client=>{
+
+const option=document.createElement("option");
+
+option.value=client.slug;
+
+option.textContent=
+client.name||
+client.config?.brand_name||
+client.slug;
+
+select.appendChild(option);
+
+});
 
 
-  <div class="footer">
-    NOVAIRE | نوفاير للحلول والدراسات ودعم القرار
-    <br>
-    NOVAIRE Digital — Smart Response
-  </div>
+if(requestedClient){
+
+const exists=clients.some(
+client=>client.slug===requestedClient
+);
+
+if(exists){
+
+select.value=requestedClient;
+
+await loadRequests();
+
+return;
+
+}
+
+}
+
+
+if(clients.length){
+
+select.value=clients[0].slug;
+
+await loadRequests();
+
+}
+
+}
+
+
+async function clientChanged(){
+
+const slug=document.getElementById("clientSelect").value;
+
+if(slug){
+
+history.replaceState(
+{},
+"",
+window.location.pathname+
+"?client="+encodeURIComponent(slug)
+);
+
+}
+
+await loadRequests();
+
+}
+
+
+async function loadRequests(){
+
+const slug=document.getElementById("clientSelect").value;
+
+const list=document.getElementById("list");
+const count=document.getElementById("count");
+
+if(!slug){
+
+list.innerHTML="اختر العميل.";
+count.textContent="";
+return;
+
+}
+
+list.innerHTML="جاري التحميل...";
+
+try{
+
+const data=await api("/api/contact-admin",{
+action:"list",
+client_slug:slug
+});
+
+const items=
+Array.isArray(data.requests)
+?data.requests
+:[];
+
+count.textContent="إجمالي الطلبات: "+items.length;
+
+render(items);
+
+}catch(error){
+
+list.innerHTML="";
+showMessage(error.message,"error");
+
+}
+
+}
+
+
+function render(items){
+
+const list=document.getElementById("list");
+
+list.innerHTML="";
+
+if(!items.length){
+
+list.innerHTML='<p class="muted">لا توجد طلبات تواصل لهذا العميل.</p>';
+
+return;
+
+}
+
+
+items.forEach(item=>{
+
+const div=document.createElement("div");
+
+div.className="request";
+
+const type=
+item.request_type==="callback"
+?"طلب معاودة اتصال"
+:"طلب التواصل مع موظف";
+
+const date=
+item.created_at
+?new Date(item.created_at).toLocaleString("ar-AE")
+:"";
+
+div.innerHTML=`
+
+<span class="badge">${escapeHtml(statusLabel(item.status))}</span>
+
+<h3>${escapeHtml(type)}</h3>
+
+<p><strong>الاسم:</strong> ${escapeHtml(item.customer_name||"")}</p>
+
+<p><strong>الهاتف:</strong> ${escapeHtml(item.phone||"")}</p>
+
+<p><strong>السبب:</strong> ${escapeHtml(item.reason||"غير محدد")}</p>
+
+<p class="muted">${escapeHtml(date)}</p>
+
+<label>حالة الطلب</label>
+
+<select id="status-${item.id}">
+
+<option value="new" ${item.status==="new"?"selected":""}>
+جديد
+</option>
+
+<option value="in_progress" ${item.status==="in_progress"?"selected":""}>
+قيد المتابعة
+</option>
+
+<option value="completed" ${item.status==="completed"?"selected":""}>
+مكتمل
+</option>
+
+<option value="closed" ${item.status==="closed"?"selected":""}>
+مغلق
+</option>
+
+</select>
+
+<button class="success" onclick="updateStatus('${item.id}')">
+حفظ الحالة
+</button>
+
+`;
+
+list.appendChild(div);
+
+});
+
+}
+
+
+function statusLabel(status){
+
+if(status==="in_progress") return "قيد المتابعة";
+if(status==="completed") return "مكتمل";
+if(status==="closed") return "مغلق";
+
+return "جديد";
+
+}
+
+
+async function updateStatus(id){
+
+const slug=document.getElementById("clientSelect").value;
+
+const status=document.getElementById("status-"+id).value;
+
+try{
+
+await api("/api/contact-admin",{
+action:"update_status",
+client_slug:slug,
+request_id:id,
+status
+});
+
+showMessage("تم تحديث الحالة.");
+
+await loadRequests();
+
+}catch(error){
+
+showMessage(error.message,"error");
+
+}
+
+}
+
+
+function escapeHtml(value){
+
+return String(value)
+.replace(/&/g,"&amp;")
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+.replace(/"/g,"&quot;")
+.replace(/'/g,"&#039;");
+
+}
+
+
+document.getElementById("password")
+.addEventListener("keydown",event=>{
+
+if(event.key==="Enter"){
+login();
+}
+
+});
+
+</script>
 
 </body>
 </html>
