@@ -152,6 +152,108 @@ module.exports = async function handler(req, res) {
 
 
     /*
+      CREATE
+    */
+
+    if (action === "create") {
+
+      const question =
+        typeof req.body?.question === "string"
+          ? req.body.question.trim()
+          : "";
+
+      const answer =
+        typeof req.body?.answer === "string"
+          ? req.body.answer.trim()
+          : "";
+
+      const language =
+        req.body?.language === "en"
+          ? "en"
+          : "ar";
+
+
+      if (!question || !answer) {
+        return res.status(400).json({
+          error:
+            "question and answer are required"
+        });
+      }
+
+
+      /*
+        نتحقق من عدم وجود نفس السؤال
+        مسبقًا لنفس العميل.
+      */
+
+      const existing =
+        await supabaseRequest(
+          `knowledge_base` +
+          `?client_id=eq.${client.id}` +
+          `&question=eq.${encodeURIComponent(question)}` +
+          `&select=id,question,answer,active` +
+          `&limit=1`
+        );
+
+
+      if (
+        Array.isArray(existing) &&
+        existing.length > 0
+      ) {
+        return res.status(409).json({
+          error:
+            "Knowledge item already exists"
+        });
+      }
+
+
+      const inserted =
+        await supabaseRequest(
+          "knowledge_base",
+          {
+            method: "POST",
+
+            prefer:
+              "return=representation",
+
+            body: {
+              client_id:
+                client.id,
+
+              question,
+
+              answer,
+
+              language,
+
+              source:
+                "admin",
+
+              active:
+                true
+            }
+          }
+        );
+
+
+      if (
+        !Array.isArray(inserted) ||
+        inserted.length === 0
+      ) {
+        throw new Error(
+          "Unable to create knowledge item"
+        );
+      }
+
+
+      return res.status(201).json({
+        success: true,
+        item: inserted[0]
+      });
+    }
+
+
+    /*
       UPDATE
     */
 
@@ -222,6 +324,7 @@ module.exports = async function handler(req, res) {
             body: {
               question,
               answer,
+
               updated_at:
                 new Date().toISOString()
             }
@@ -286,6 +389,7 @@ module.exports = async function handler(req, res) {
 
             body: {
               active,
+
               updated_at:
                 new Date().toISOString()
             }
