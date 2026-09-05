@@ -214,6 +214,18 @@
       <div class="small" id="unresolvedQuestions">-</div>
     </div>
 
+    <div class="card">
+      <div class="label">المحادثات العربية</div>
+      <div class="value" id="arabicConversations">-</div>
+      <div class="small" id="arabicRate">-</div>
+    </div>
+
+    <div class="card">
+      <div class="label">English Conversations</div>
+      <div class="value" id="englishConversations">-</div>
+      <div class="small" id="englishRate">-</div>
+    </div>
+
   </div>
 
   <div class="section-title">
@@ -365,6 +377,22 @@ async function loadDashboard(){
     document.getElementById("handoffRate").textContent =
       "نسبة المحادثات المحولة لمسؤول: " +
       (summary.human_handoff_rate_percent ?? 0) +
+      "%";
+
+    document.getElementById("arabicConversations").textContent =
+      summary.arabic_conversations ?? 0;
+
+    document.getElementById("arabicRate").textContent =
+      "النسبة من المحادثات المسجلة لغتها: " +
+      (summary.arabic_rate_percent ?? 0) +
+      "%";
+
+    document.getElementById("englishConversations").textContent =
+      summary.english_conversations ?? 0;
+
+    document.getElementById("englishRate").textContent =
+      "Share of language-tracked conversations: " +
+      (summary.english_rate_percent ?? 0) +
       "%";
 
     dailyTable.innerHTML = "";
