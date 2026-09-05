@@ -1,149 +1,215 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <title>NOVAIRE Admin Dashboard</title>
 
   <style>
-    :root{
-      --bg:#111111;
-      --card:#1d1d1d;
-      --line:#333333;
-      --gold:#f2a93b;
-      --text:#f5f1e8;
-      --muted:#aaa49b;
-      --danger:#ff7b6b;
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
 
-    *{
-      box-sizing:border-box;
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b1020;
+      color: #ffffff;
+      min-height: 100vh;
     }
 
-    body{
-      margin:0;
-      background:var(--bg);
-      color:var(--text);
-      font-family:Arial,Tahoma,sans-serif;
+    .login-page {
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
     }
 
-    .container{
-      width:min(1100px,calc(100% - 32px));
-      margin:auto;
-      padding:32px 0 50px;
+    .login-card {
+      width: 100%;
+      max-width: 430px;
+      background: #151c31;
+      border: 1px solid #28334f;
+      border-radius: 18px;
+      padding: 35px;
+      box-shadow: 0 20px 50px rgba(0,0,0,.35);
     }
 
-    .header{
-      display:flex;
-      justify-content:space-between;
-      gap:20px;
-      align-items:flex-start;
-      margin-bottom:28px;
+    .brand {
+      text-align: center;
+      margin-bottom: 30px;
     }
 
-    .header h1{
-      margin:0;
-      font-size:30px;
+    .brand h1 {
+      font-size: 30px;
+      margin-bottom: 8px;
     }
 
-    .header p{
-      margin:8px 0 0;
-      color:var(--muted);
+    .brand p {
+      color: #9da9c5;
+      font-size: 14px;
     }
 
-    .internal-badge{
-      padding:8px 12px;
-      border:1px solid var(--gold);
-      color:var(--gold);
-      border-radius:20px;
-      font-size:12px;
-      white-space:nowrap;
+    .internal-badge {
+      display: inline-block;
+      margin-top: 15px;
+      background: #3b2130;
+      border: 1px solid #7c3c55;
+      color: #ffb9ce;
+      padding: 7px 12px;
+      border-radius: 20px;
+      font-size: 12px;
     }
 
-    .section-title{
-      margin-top:32px;
-      margin-bottom:14px;
-      font-size:20px;
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #d4dbeb;
     }
 
-    .grid{
-      display:grid;
-      grid-template-columns:repeat(3,1fr);
-      gap:16px;
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 10px;
+      border: 1px solid #35415f;
+      background: #0e1528;
+      color: white;
+      font-size: 16px;
+      outline: none;
+      margin-bottom: 15px;
     }
 
-    .card{
-      background:var(--card);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:20px;
+    input:focus {
+      border-color: #7384b4;
     }
 
-    .label{
-      color:var(--muted);
-      font-size:14px;
-      margin-bottom:12px;
+    button {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      background: #ffffff;
+      color: #111827;
     }
 
-    .value{
-      font-size:32px;
-      color:var(--gold);
-      font-weight:bold;
-      word-break:break-word;
+    button:disabled {
+      opacity: .6;
+      cursor: wait;
     }
 
-    .small{
-      color:var(--muted);
-      font-size:13px;
-      margin-top:7px;
+    .error-message {
+      min-height: 22px;
+      margin-top: 15px;
+      text-align: center;
+      color: #ff8fa8;
+      font-size: 14px;
     }
 
-    .cost-card{
-      border-color:#5e4823;
+    .dashboard {
+      display: none;
+      padding: 25px;
+      max-width: 1450px;
+      margin: auto;
     }
 
-    .notice{
-      margin-top:28px;
-      padding:15px;
-      border:1px solid #5e4823;
-      background:#1d1a14;
-      border-radius:10px;
-      color:#d9c79d;
-      line-height:1.7;
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 25px;
+      flex-wrap: wrap;
     }
 
-    .status{
-      margin-top:25px;
-      padding:14px;
-      border:1px solid var(--line);
-      border-radius:10px;
-      background:var(--card);
-      color:var(--muted);
+    .topbar h1 {
+      font-size: 28px;
     }
 
-    .error{
-      color:var(--danger);
+    .topbar p {
+      margin-top: 6px;
+      color: #9da9c5;
     }
 
-    @media(max-width:800px){
-      .grid{
-        grid-template-columns:1fr 1fr;
+    .logout-btn {
+      width: auto;
+      padding: 10px 18px;
+      background: #263149;
+      color: white;
+    }
+
+    .section-title {
+      margin: 30px 0 15px;
+      font-size: 21px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 15px;
+    }
+
+    .card {
+      background: #151c31;
+      border: 1px solid #28334f;
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .card-title {
+      color: #9da9c5;
+      font-size: 13px;
+      margin-bottom: 13px;
+    }
+
+    .card-value {
+      font-size: 27px;
+      font-weight: bold;
+      word-break: break-word;
+    }
+
+    .model-card {
+      grid-column: span 2;
+    }
+
+    .cost-card {
+      background: #18231e;
+      border-color: #354d3d;
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 20px;
+      color: #9da9c5;
+    }
+
+    .security-note {
+      margin-top: 30px;
+      padding: 15px;
+      background: #151c31;
+      border: 1px solid #28334f;
+      border-radius: 12px;
+      color: #9da9c5;
+      font-size: 13px;
+      line-height: 1.8;
+    }
+
+    @media (max-width: 650px) {
+      .dashboard {
+        padding: 15px;
       }
-    }
 
-    @media(max-width:520px){
-      .grid{
-        grid-template-columns:1fr;
+      .model-card {
+        grid-column: span 1;
       }
 
-      .header{
-        display:block;
-      }
-
-      .internal-badge{
-        display:inline-block;
-        margin-top:15px;
+      .topbar h1 {
+        font-size: 23px;
       }
     }
   </style>
@@ -151,271 +217,662 @@
 
 <body>
 
-<main class="container">
+  <!-- LOGIN -->
 
-  <div class="header">
-    <div>
-      <h1>NOVAIRE Admin Dashboard</h1>
-      <p id="clientName">لوحة الإدارة الداخلية</p>
-    </div>
+  <div id="loginPage" class="login-page">
 
-    <div class="internal-badge">
-      للاستخدام الداخلي فقط
-    </div>
-  </div>
+    <div class="login-card">
 
+      <div class="brand">
+        <h1>NOVAIRE</h1>
+        <p>لوحة الإدارة الداخلية</p>
 
-  <div class="section-title">
-    المؤشرات التشغيلية
-  </div>
+        <div class="internal-badge">
+          للاستخدام الداخلي فقط
+        </div>
+      </div>
 
-  <div class="grid">
+      <form id="loginForm">
 
-    <div class="card">
-      <div class="label">إجمالي المحادثات</div>
-      <div class="value" id="totalConversations">-</div>
-    </div>
+        <label for="password">
+          كلمة مرور الإدارة
+        </label>
 
-    <div class="card">
-      <div class="label">إجمالي الرسائل</div>
-      <div class="value" id="totalMessages">-</div>
-    </div>
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          placeholder="أدخل كلمة المرور"
+          required
+        />
 
-    <div class="card">
-      <div class="label">طلبات التواصل</div>
-      <div class="value" id="totalContactRequests">-</div>
-    </div>
+        <button
+          id="loginButton"
+          type="submit"
+        >
+          دخول
+        </button>
 
-    <div class="card">
-      <div class="label">طلبات الاتصال</div>
-      <div class="value" id="callbackRequests">-</div>
-    </div>
+        <div
+          id="loginError"
+          class="error-message"
+        ></div>
 
-    <div class="card">
-      <div class="label">التحويل لموظف</div>
-      <div class="value" id="handoffRequests">-</div>
-    </div>
+      </form>
 
-    <div class="card">
-      <div class="label">نسبة الحل بالذكاء الاصطناعي</div>
-      <div class="value" id="aiResolutionRate">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">الأسئلة غير المجابة</div>
-      <div class="value" id="totalUnanswered">-</div>
-      <div class="small" id="unresolvedUnanswered">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">المحادثات العربية</div>
-      <div class="value" id="arabicConversations">-</div>
-    </div>
-
-    <div class="card">
-      <div class="label">المحادثات الإنجليزية</div>
-      <div class="value" id="englishConversations">-</div>
     </div>
 
   </div>
 
 
-  <div class="section-title">
-    استهلاك الذكاء الاصطناعي
-  </div>
+  <!-- DASHBOARD -->
 
-  <div class="grid">
+  <main
+    id="dashboard"
+    class="dashboard"
+  >
 
-    <div class="card">
-      <div class="label">النموذج المستخدم</div>
-      <div class="value" style="font-size:22px" id="aiModel">-</div>
+    <div class="topbar">
+
+      <div>
+
+        <h1>
+          NOVAIRE Admin Dashboard
+        </h1>
+
+        <p id="clientName">
+          لوحة الإدارة الداخلية
+        </p>
+
+        <div class="internal-badge">
+          بيانات داخلية — لا تعرض للعميل
+        </div>
+
+      </div>
+
+      <button
+        id="logoutButton"
+        class="logout-btn"
+        type="button"
+      >
+        تسجيل الخروج
+      </button>
+
     </div>
 
-    <div class="card">
-      <div class="label">Input Tokens</div>
-      <div class="value" id="inputTokens">-</div>
+
+    <h2 class="section-title">
+      المؤشرات التشغيلية
+    </h2>
+
+    <section class="cards">
+
+      <div class="card">
+        <div class="card-title">
+          إجمالي المحادثات
+        </div>
+        <div
+          id="totalConversations"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          إجمالي الرسائل
+        </div>
+        <div
+          id="totalMessages"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          طلبات التواصل
+        </div>
+        <div
+          id="totalContactRequests"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          طلبات الاتصال
+        </div>
+        <div
+          id="callbackRequests"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          التحويل لموظف
+        </div>
+        <div
+          id="humanHandoff"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          الأسئلة غير المجابة
+        </div>
+        <div
+          id="unansweredQuestions"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          غير محلولة حتى الآن
+        </div>
+        <div
+          id="unresolvedQuestions"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          نسبة الحل بالذكاء الاصطناعي
+        </div>
+        <div
+          id="aiResolution"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          المحادثات العربية
+        </div>
+        <div
+          id="arabicConversations"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          المحادثات الإنجليزية
+        </div>
+        <div
+          id="englishConversations"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+    </section>
+
+
+    <h2 class="section-title">
+      استهلاك الذكاء الاصطناعي والتكلفة
+    </h2>
+
+    <section class="cards">
+
+      <div class="card model-card">
+        <div class="card-title">
+          نموذج الذكاء الاصطناعي
+        </div>
+
+        <div
+          id="aiModel"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          Input Tokens
+        </div>
+
+        <div
+          id="inputTokens"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          Output Tokens
+        </div>
+
+        <div
+          id="outputTokens"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          إجمالي Tokens
+        </div>
+
+        <div
+          id="totalTokens"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          سجلات استخدام AI
+        </div>
+
+        <div
+          id="usageRecords"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          تكلفة الإدخال
+        </div>
+
+        <div
+          id="inputCost"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">
+          تكلفة الإخراج
+        </div>
+
+        <div
+          id="outputCost"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card cost-card">
+        <div class="card-title">
+          إجمالي تكلفة AI بالدولار
+        </div>
+
+        <div
+          id="totalCostUsd"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+      <div class="card cost-card">
+        <div class="card-title">
+          إجمالي تكلفة AI بالدرهم
+        </div>
+
+        <div
+          id="totalCostAed"
+          class="card-value"
+        >
+          -
+        </div>
+      </div>
+
+    </section>
+
+    <div class="security-note">
+      هذه الصفحة مخصصة لإدارة NOVAIRE فقط.
+      بيانات استهلاك الذكاء الاصطناعي والتكاليف الداخلية
+      لا يتم عرضها في لوحة العميل.
     </div>
 
-    <div class="card">
-      <div class="label">Output Tokens</div>
-      <div class="value" id="outputTokens">-</div>
-    </div>
+  </main>
 
-    <div class="card">
-      <div class="label">إجمالي Tokens</div>
-      <div class="value" id="totalTokens">-</div>
-    </div>
 
-    <div class="card">
-      <div class="label">عمليات AI المسجلة</div>
-      <div class="value" id="usageRecords">-</div>
-    </div>
+  <script>
 
-    <div class="card">
-      <div class="label">سعر Input / مليون</div>
-      <div class="value" id="inputPrice">-</div>
-    </div>
+    const loginPage =
+      document.getElementById("loginPage");
 
-    <div class="card">
-      <div class="label">سعر Output / مليون</div>
-      <div class="value" id="outputPrice">-</div>
-    </div>
+    const dashboard =
+      document.getElementById("dashboard");
 
-    <div class="card cost-card">
-      <div class="label">تكلفة Input</div>
-      <div class="value" id="inputCostUsd">-</div>
-    </div>
+    const loginForm =
+      document.getElementById("loginForm");
 
-    <div class="card cost-card">
-      <div class="label">تكلفة Output</div>
-      <div class="value" id="outputCostUsd">-</div>
-    </div>
+    const loginButton =
+      document.getElementById("loginButton");
 
-    <div class="card cost-card">
-      <div class="label">إجمالي تكلفة AI بالدولار</div>
-      <div class="value" id="totalCostUsd">-</div>
-    </div>
+    const loginError =
+      document.getElementById("loginError");
 
-    <div class="card cost-card">
-      <div class="label">إجمالي تكلفة AI بالدرهم</div>
-      <div class="value" id="totalCostAed">-</div>
-    </div>
+    const passwordInput =
+      document.getElementById("password");
 
-  </div>
+    const logoutButton =
+      document.getElementById("logoutButton");
 
-  <div class="notice">
-    هذه البيانات مالية وتشغيلية خاصة بـ NOVAIRE ولا تُعرض للعميل.
-    لاحقًا يمكننا إضافة تكلفة الاستضافة، تكلفة الخدمات الخارجية،
-    الإيراد الشهري، وهامش الربح لكل عميل.
-  </div>
 
-  <div class="status" id="status">
-    جاري تحميل البيانات...
-  </div>
+    function setText(id, value) {
+      const element =
+        document.getElementById(id);
 
-</main>
-
-<script>
-
-function formatNumber(value){
-  return Number(value || 0).toLocaleString("en-US");
-}
-
-function formatUsd(value){
-  return "$" + Number(value || 0).toFixed(4);
-}
-
-function formatAed(value){
-  return Number(value || 0).toFixed(2) + " AED";
-}
-
-async function loadAdminDashboard(){
-
-  const status = document.getElementById("status");
-
-  try{
-
-    const response = await fetch("/api/admin-dashboard");
-
-    if(!response.ok){
-      throw new Error("Admin API failed");
+      if (element) {
+        element.textContent =
+          value ?? "-";
+      }
     }
 
-    const data = await response.json();
 
-    const client = data.client || {};
-    const operations = data.operations || {};
-    const usage = data.ai_usage || {};
+    function formatNumber(value) {
+      return Number(value || 0)
+        .toLocaleString("en-US");
+    }
 
-    document.getElementById("clientName").textContent =
-      (client.client_name || "Client") +
-      " — لوحة الإدارة الداخلية";
 
-    document.getElementById("totalConversations").textContent =
-      formatNumber(operations.total_conversations);
+    function showDashboard(data) {
 
-    document.getElementById("totalMessages").textContent =
-      formatNumber(operations.total_messages);
+      const client =
+        data.client || {};
 
-    document.getElementById("totalContactRequests").textContent =
-      formatNumber(operations.total_contact_requests);
+      const operations =
+        data.operations || {};
 
-    document.getElementById("callbackRequests").textContent =
-      formatNumber(operations.callback_requests);
+      const ai =
+        data.ai_usage || {};
 
-    document.getElementById("handoffRequests").textContent =
-      formatNumber(operations.human_handoff_requests);
 
-    document.getElementById("aiResolutionRate").textContent =
-      (operations.ai_resolution_rate_percent || 0) + "%";
+      setText(
+        "clientName",
+        `${client.client_name || "Client"} — Internal Dashboard`
+      );
 
-    document.getElementById("totalUnanswered").textContent =
-      formatNumber(operations.total_unanswered_questions);
 
-    document.getElementById("unresolvedUnanswered").textContent =
-      "غير محلولة: " +
-      formatNumber(operations.unresolved_unanswered_questions);
+      setText(
+        "totalConversations",
+        formatNumber(
+          operations.total_conversations
+        )
+      );
 
-    document.getElementById("arabicConversations").textContent =
-      formatNumber(operations.arabic_conversations);
+      setText(
+        "totalMessages",
+        formatNumber(
+          operations.total_messages
+        )
+      );
 
-    document.getElementById("englishConversations").textContent =
-      formatNumber(operations.english_conversations);
+      setText(
+        "totalContactRequests",
+        formatNumber(
+          operations.total_contact_requests
+        )
+      );
 
-    document.getElementById("aiModel").textContent =
-      usage.model || "-";
+      setText(
+        "callbackRequests",
+        formatNumber(
+          operations.callback_requests
+        )
+      );
 
-    document.getElementById("inputTokens").textContent =
-      formatNumber(usage.total_input_tokens);
+      setText(
+        "humanHandoff",
+        formatNumber(
+          operations.human_handoff_requests
+        )
+      );
 
-    document.getElementById("outputTokens").textContent =
-      formatNumber(usage.total_output_tokens);
+      setText(
+        "unansweredQuestions",
+        formatNumber(
+          operations.total_unanswered_questions
+        )
+      );
 
-    document.getElementById("totalTokens").textContent =
-      formatNumber(usage.total_tokens);
+      setText(
+        "unresolvedQuestions",
+        formatNumber(
+          operations.unresolved_unanswered_questions
+        )
+      );
 
-    document.getElementById("usageRecords").textContent =
-      formatNumber(usage.ai_usage_records);
+      setText(
+        "aiResolution",
+        `${Number(
+          operations.ai_resolution_rate_percent || 0
+        ).toFixed(1)}%`
+      );
 
-    document.getElementById("inputPrice").textContent =
-      "$" + Number(
-        usage.input_price_per_million_usd || 0
-      ).toFixed(2);
+      setText(
+        "arabicConversations",
+        formatNumber(
+          operations.arabic_conversations
+        )
+      );
 
-    document.getElementById("outputPrice").textContent =
-      "$" + Number(
-        usage.output_price_per_million_usd || 0
-      ).toFixed(2);
+      setText(
+        "englishConversations",
+        formatNumber(
+          operations.english_conversations
+        )
+      );
 
-    document.getElementById("inputCostUsd").textContent =
-      formatUsd(usage.input_cost_usd);
 
-    document.getElementById("outputCostUsd").textContent =
-      formatUsd(usage.output_cost_usd);
+      setText(
+        "aiModel",
+        ai.model || "-"
+      );
 
-    document.getElementById("totalCostUsd").textContent =
-      formatUsd(usage.total_cost_usd);
+      setText(
+        "inputTokens",
+        formatNumber(
+          ai.total_input_tokens
+        )
+      );
 
-    document.getElementById("totalCostAed").textContent =
-      formatAed(usage.total_cost_aed);
+      setText(
+        "outputTokens",
+        formatNumber(
+          ai.total_output_tokens
+        )
+      );
 
-    status.textContent =
-      "تم تحديث لوحة NOVAIRE الداخلية بنجاح";
+      setText(
+        "totalTokens",
+        formatNumber(
+          ai.total_tokens
+        )
+      );
 
-  }catch(error){
+      setText(
+        "usageRecords",
+        formatNumber(
+          ai.ai_usage_records
+        )
+      );
 
-    console.error(error);
+      setText(
+        "inputCost",
+        `$${Number(
+          ai.input_cost_usd || 0
+        ).toFixed(6)}`
+      );
 
-    status.textContent =
-      "تعذر تحميل لوحة الإدارة الداخلية";
+      setText(
+        "outputCost",
+        `$${Number(
+          ai.output_cost_usd || 0
+        ).toFixed(6)}`
+      );
 
-    status.classList.add("error");
-  }
-}
+      setText(
+        "totalCostUsd",
+        `$${Number(
+          ai.total_cost_usd || 0
+        ).toFixed(6)}`
+      );
 
-loadAdminDashboard();
+      setText(
+        "totalCostAed",
+        `${Number(
+          ai.total_cost_aed || 0
+        ).toFixed(4)} AED`
+      );
 
-</script>
+
+      loginPage.style.display =
+        "none";
+
+      dashboard.style.display =
+        "block";
+    }
+
+
+    loginForm.addEventListener(
+      "submit",
+      async function(event) {
+
+        event.preventDefault();
+
+        loginError.textContent = "";
+
+        const password =
+          passwordInput.value;
+
+        if (!password) {
+          loginError.textContent =
+            "أدخل كلمة المرور.";
+          return;
+        }
+
+        loginButton.disabled = true;
+        loginButton.textContent =
+          "جاري الدخول...";
+
+        try {
+
+          const response =
+            await fetch(
+              "/api/admin-dashboard",
+              {
+                method: "POST",
+
+                headers: {
+                  "Content-Type":
+                    "application/json"
+                },
+
+                body:
+                  JSON.stringify({
+                    password
+                  })
+              }
+            );
+
+
+          if (response.status === 401) {
+
+            loginError.textContent =
+              "كلمة المرور غير صحيحة.";
+
+            return;
+          }
+
+
+          const data =
+            await response.json();
+
+
+          if (!response.ok) {
+
+            console.error(data);
+
+            loginError.textContent =
+              "تعذر تحميل لوحة الإدارة.";
+
+            return;
+          }
+
+
+          passwordInput.value = "";
+
+          showDashboard(data);
+
+
+        } catch (error) {
+
+          console.error(error);
+
+          loginError.textContent =
+            "حدث خطأ في الاتصال.";
+
+        } finally {
+
+          loginButton.disabled =
+            false;
+
+          loginButton.textContent =
+            "دخول";
+        }
+      }
+    );
+
+
+    logoutButton.addEventListener(
+      "click",
+      function() {
+
+        dashboard.style.display =
+          "none";
+
+        loginPage.style.display =
+          "flex";
+
+        passwordInput.value = "";
+
+        loginError.textContent = "";
+
+        passwordInput.focus();
+      }
+    );
+
+  </script>
 
 </body>
 </html>
