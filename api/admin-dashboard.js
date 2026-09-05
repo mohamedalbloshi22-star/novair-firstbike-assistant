@@ -1,5 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ADMIN_PASSWORD = process.env.NOVAIRE_ADMIN_PASSWORD;
 
 const CLIENT_SLUG = "first-bike";
 
@@ -28,15 +29,26 @@ async function supabaseRequest(path) {
 }
 
 module.exports = async function handler(req, res) {
-  if (req.method !== "GET") {
+  if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed"
     });
   }
 
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  if (!SUPABASE_URL || !SUPABASE_KEY || !ADMIN_PASSWORD) {
     return res.status(500).json({
-      error: "Supabase environment variables are missing"
+      error: "Server configuration is incomplete"
+    });
+  }
+
+  const suppliedPassword =
+    typeof req.body?.password === "string"
+      ? req.body.password
+      : "";
+
+  if (!suppliedPassword || suppliedPassword !== ADMIN_PASSWORD) {
+    return res.status(401).json({
+      error: "Unauthorized"
     });
   }
 
@@ -112,6 +124,11 @@ module.exports = async function handler(req, res) {
 
     const totalCostAed =
       totalCostUsd * AED_PER_USD;
+
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate"
+    );
 
     return res.status(200).json({
       client: {
@@ -189,11 +206,14 @@ module.exports = async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error("ADMIN DASHBOARD API ERROR:", error);
+    console.error(
+      "ADMIN DASHBOARD API ERROR:",
+      error
+    );
 
     return res.status(500).json({
-      error: "Unable to load admin dashboard statistics",
-      details: error.message
+      error:
+        "Unable to load admin dashboard statistics"
     });
   }
 };
