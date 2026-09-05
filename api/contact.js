@@ -109,10 +109,6 @@ async function getClient(clientSlug) {
     result[0];
 
 
-  /*
-    منع استقبال الطلبات لعميل غير فعال.
-  */
-
   if (
     client.config &&
     client.config.active === false
@@ -161,6 +157,127 @@ async function getConversation(
 
 
   return result[0];
+}
+
+
+/*
+==================================================
+Create Conversation
+==================================================
+*/
+
+async function createConversation(
+  clientId,
+  sessionId,
+  language
+) {
+
+  const result =
+    await supabaseRequest(
+      "conversations",
+      {
+        method: "POST",
+
+        headers: {
+          Prefer:
+            "return=representation"
+        },
+
+        body: JSON.stringify({
+          client_id:
+            clientId,
+
+          session_id:
+            sessionId,
+
+          status:
+            "active",
+
+          resolved_by_ai:
+            false,
+
+          human_handoff:
+            false,
+
+          callback_requested:
+            false,
+
+          language:
+            language === "en"
+              ? "en"
+              : "ar"
+        })
+      }
+    );
+
+
+  if (
+    !Array.isArray(result) ||
+    !result[0]?.id
+  ) {
+    throw new Error(
+      "Unable to create conversation"
+    );
+  }
+
+
+  return result[0];
+}
+
+
+/*
+==================================================
+Get Or Create Conversation
+==================================================
+*/
+
+async function getOrCreateConversation(
+  clientId,
+  sessionId,
+  language
+) {
+
+  const existing =
+    await getConversation(
+      clientId,
+      sessionId
+    );
+
+
+  if (existing) {
+    return existing;
+  }
+
+
+  try {
+
+    return await createConversation(
+      clientId,
+      sessionId,
+      language
+    );
+
+  } catch (error) {
+
+    /*
+      حماية إضافية إذا تم إنشاء نفس المحادثة
+      في نفس اللحظة من طلب آخر.
+    */
+
+    const retry =
+      await getConversation(
+        clientId,
+        sessionId
+      );
+
+
+    if (retry) {
+      return retry;
+    }
+
+
+    throw error;
+  }
 }
 
 
@@ -222,9 +339,17 @@ module.exports = async function handler(req, res) {
       );
 
 
+    const language =
+      cleanText(
+        body.language
+      ).toLowerCase() === "en"
+        ? "en"
+        : "ar";
+
+
     /*
     ==================================================
-    Validate client
+    Validate Client
     ==================================================
     */
 
@@ -239,7 +364,7 @@ module.exports = async function handler(req, res) {
 
     /*
     ==================================================
-    Validate session
+    Validate Session
     ==================================================
     */
 
@@ -254,7 +379,7 @@ module.exports = async function handler(req, res) {
 
     /*
     ==================================================
-    Validate request type
+    Validate Request Type
     ==================================================
     */
 
@@ -272,7 +397,7 @@ module.exports = async function handler(req, res) {
 
     /*
     ==================================================
-    Validate contact information
+    Validate Contact Information
     ==================================================
     */
 
@@ -290,7 +415,7 @@ module.exports = async function handler(req, res) {
 
     /*
     ==================================================
-    Get selected client
+    Get Selected Client
     ==================================================
     */
 
@@ -320,29 +445,21 @@ module.exports = async function handler(req, res) {
 
     /*
     ==================================================
-    Find conversation belonging to this client
+    Find Or Create Conversation
     ==================================================
     */
 
     const conversation =
-      await getConversation(
+      await getOrCreateConversation(
         client.id,
-        sessionId
+        sessionId,
+        language
       );
-
-
-    if (!conversation) {
-
-      return res.status(404).json({
-        error:
-          "Conversation was not found for this client"
-      });
-    }
 
 
     /*
     ==================================================
-    Create contact request
+    Create Contact Request
     ==================================================
     */
 
@@ -383,13 +500,12 @@ module.exports = async function handler(req, res) {
 
     /*
     ==================================================
-    Update conversation
+    Update Conversation
     ==================================================
     */
 
     const updateField =
-      requestType ===
-      "human_handoff"
+      requestType === "human_handoff"
         ? "human_handoff"
         : "callback_requested";
 
@@ -407,8 +523,11 @@ module.exports = async function handler(req, res) {
         },
 
         body: JSON.stringify({
-          [updateField]: true,
-          resolved_by_ai: false
+          [updateField]:
+            true,
+
+          resolved_by_ai:
+            false
         })
       }
     );
@@ -422,12 +541,18 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
 
-      success: true,
+      success:
+        true,
 
       client: {
-        id: client.id,
-        name: client.name,
-        slug: client.slug
+        id:
+          client.id,
+
+        name:
+          client.name,
+
+        slug:
+          client.slug
       },
 
       request_type:
