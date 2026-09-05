@@ -1,65 +1,148 @@
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_PASSWORD = process.env.NOVAIRE_ADMIN_PASSWORD;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL;
 
-const CLIENT_SLUG = "first-bike";
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const ADMIN_PASSWORD =
+  process.env.NOVAIRE_ADMIN_PASSWORD;
 
 
-async function supabaseRequest(path, options = {}) {
-  const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/${path}`,
-    {
-      method: options.method || "GET",
+/*
+==================================================
+Supabase
+==================================================
+*/
 
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        Prefer:
-          options.prefer ||
-          "return=representation"
-      },
+async function supabaseRequest(
+  path,
+  options = {}
+) {
 
-      body: options.body
-        ? JSON.stringify(options.body)
-        : undefined
-    }
-  );
+  const response =
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/${path}`,
+      {
+        method:
+          options.method || "GET",
 
-  const text = await response.text();
+        headers: {
+          apikey:
+            SUPABASE_KEY,
+
+          Authorization:
+            `Bearer ${SUPABASE_KEY}`,
+
+          "Content-Type":
+            "application/json",
+
+          ...(options.prefer
+            ? {
+                Prefer:
+                  options.prefer
+              }
+            : {})
+        },
+
+        body:
+          options.body
+            ? JSON.stringify(
+                options.body
+              )
+            : undefined
+      }
+    );
+
+  const text =
+    await response.text();
 
   if (!response.ok) {
+
     throw new Error(
-      `Supabase ${response.status}: ${text}`
+      `Supabase error ${response.status}: ${text}`
     );
   }
 
   return text
     ? JSON.parse(text)
-    : [];
+    : null;
 }
 
 
-function isAuthorized(req) {
-  const suppliedPassword =
-    typeof req.body?.password === "string"
-      ? req.body.password
-      : "";
+/*
+==================================================
+Helpers
+==================================================
+*/
 
-  return (
-    ADMIN_PASSWORD &&
-    suppliedPassword &&
-    suppliedPassword === ADMIN_PASSWORD
-  );
+function cleanText(value) {
+
+  return String(
+    value || ""
+  ).trim();
 }
 
 
-async function getClient() {
-  const rows = await supabaseRequest(
-    `clients?slug=eq.${encodeURIComponent(
-      CLIENT_SLUG
-    )}&select=id,name,slug&limit=1`
-  );
+function normalizeSlug(value) {
+
+  const slug =
+    cleanText(value)
+      .toLowerCase();
+
+  if (
+    !/^[a-z0-9_-]{2,80}$/.test(slug)
+  ) {
+    return "";
+  }
+
+  return slug;
+}
+
+
+function normalizeLanguage(value) {
+
+  return value === "en"
+    ? "en"
+    : "ar";
+}
+
+
+function isAuthorized(body) {
+
+  const password =
+    cleanText(
+      body?.password
+    );
+
+  if (
+    !ADMIN_PASSWORD ||
+    !password
+  ) {
+    return false;
+  }
+
+  return password ===
+    ADMIN_PASSWORD;
+}
+
+
+/*
+==================================================
+Get Client
+==================================================
+*/
+
+async function getClientBySlug(
+  clientSlug
+) {
+
+  const rows =
+    await supabaseRequest(
+      `clients` +
+      `?slug=eq.${encodeURIComponent(clientSlug)}` +
+      `&select=id,name,slug,config` +
+      `&limit=1`
+    );
 
   if (
     !Array.isArray(rows) ||
@@ -72,12 +155,456 @@ async function getClient() {
 }
 
 
-module.exports = async function handler(req, res) {
+/*
+==================================================
+List Knowledge
+==================================================
+*/
 
-  if (req.method !== "POST") {
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
+async function listKnowledge(
+  clientId
+) {
+
+  const rows =
+    await supabaseRequest(
+      `knowledge_base` +
+      `?client_id=eq.${encodeURIComponent(clientId)}` +
+      `&select=id,client_id,question,answer,language,source,active,created_at,updated_at` +
+      `&order=updated_at.desc.nullslast,created_at.desc`
+    );
+
+  return Array.isArray(rows)
+    ? rows
+    : [];
+}
+
+
+/*
+==================================================
+Create
+==================================================
+*/
+
+async function createKnowledge(
+  clientId,
+  body
+) {
+
+  const question =
+    cleanText(
+      body.question
+    );
+
+  const answer =
+    cleanText(
+      body.answer
+    );
+
+  const language =
+    normalizeLanguage(
+      body.language
+    );
+
+  if (
+    !question ||
+    !answer
+  ) {
+
+    return {
+      status: 400,
+
+      data: {
+        error:
+          "Question and answer are required"
+      }
+    };
+  }
+
+
+  /*
+  ----------------------------------------------
+  Exact duplicate check inside same client only
+  ----------------------------------------------
+  */
+
+  const duplicates =
+    await supabaseRequest(
+      `knowledge_base` +
+      `?client_id=eq.${encodeURIComponent(clientId)}` +
+      `&question=eq.${encodeURIComponent(question)}` +
+      `&select=id` +
+      `&limit=1`
+    );
+
+
+  if (
+    Array.isArray(duplicates) &&
+    duplicates.length > 0
+  ) {
+
+    return {
+      status: 409,
+
+      data: {
+        error:
+          "Knowledge item already exists"
+      }
+    };
+  }
+
+
+  const created =
+    await supabaseRequest(
+      "knowledge_base",
+      {
+        method:
+          "POST",
+
+        prefer:
+          "return=representation",
+
+        body: {
+          client_id:
+            clientId,
+
+          question,
+
+          answer,
+
+          language,
+
+          source:
+            "admin",
+
+          active:
+            true
+        }
+      }
+    );
+
+
+  return {
+    status: 201,
+
+    data: {
+      success: true,
+
+      item:
+        Array.isArray(created)
+          ? created[0]
+          : null
+    }
+  };
+}
+
+
+/*
+==================================================
+Update
+==================================================
+*/
+
+async function updateKnowledge(
+  clientId,
+  body
+) {
+
+  const id =
+    cleanText(
+      body.id
+    );
+
+  const question =
+    cleanText(
+      body.question
+    );
+
+  const answer =
+    cleanText(
+      body.answer
+    );
+
+  const language =
+    normalizeLanguage(
+      body.language
+    );
+
+  if (
+    !id ||
+    !question ||
+    !answer
+  ) {
+
+    return {
+      status: 400,
+
+      data: {
+        error:
+          "id, question and answer are required"
+      }
+    };
+  }
+
+
+  /*
+  ----------------------------------------------
+  Make sure item belongs to selected client
+  ----------------------------------------------
+  */
+
+  const existing =
+    await supabaseRequest(
+      `knowledge_base` +
+      `?id=eq.${encodeURIComponent(id)}` +
+      `&client_id=eq.${encodeURIComponent(clientId)}` +
+      `&select=id` +
+      `&limit=1`
+    );
+
+
+  if (
+    !Array.isArray(existing) ||
+    existing.length === 0
+  ) {
+
+    return {
+      status: 404,
+
+      data: {
+        error:
+          "Knowledge item not found"
+      }
+    };
+  }
+
+
+  const updated =
+    await supabaseRequest(
+      `knowledge_base` +
+      `?id=eq.${encodeURIComponent(id)}` +
+      `&client_id=eq.${encodeURIComponent(clientId)}`,
+      {
+        method:
+          "PATCH",
+
+        prefer:
+          "return=representation",
+
+        body: {
+          question,
+          answer,
+          language
+        }
+      }
+    );
+
+
+  return {
+    status: 200,
+
+    data: {
+      success: true,
+
+      item:
+        Array.isArray(updated)
+          ? updated[0]
+          : null
+    }
+  };
+}
+
+
+/*
+==================================================
+Toggle
+==================================================
+*/
+
+async function toggleKnowledge(
+  clientId,
+  body
+) {
+
+  const id =
+    cleanText(
+      body.id
+    );
+
+  if (!id) {
+
+    return {
+      status: 400,
+
+      data: {
+        error:
+          "id is required"
+      }
+    };
+  }
+
+
+  const rows =
+    await supabaseRequest(
+      `knowledge_base` +
+      `?id=eq.${encodeURIComponent(id)}` +
+      `&client_id=eq.${encodeURIComponent(clientId)}` +
+      `&select=id,active` +
+      `&limit=1`
+    );
+
+
+  if (
+    !Array.isArray(rows) ||
+    rows.length === 0
+  ) {
+
+    return {
+      status: 404,
+
+      data: {
+        error:
+          "Knowledge item not found"
+      }
+    };
+  }
+
+
+  const nextActive =
+    rows[0].active === false;
+
+
+  await supabaseRequest(
+    `knowledge_base` +
+    `?id=eq.${encodeURIComponent(id)}` +
+    `&client_id=eq.${encodeURIComponent(clientId)}`,
+    {
+      method:
+        "PATCH",
+
+      prefer:
+        "return=minimal",
+
+      body: {
+        active:
+          nextActive
+      }
+    }
+  );
+
+
+  return {
+    status: 200,
+
+    data: {
+      success: true,
+      active:
+        nextActive
+    }
+  };
+}
+
+
+/*
+==================================================
+Delete
+==================================================
+*/
+
+async function deleteKnowledge(
+  clientId,
+  body
+) {
+
+  const id =
+    cleanText(
+      body.id
+    );
+
+  if (!id) {
+
+    return {
+      status: 400,
+
+      data: {
+        error:
+          "id is required"
+      }
+    };
+  }
+
+
+  const rows =
+    await supabaseRequest(
+      `knowledge_base` +
+      `?id=eq.${encodeURIComponent(id)}` +
+      `&client_id=eq.${encodeURIComponent(clientId)}` +
+      `&select=id` +
+      `&limit=1`
+    );
+
+
+  if (
+    !Array.isArray(rows) ||
+    rows.length === 0
+  ) {
+
+    return {
+      status: 404,
+
+      data: {
+        error:
+          "Knowledge item not found"
+      }
+    };
+  }
+
+
+  await supabaseRequest(
+    `knowledge_base` +
+    `?id=eq.${encodeURIComponent(id)}` +
+    `&client_id=eq.${encodeURIComponent(clientId)}`,
+    {
+      method:
+        "DELETE",
+
+      prefer:
+        "return=minimal"
+    }
+  );
+
+
+  return {
+    status: 200,
+
+    data: {
+      success: true
+    }
+  };
+}
+
+
+/*
+==================================================
+Handler
+==================================================
+*/
+
+module.exports =
+async function handler(
+  req,
+  res
+) {
+
+  if (
+    req.method !== "POST"
+  ) {
+
+    return res
+      .status(405)
+      .json({
+        error:
+          "Method not allowed"
+      });
   }
 
 
@@ -86,405 +613,249 @@ module.exports = async function handler(req, res) {
     !SUPABASE_KEY ||
     !ADMIN_PASSWORD
   ) {
-    return res.status(500).json({
-      error:
-        "Server configuration is incomplete"
-    });
-  }
 
-
-  if (!isAuthorized(req)) {
-    return res.status(401).json({
-      error: "Unauthorized"
-    });
+    return res
+      .status(500)
+      .json({
+        error:
+          "Server configuration error"
+      });
   }
 
 
   try {
 
-    const action =
-      typeof req.body?.action === "string"
-        ? req.body.action
-        : "";
+    const body =
+      req.body || {};
 
 
-    const client =
-      await getClient();
+    /*
+    ----------------------------------------------
+    Auth
+    ----------------------------------------------
+    */
 
+    if (
+      !isAuthorized(body)
+    ) {
 
-    if (!client) {
-      return res.status(404).json({
-        error: "Client not found"
-      });
+      return res
+        .status(401)
+        .json({
+          error:
+            "Unauthorized"
+        });
     }
 
 
     /*
-      LIST
+    ----------------------------------------------
+    Client
+    ----------------------------------------------
     */
 
-    if (action === "list") {
-
-      const rows =
-        await supabaseRequest(
-          `knowledge_base` +
-          `?client_id=eq.${client.id}` +
-          `&select=id,question,answer,language,source,active,created_at,updated_at` +
-          `&order=updated_at.desc`
-        );
-
-
-      res.setHeader(
-        "Cache-Control",
-        "no-store, no-cache, must-revalidate"
+    const clientSlug =
+      normalizeSlug(
+        body.client_slug
       );
 
 
-      return res.status(200).json({
-        client,
+    if (!clientSlug) {
 
-        items:
-          Array.isArray(rows)
-            ? rows
-            : []
-      });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Valid client_slug is required"
+        });
+    }
+
+
+    const client =
+      await getClientBySlug(
+        clientSlug
+      );
+
+
+    if (!client) {
+
+      return res
+        .status(404)
+        .json({
+          error:
+            "Client not found"
+        });
+    }
+
+
+    const action =
+      cleanText(
+        body.action
+      );
+
+
+    /*
+    ----------------------------------------------
+    List
+    ----------------------------------------------
+    */
+
+    if (
+      action === "list"
+    ) {
+
+      const items =
+        await listKnowledge(
+          client.id
+        );
+
+
+      return res
+        .status(200)
+        .json({
+          success: true,
+
+          client: {
+            id:
+              client.id,
+
+            name:
+              client.name,
+
+            slug:
+              client.slug
+          },
+
+          items
+        });
     }
 
 
     /*
-      CREATE
+    ----------------------------------------------
+    Create
+    ----------------------------------------------
     */
 
-    if (action === "create") {
+    if (
+      action === "create"
+    ) {
 
-      const question =
-        typeof req.body?.question === "string"
-          ? req.body.question.trim()
-          : "";
-
-      const answer =
-        typeof req.body?.answer === "string"
-          ? req.body.answer.trim()
-          : "";
-
-      const language =
-        req.body?.language === "en"
-          ? "en"
-          : "ar";
-
-
-      if (!question || !answer) {
-        return res.status(400).json({
-          error:
-            "question and answer are required"
-        });
-      }
-
-
-      /*
-        نتحقق من عدم وجود نفس السؤال
-        مسبقًا لنفس العميل.
-      */
-
-      const existing =
-        await supabaseRequest(
-          `knowledge_base` +
-          `?client_id=eq.${client.id}` +
-          `&question=eq.${encodeURIComponent(question)}` +
-          `&select=id,question,answer,active` +
-          `&limit=1`
+      const result =
+        await createKnowledge(
+          client.id,
+          body
         );
 
-
-      if (
-        Array.isArray(existing) &&
-        existing.length > 0
-      ) {
-        return res.status(409).json({
-          error:
-            "Knowledge item already exists"
-        });
-      }
-
-
-      const inserted =
-        await supabaseRequest(
-          "knowledge_base",
-          {
-            method: "POST",
-
-            prefer:
-              "return=representation",
-
-            body: {
-              client_id:
-                client.id,
-
-              question,
-
-              answer,
-
-              language,
-
-              source:
-                "admin",
-
-              active:
-                true
-            }
-          }
+      return res
+        .status(
+          result.status
+        )
+        .json(
+          result.data
         );
-
-
-      if (
-        !Array.isArray(inserted) ||
-        inserted.length === 0
-      ) {
-        throw new Error(
-          "Unable to create knowledge item"
-        );
-      }
-
-
-      return res.status(201).json({
-        success: true,
-        item: inserted[0]
-      });
     }
 
 
     /*
-      UPDATE
+    ----------------------------------------------
+    Update
+    ----------------------------------------------
     */
 
-    if (action === "update") {
+    if (
+      action === "update"
+    ) {
 
-      const id =
-        typeof req.body?.id === "string"
-          ? req.body.id.trim()
-          : "";
-
-      const question =
-        typeof req.body?.question === "string"
-          ? req.body.question.trim()
-          : "";
-
-      const answer =
-        typeof req.body?.answer === "string"
-          ? req.body.answer.trim()
-          : "";
-
-
-      if (!id) {
-        return res.status(400).json({
-          error: "id is required"
-        });
-      }
-
-
-      if (!question || !answer) {
-        return res.status(400).json({
-          error:
-            "question and answer are required"
-        });
-      }
-
-
-      const existing =
-        await supabaseRequest(
-          `knowledge_base` +
-          `?id=eq.${encodeURIComponent(id)}` +
-          `&client_id=eq.${client.id}` +
-          `&select=id&limit=1`
+      const result =
+        await updateKnowledge(
+          client.id,
+          body
         );
 
-
-      if (
-        !Array.isArray(existing) ||
-        existing.length === 0
-      ) {
-        return res.status(404).json({
-          error:
-            "Knowledge item not found"
-        });
-      }
-
-
-      const updated =
-        await supabaseRequest(
-          `knowledge_base` +
-          `?id=eq.${encodeURIComponent(id)}` +
-          `&client_id=eq.${client.id}`,
-          {
-            method: "PATCH",
-
-            prefer:
-              "return=representation",
-
-            body: {
-              question,
-              answer,
-
-              updated_at:
-                new Date().toISOString()
-            }
-          }
+      return res
+        .status(
+          result.status
+        )
+        .json(
+          result.data
         );
-
-
-      return res.status(200).json({
-        success: true,
-
-        item:
-          Array.isArray(updated) &&
-          updated.length > 0
-            ? updated[0]
-            : null
-      });
     }
 
 
     /*
-      TOGGLE ACTIVE
+    ----------------------------------------------
+    Toggle
+    ----------------------------------------------
     */
 
-    if (action === "toggle") {
+    if (
+      action === "toggle"
+    ) {
 
-      const id =
-        typeof req.body?.id === "string"
-          ? req.body.id.trim()
-          : "";
-
-      const active =
-        typeof req.body?.active === "boolean"
-          ? req.body.active
-          : null;
-
-
-      if (!id) {
-        return res.status(400).json({
-          error: "id is required"
-        });
-      }
-
-
-      if (active === null) {
-        return res.status(400).json({
-          error:
-            "active must be boolean"
-        });
-      }
-
-
-      const updated =
-        await supabaseRequest(
-          `knowledge_base` +
-          `?id=eq.${encodeURIComponent(id)}` +
-          `&client_id=eq.${client.id}`,
-          {
-            method: "PATCH",
-
-            prefer:
-              "return=representation",
-
-            body: {
-              active,
-
-              updated_at:
-                new Date().toISOString()
-            }
-          }
+      const result =
+        await toggleKnowledge(
+          client.id,
+          body
         );
 
-
-      if (
-        !Array.isArray(updated) ||
-        updated.length === 0
-      ) {
-        return res.status(404).json({
-          error:
-            "Knowledge item not found"
-        });
-      }
-
-
-      return res.status(200).json({
-        success: true,
-        item: updated[0]
-      });
+      return res
+        .status(
+          result.status
+        )
+        .json(
+          result.data
+        );
     }
 
 
     /*
-      DELETE
+    ----------------------------------------------
+    Delete
+    ----------------------------------------------
     */
 
-    if (action === "delete") {
+    if (
+      action === "delete"
+    ) {
 
-      const id =
-        typeof req.body?.id === "string"
-          ? req.body.id.trim()
-          : "";
-
-
-      if (!id) {
-        return res.status(400).json({
-          error: "id is required"
-        });
-      }
-
-
-      const deleted =
-        await supabaseRequest(
-          `knowledge_base` +
-          `?id=eq.${encodeURIComponent(id)}` +
-          `&client_id=eq.${client.id}`,
-          {
-            method: "DELETE",
-
-            prefer:
-              "return=representation"
-          }
+      const result =
+        await deleteKnowledge(
+          client.id,
+          body
         );
 
-
-      if (
-        !Array.isArray(deleted) ||
-        deleted.length === 0
-      ) {
-        return res.status(404).json({
-          error:
-            "Knowledge item not found"
-        });
-      }
-
-
-      return res.status(200).json({
-        success: true,
-        deleted_id: id
-      });
+      return res
+        .status(
+          result.status
+        )
+        .json(
+          result.data
+        );
     }
 
 
-    return res.status(400).json({
-      error: "Invalid action"
-    });
+    return res
+      .status(400)
+      .json({
+        error:
+          "Unknown action"
+      });
 
 
   } catch (error) {
 
     console.error(
-      "KNOWLEDGE ADMIN API ERROR:",
+      "KNOWLEDGE ADMIN ERROR:",
       error
     );
 
 
-    return res.status(500).json({
-      error:
-        "Unable to manage knowledge base",
-
-      details:
-        error.message
-    });
+    return res
+      .status(500)
+      .json({
+        error:
+          "Unable to process knowledge request"
+      });
   }
 };
