@@ -1,5 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const ADMIN_PASSWORD = process.env.NOVAIRE_ADMIN_PASSWORD;
 
 async function supabaseRequest(path) {
   const response = await fetch(
@@ -88,22 +89,44 @@ function uaeHour(value) {
 
 module.exports = async function handler(req, res) {
 
-  if (req.method !== "GET") {
+  if (req.method !== "POST") {
     return res.status(405).json({
       error: "Method not allowed"
     });
   }
 
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  if (
+    !SUPABASE_URL ||
+    !SUPABASE_KEY ||
+    !ADMIN_PASSWORD
+  ) {
     return res.status(500).json({
-      error: "Supabase configuration missing"
+      error: "Server configuration missing"
+    });
+  }
+
+  /*
+    حماية لوحة الإحصائيات
+  */
+
+  const password = String(
+    req.body?.password || ""
+  );
+
+  if (
+    !password ||
+    password !== ADMIN_PASSWORD
+  ) {
+    return res.status(401).json({
+      error: "Unauthorized"
     });
   }
 
   try {
 
     const clientSlug = safeSlug(
-      req.query?.client
+      req.body?.client_slug ||
+      req.body?.client
     );
 
     if (!clientSlug) {
@@ -143,7 +166,7 @@ module.exports = async function handler(req, res) {
     }
 
     /*
-      2. المحادثات الخاصة بهذا العميل فقط
+      2. المحادثات
     */
 
     const conversations =
@@ -235,7 +258,6 @@ module.exports = async function handler(req, res) {
 
     /*
       الأسئلة الأكثر شيوعًا
-      نستخدم رسائل المستخدم فقط
     */
 
     const questionMap = {};
@@ -313,7 +335,6 @@ module.exports = async function handler(req, res) {
 
     /*
       الإحصائيات اليومية
-      بتوقيت الإمارات
     */
 
     const dailyMap = {};
@@ -365,7 +386,16 @@ module.exports = async function handler(req, res) {
         .slice(0, 30);
 
     /*
-      النتيجة النهائية
+      منع التخزين المؤقت
+    */
+
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate"
+    );
+
+    /*
+      النتيجة
     */
 
     return res.status(200).json({
