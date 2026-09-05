@@ -201,19 +201,22 @@
       border-color: #354d3d;
     }
 
-    .questions-container {
+    .questions-container,
+    .knowledge-container {
       display: grid;
       gap: 15px;
     }
 
-    .question-card {
+    .question-card,
+    .knowledge-card {
       background: #151c31;
       border: 1px solid #28334f;
       border-radius: 14px;
       padding: 20px;
     }
 
-    .question-header {
+    .question-header,
+    .knowledge-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
@@ -222,16 +225,18 @@
       margin-bottom: 15px;
     }
 
-    .question-text {
+    .question-text,
+    .knowledge-title {
       font-size: 17px;
       line-height: 1.7;
       font-weight: bold;
     }
 
-    .question-date {
+    .question-date,
+    .knowledge-meta {
       color: #8996b3;
       font-size: 12px;
-      white-space: nowrap;
+      line-height: 1.7;
     }
 
     .answer-label {
@@ -247,7 +252,8 @@
       color: #102017;
     }
 
-    .question-status {
+    .question-status,
+    .knowledge-status {
       min-height: 22px;
       margin-top: 10px;
       font-size: 13px;
@@ -277,6 +283,53 @@
       color: #9da9c5;
     }
 
+    .knowledge-question-input {
+      margin-bottom: 12px;
+    }
+
+    .knowledge-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .save-btn {
+      background: #dce7df;
+      color: #102017;
+    }
+
+    .toggle-btn {
+      background: #2b3652;
+      color: white;
+    }
+
+    .delete-btn {
+      background: #5b2636;
+      color: #ffd3df;
+    }
+
+    .active-badge,
+    .inactive-badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+
+    .active-badge {
+      background: #173625;
+      color: #86e9ab;
+      border: 1px solid #315b40;
+    }
+
+    .inactive-badge {
+      background: #3a2d1c;
+      color: #ffd590;
+      border: 1px solid #6b512c;
+    }
+
     .security-note {
       margin-top: 30px;
       padding: 15px;
@@ -301,12 +354,18 @@
         font-size: 23px;
       }
 
-      .question-header {
+      .question-header,
+      .knowledge-header {
         display: block;
       }
 
-      .question-date {
+      .question-date,
+      .knowledge-meta {
         margin-top: 8px;
+      }
+
+      .knowledge-actions {
+        grid-template-columns: 1fr;
       }
     }
   </style>
@@ -314,10 +373,7 @@
 
 <body>
 
-  <!-- LOGIN -->
-
   <div id="loginPage" class="login-page">
-
     <div class="login-card">
 
       <div class="brand">
@@ -358,24 +414,15 @@
       </form>
 
     </div>
-
   </div>
 
 
-  <!-- DASHBOARD -->
-
-  <main
-    id="dashboard"
-    class="dashboard"
-  >
+  <main id="dashboard" class="dashboard">
 
     <div class="topbar">
 
       <div>
-
-        <h1>
-          NOVAIRE Admin Dashboard
-        </h1>
+        <h1>NOVAIRE Admin Dashboard</h1>
 
         <p id="clientName">
           لوحة الإدارة الداخلية
@@ -384,7 +431,6 @@
         <div class="internal-badge">
           بيانات داخلية — لا تعرض للعميل
         </div>
-
       </div>
 
       <button
@@ -398,8 +444,6 @@
     </div>
 
 
-    <!-- OPERATIONS -->
-
     <h2 class="section-title">
       المؤشرات التشغيلية
     </h2>
@@ -407,79 +451,57 @@
     <section class="cards">
 
       <div class="card">
-        <div class="card-title">
-          إجمالي المحادثات
-        </div>
+        <div class="card-title">إجمالي المحادثات</div>
         <div id="totalConversations" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          إجمالي الرسائل
-        </div>
+        <div class="card-title">إجمالي الرسائل</div>
         <div id="totalMessages" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          طلبات التواصل
-        </div>
+        <div class="card-title">طلبات التواصل</div>
         <div id="totalContactRequests" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          طلبات الاتصال
-        </div>
+        <div class="card-title">طلبات الاتصال</div>
         <div id="callbackRequests" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          التحويل لموظف
-        </div>
+        <div class="card-title">التحويل لموظف</div>
         <div id="humanHandoff" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          الأسئلة غير المجابة
-        </div>
+        <div class="card-title">الأسئلة غير المجابة</div>
         <div id="unansweredQuestions" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          غير محلولة حتى الآن
-        </div>
+        <div class="card-title">غير محلولة حتى الآن</div>
         <div id="unresolvedQuestions" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          نسبة الحل بالذكاء الاصطناعي
-        </div>
+        <div class="card-title">نسبة الحل بالذكاء الاصطناعي</div>
         <div id="aiResolution" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          المحادثات العربية
-        </div>
+        <div class="card-title">المحادثات العربية</div>
         <div id="arabicConversations" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          المحادثات الإنجليزية
-        </div>
+        <div class="card-title">المحادثات الإنجليزية</div>
         <div id="englishConversations" class="card-value">-</div>
       </div>
 
     </section>
 
-
-    <!-- AI USAGE -->
 
     <h2 class="section-title">
       استهلاك الذكاء الاصطناعي والتكلفة
@@ -488,72 +510,52 @@
     <section class="cards">
 
       <div class="card model-card">
-        <div class="card-title">
-          نموذج الذكاء الاصطناعي
-        </div>
+        <div class="card-title">نموذج الذكاء الاصطناعي</div>
         <div id="aiModel" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          Input Tokens
-        </div>
+        <div class="card-title">Input Tokens</div>
         <div id="inputTokens" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          Output Tokens
-        </div>
+        <div class="card-title">Output Tokens</div>
         <div id="outputTokens" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          إجمالي Tokens
-        </div>
+        <div class="card-title">إجمالي Tokens</div>
         <div id="totalTokens" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          سجلات استخدام AI
-        </div>
+        <div class="card-title">سجلات استخدام AI</div>
         <div id="usageRecords" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          تكلفة الإدخال
-        </div>
+        <div class="card-title">تكلفة الإدخال</div>
         <div id="inputCost" class="card-value">-</div>
       </div>
 
       <div class="card">
-        <div class="card-title">
-          تكلفة الإخراج
-        </div>
+        <div class="card-title">تكلفة الإخراج</div>
         <div id="outputCost" class="card-value">-</div>
       </div>
 
       <div class="card cost-card">
-        <div class="card-title">
-          إجمالي تكلفة AI بالدولار
-        </div>
+        <div class="card-title">إجمالي تكلفة AI بالدولار</div>
         <div id="totalCostUsd" class="card-value">-</div>
       </div>
 
       <div class="card cost-card">
-        <div class="card-title">
-          إجمالي تكلفة AI بالدرهم
-        </div>
+        <div class="card-title">إجمالي تكلفة AI بالدرهم</div>
         <div id="totalCostAed" class="card-value">-</div>
       </div>
 
     </section>
 
-
-    <!-- UNANSWERED QUESTIONS -->
 
     <h2 class="section-title">
       إدارة الأسئلة غير المجابة
@@ -574,9 +576,28 @@
     </section>
 
 
+    <h2 class="section-title">
+      قاعدة المعرفة
+    </h2>
+
+    <p class="section-subtitle">
+      هذه هي المعلومات الرسمية التي يستخدمها Smart Response.
+      يمكنك تعديل السؤال أو الإجابة، تعطيل المعلومة مؤقتًا، إعادة تفعيلها، أو حذفها.
+    </p>
+
+    <section
+      id="knowledgeContainer"
+      class="knowledge-container"
+    >
+      <div class="loading">
+        جاري تحميل قاعدة المعرفة...
+      </div>
+    </section>
+
+
     <div class="security-note">
       هذه الصفحة مخصصة لإدارة NOVAIRE فقط.
-      بيانات استهلاك الذكاء الاصطناعي والتكاليف والإجابات المعتمدة
+      بيانات استهلاك الذكاء الاصطناعي والتكاليف وقاعدة المعرفة
       لا يتم عرضها للعميل.
     </div>
 
@@ -610,6 +631,9 @@
 
     const questionsContainer =
       document.getElementById("questionsContainer");
+
+    const knowledgeContainer =
+      document.getElementById("knowledgeContainer");
 
 
     function setText(id, value) {
@@ -670,54 +694,39 @@
         `${client.client_name || "Client"} — Internal Dashboard`
       );
 
-
       setText(
         "totalConversations",
-        formatNumber(
-          operations.total_conversations
-        )
+        formatNumber(operations.total_conversations)
       );
 
       setText(
         "totalMessages",
-        formatNumber(
-          operations.total_messages
-        )
+        formatNumber(operations.total_messages)
       );
 
       setText(
         "totalContactRequests",
-        formatNumber(
-          operations.total_contact_requests
-        )
+        formatNumber(operations.total_contact_requests)
       );
 
       setText(
         "callbackRequests",
-        formatNumber(
-          operations.callback_requests
-        )
+        formatNumber(operations.callback_requests)
       );
 
       setText(
         "humanHandoff",
-        formatNumber(
-          operations.human_handoff_requests
-        )
+        formatNumber(operations.human_handoff_requests)
       );
 
       setText(
         "unansweredQuestions",
-        formatNumber(
-          operations.total_unanswered_questions
-        )
+        formatNumber(operations.total_unanswered_questions)
       );
 
       setText(
         "unresolvedQuestions",
-        formatNumber(
-          operations.unresolved_unanswered_questions
-        )
+        formatNumber(operations.unresolved_unanswered_questions)
       );
 
       setText(
@@ -729,18 +738,13 @@
 
       setText(
         "arabicConversations",
-        formatNumber(
-          operations.arabic_conversations
-        )
+        formatNumber(operations.arabic_conversations)
       );
 
       setText(
         "englishConversations",
-        formatNumber(
-          operations.english_conversations
-        )
+        formatNumber(operations.english_conversations)
       );
-
 
       setText(
         "aiModel",
@@ -749,60 +753,43 @@
 
       setText(
         "inputTokens",
-        formatNumber(
-          ai.total_input_tokens
-        )
+        formatNumber(ai.total_input_tokens)
       );
 
       setText(
         "outputTokens",
-        formatNumber(
-          ai.total_output_tokens
-        )
+        formatNumber(ai.total_output_tokens)
       );
 
       setText(
         "totalTokens",
-        formatNumber(
-          ai.total_tokens
-        )
+        formatNumber(ai.total_tokens)
       );
 
       setText(
         "usageRecords",
-        formatNumber(
-          ai.ai_usage_records
-        )
+        formatNumber(ai.ai_usage_records)
       );
 
       setText(
         "inputCost",
-        `$${Number(
-          ai.input_cost_usd || 0
-        ).toFixed(6)}`
+        `$${Number(ai.input_cost_usd || 0).toFixed(6)}`
       );
 
       setText(
         "outputCost",
-        `$${Number(
-          ai.output_cost_usd || 0
-        ).toFixed(6)}`
+        `$${Number(ai.output_cost_usd || 0).toFixed(6)}`
       );
 
       setText(
         "totalCostUsd",
-        `$${Number(
-          ai.total_cost_usd || 0
-        ).toFixed(6)}`
+        `$${Number(ai.total_cost_usd || 0).toFixed(6)}`
       );
 
       setText(
         "totalCostAed",
-        `${Number(
-          ai.total_cost_aed || 0
-        ).toFixed(4)} AED`
+        `${Number(ai.total_cost_aed || 0).toFixed(4)} AED`
       );
-
 
       loginPage.style.display =
         "none";
@@ -882,12 +869,6 @@
 
         const data =
           await response.json();
-
-        if (response.status === 401) {
-          throw new Error(
-            "Unauthorized"
-          );
-        }
 
         if (!response.ok) {
           throw new Error(
@@ -1088,7 +1069,6 @@
 
 
                 if (!response.ok) {
-
                   throw new Error(
                     data.error ||
                     "Unable to resolve question"
@@ -1097,7 +1077,7 @@
 
 
                 status.textContent =
-                  "تم اعتماد الإجابة وحل السؤال.";
+                  "تم اعتماد الإجابة وحفظها في قاعدة المعرفة.";
 
                 status.classList.add(
                   "status-success"
@@ -1105,12 +1085,14 @@
 
 
                 await loadAdminDashboard();
+                await loadKnowledge();
+
 
                 setTimeout(
                   function() {
                     loadQuestions();
                   },
-                  500
+                  400
                 );
 
 
@@ -1138,28 +1120,570 @@
           );
 
 
-          card.appendChild(
-            header
-          );
-
-          card.appendChild(
-            label
-          );
-
-          card.appendChild(
-            textarea
-          );
-
-          card.appendChild(
-            button
-          );
-
-          card.appendChild(
-            status
-          );
-
+          card.appendChild(header);
+          card.appendChild(label);
+          card.appendChild(textarea);
+          card.appendChild(button);
+          card.appendChild(status);
 
           questionsContainer.appendChild(
+            card
+          );
+        }
+      );
+    }
+
+
+    async function loadKnowledge() {
+
+      knowledgeContainer.innerHTML =
+        `
+          <div class="loading">
+            جاري تحميل قاعدة المعرفة...
+          </div>
+        `;
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/knowledge-admin",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  password:
+                    adminPassword,
+
+                  action:
+                    "list"
+                })
+            }
+          );
+
+        const data =
+          await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            data.error ||
+            "Unable to load knowledge base"
+          );
+        }
+
+        renderKnowledge(
+          data.items || []
+        );
+
+
+      } catch (error) {
+
+        console.error(error);
+
+        knowledgeContainer.innerHTML =
+          `
+            <div class="empty-state">
+              تعذر تحميل قاعدة المعرفة.
+            </div>
+          `;
+      }
+    }
+
+
+    function renderKnowledge(items) {
+
+      if (
+        !Array.isArray(items) ||
+        items.length === 0
+      ) {
+
+        knowledgeContainer.innerHTML =
+          `
+            <div class="empty-state">
+              لا توجد معلومات معتمدة في قاعدة المعرفة حاليًا.
+            </div>
+          `;
+
+        return;
+      }
+
+
+      knowledgeContainer.innerHTML = "";
+
+
+      items.forEach(
+        function(item) {
+
+          const card =
+            document.createElement("div");
+
+          card.className =
+            "knowledge-card";
+
+
+          const header =
+            document.createElement("div");
+
+          header.className =
+            "knowledge-header";
+
+
+          const title =
+            document.createElement("div");
+
+          title.className =
+            "knowledge-title";
+
+          title.textContent =
+            "معلومة معتمدة";
+
+
+          const meta =
+            document.createElement("div");
+
+          meta.className =
+            "knowledge-meta";
+
+          meta.innerHTML =
+            `
+              آخر تحديث:
+              ${formatDate(item.updated_at)}
+              <br>
+              المصدر:
+              ${item.source || "admin"}
+            `;
+
+
+          header.appendChild(title);
+          header.appendChild(meta);
+
+
+          const badge =
+            document.createElement("div");
+
+          badge.className =
+            item.active
+              ? "active-badge"
+              : "inactive-badge";
+
+          badge.textContent =
+            item.active
+              ? "مفعّلة"
+              : "معطّلة";
+
+
+          const questionLabel =
+            document.createElement("div");
+
+          questionLabel.className =
+            "answer-label";
+
+          questionLabel.textContent =
+            "السؤال / الموضوع";
+
+
+          const questionInput =
+            document.createElement("textarea");
+
+          questionInput.className =
+            "knowledge-question-input";
+
+          questionInput.value =
+            item.question || "";
+
+          questionInput.placeholder =
+            "السؤال أو الموضوع";
+
+
+          const answerLabel =
+            document.createElement("div");
+
+          answerLabel.className =
+            "answer-label";
+
+          answerLabel.textContent =
+            "الإجابة الرسمية";
+
+
+          const answerInput =
+            document.createElement("textarea");
+
+          answerInput.value =
+            item.answer || "";
+
+          answerInput.placeholder =
+            "الإجابة الرسمية المعتمدة";
+
+
+          const actions =
+            document.createElement("div");
+
+          actions.className =
+            "knowledge-actions";
+
+
+          const saveButton =
+            document.createElement("button");
+
+          saveButton.type =
+            "button";
+
+          saveButton.className =
+            "save-btn";
+
+          saveButton.textContent =
+            "حفظ التعديل";
+
+
+          const toggleButton =
+            document.createElement("button");
+
+          toggleButton.type =
+            "button";
+
+          toggleButton.className =
+            "toggle-btn";
+
+          toggleButton.textContent =
+            item.active
+              ? "تعطيل"
+              : "تفعيل";
+
+
+          const deleteButton =
+            document.createElement("button");
+
+          deleteButton.type =
+            "button";
+
+          deleteButton.className =
+            "delete-btn";
+
+          deleteButton.textContent =
+            "حذف";
+
+
+          const status =
+            document.createElement("div");
+
+          status.className =
+            "knowledge-status";
+
+
+          saveButton.addEventListener(
+            "click",
+            async function() {
+
+              const question =
+                questionInput.value.trim();
+
+              const answer =
+                answerInput.value.trim();
+
+
+              status.textContent = "";
+              status.className =
+                "knowledge-status";
+
+
+              if (!question || !answer) {
+
+                status.textContent =
+                  "السؤال والإجابة مطلوبان.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+                return;
+              }
+
+
+              saveButton.disabled =
+                true;
+
+              saveButton.textContent =
+                "جاري الحفظ...";
+
+
+              try {
+
+                const response =
+                  await fetch(
+                    "/api/knowledge-admin",
+                    {
+                      method: "POST",
+
+                      headers: {
+                        "Content-Type":
+                          "application/json"
+                      },
+
+                      body:
+                        JSON.stringify({
+                          password:
+                            adminPassword,
+
+                          action:
+                            "update",
+
+                          id:
+                            item.id,
+
+                          question,
+
+                          answer
+                        })
+                    }
+                  );
+
+
+                const data =
+                  await response.json();
+
+
+                if (!response.ok) {
+                  throw new Error(
+                    data.error ||
+                    "Unable to update item"
+                  );
+                }
+
+
+                status.textContent =
+                  "تم حفظ التعديل.";
+
+                status.classList.add(
+                  "status-success"
+                );
+
+
+                setTimeout(
+                  function() {
+                    loadKnowledge();
+                  },
+                  500
+                );
+
+
+              } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                  "تعذر حفظ التعديل.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+
+              } finally {
+
+                saveButton.disabled =
+                  false;
+
+                saveButton.textContent =
+                  "حفظ التعديل";
+              }
+            }
+          );
+
+
+          toggleButton.addEventListener(
+            "click",
+            async function() {
+
+              toggleButton.disabled =
+                true;
+
+              toggleButton.textContent =
+                "جاري التنفيذ...";
+
+
+              try {
+
+                const response =
+                  await fetch(
+                    "/api/knowledge-admin",
+                    {
+                      method: "POST",
+
+                      headers: {
+                        "Content-Type":
+                          "application/json"
+                      },
+
+                      body:
+                        JSON.stringify({
+                          password:
+                            adminPassword,
+
+                          action:
+                            "toggle",
+
+                          id:
+                            item.id,
+
+                          active:
+                            !item.active
+                        })
+                    }
+                  );
+
+
+                const data =
+                  await response.json();
+
+
+                if (!response.ok) {
+                  throw new Error(
+                    data.error ||
+                    "Unable to toggle item"
+                  );
+                }
+
+
+                await loadKnowledge();
+
+
+              } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                  "تعذر تغيير حالة المعلومة.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+
+              } finally {
+
+                toggleButton.disabled =
+                  false;
+              }
+            }
+          );
+
+
+          deleteButton.addEventListener(
+            "click",
+            async function() {
+
+              const confirmed =
+                window.confirm(
+                  "هل أنت متأكد من حذف هذه المعلومة نهائيًا؟"
+                );
+
+
+              if (!confirmed) {
+                return;
+              }
+
+
+              deleteButton.disabled =
+                true;
+
+              deleteButton.textContent =
+                "جاري الحذف...";
+
+
+              try {
+
+                const response =
+                  await fetch(
+                    "/api/knowledge-admin",
+                    {
+                      method: "POST",
+
+                      headers: {
+                        "Content-Type":
+                          "application/json"
+                      },
+
+                      body:
+                        JSON.stringify({
+                          password:
+                            adminPassword,
+
+                          action:
+                            "delete",
+
+                          id:
+                            item.id
+                        })
+                    }
+                  );
+
+
+                const data =
+                  await response.json();
+
+
+                if (!response.ok) {
+                  throw new Error(
+                    data.error ||
+                    "Unable to delete item"
+                  );
+                }
+
+
+                await loadKnowledge();
+
+
+              } catch (error) {
+
+                console.error(error);
+
+                status.textContent =
+                  "تعذر حذف المعلومة.";
+
+                status.classList.add(
+                  "status-error"
+                );
+
+
+              } finally {
+
+                deleteButton.disabled =
+                  false;
+              }
+            }
+          );
+
+
+          actions.appendChild(
+            saveButton
+          );
+
+          actions.appendChild(
+            toggleButton
+          );
+
+          actions.appendChild(
+            deleteButton
+          );
+
+
+          card.appendChild(header);
+          card.appendChild(badge);
+          card.appendChild(questionLabel);
+          card.appendChild(questionInput);
+          card.appendChild(answerLabel);
+          card.appendChild(answerInput);
+          card.appendChild(actions);
+          card.appendChild(status);
+
+
+          knowledgeContainer.appendChild(
             card
           );
         }
@@ -1177,6 +1701,7 @@
 
         const password =
           passwordInput.value;
+
 
         if (!password) {
 
@@ -1252,7 +1777,10 @@
 
           showDashboard(data);
 
-          await loadQuestions();
+          await Promise.all([
+            loadQuestions(),
+            loadKnowledge()
+          ]);
 
 
         } catch (error) {
@@ -1294,6 +1822,9 @@
         loginError.textContent = "";
 
         questionsContainer.innerHTML =
+          "";
+
+        knowledgeContainer.innerHTML =
           "";
 
         passwordInput.focus();
