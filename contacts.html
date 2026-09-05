@@ -1,460 +1,177 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NOVAIRE | طلبات التواصل</title>
 
-  <title>NOVAIRE | طلبات التواصل</title>
-
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: Arial, Tahoma, sans-serif;
-      background: #f4f6f8;
-      color: #1f2937;
-    }
-
-    .container {
-      max-width: 1100px;
-      margin: auto;
-      padding: 24px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 14px;
-      padding: 20px;
-      margin-bottom: 18px;
-      box-shadow: 0 3px 12px rgba(0,0,0,.06);
-    }
-
-    h1, h2, h3 {
-      margin-top: 0;
-    }
-
-    .muted {
-      color: #6b7280;
-      font-size: 14px;
-    }
-
-    input,
-    select,
-    button {
-      width: 100%;
-      padding: 11px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      font-size: 15px;
-      margin-top: 7px;
-      margin-bottom: 12px;
-    }
-
-    button {
-      border: none;
-      cursor: pointer;
-      font-weight: bold;
-    }
-
-    .primary {
-      background: #111827;
-      color: white;
-    }
-
-    .secondary {
-      background: #e5e7eb;
-      color: #111827;
-    }
-
-    .success {
-      background: #047857;
-      color: white;
-    }
-
-    .top {
-      display: grid;
-      grid-template-columns: 1fr 160px;
-      gap: 10px;
-      align-items: end;
-    }
-
-    .request-card {
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      padding: 17px;
-      margin-bottom: 15px;
-      background: #fafafa;
-    }
-
-    .request-card p {
-      margin: 7px 0;
-      line-height: 1.6;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 5px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      margin-bottom: 10px;
-    }
-
-    .new {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .in_progress {
-      background: #fef3c7;
-      color: #92400e;
-    }
-
-    .completed {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    .closed {
-      background: #e5e7eb;
-      color: #374151;
-    }
-
-    .counter {
-      display: inline-block;
-      padding: 6px 10px;
-      border-radius: 20px;
-      background: #eef2ff;
-      color: #3730a3;
-      margin-bottom: 15px;
-      font-size: 13px;
-    }
-
-    .empty {
-      text-align: center;
-      padding: 30px;
-      color: #6b7280;
-    }
-
-    #app {
-      display: none;
-    }
-
-    #message {
-      display: none;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-
-    #message.ok {
-      display: block;
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    #message.error {
-      display: block;
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .phone {
-      direction: ltr;
-      display: inline-block;
-    }
-
-    @media (max-width: 700px) {
-      .top {
-        grid-template-columns: 1fr;
-      }
-    }
-  </style>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#1f2937}
+.container{max-width:1050px;margin:auto;padding:24px}
+.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+.request{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;background:#fafafa}
+input,select,button{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin:6px 0 12px}
+button{border:0;cursor:pointer;font-weight:bold}
+.primary{background:#111827;color:white}
+.secondary{background:#e5e7eb;color:#111827}
+.success{background:#047857;color:white}
+.muted{color:#6b7280;font-size:14px}
+.badge{display:inline-block;padding:5px 10px;border-radius:20px;font-size:12px;background:#e5e7eb}
+#app{display:none}
+#message{display:none;padding:12px;border-radius:8px;margin-bottom:15px}
+#message.ok{display:block;background:#d1fae5;color:#065f46}
+#message.error{display:block;background:#fee2e2;color:#991b1b}
+</style>
 </head>
 
 <body>
 
 <div class="container">
 
-  <div class="card" id="loginBox">
+<div class="card" id="loginBox">
+<h1>NOVAIRE</h1>
+<h2>طلبات التواصل</h2>
 
-    <h1>NOVAIRE</h1>
-    <h2>إدارة طلبات التواصل</h2>
+<input id="password" type="password" placeholder="كلمة مرور الإدارة">
 
-    <p class="muted">
-      متابعة طلبات التواصل ومعاودة الاتصال لكل عميل بشكل مستقل.
-    </p>
+<button class="primary" onclick="login()">دخول</button>
+</div>
 
-    <label>كلمة مرور الإدارة</label>
+<div id="app">
 
-    <input
-      id="password"
-      type="password"
-      placeholder="أدخل كلمة مرور الإدارة"
-    >
+<div id="message"></div>
 
-    <button
-      class="primary"
-      onclick="login()"
-    >
-      دخول
-    </button>
+<div class="card">
 
-  </div>
+<label>العميل</label>
 
+<select id="clientSelect" onchange="clientChanged()">
+<option value="">اختر العميل</option>
+</select>
 
-  <div id="app">
-
-    <div id="message"></div>
-
-
-    <div class="card">
-
-      <div class="top">
-
-        <div>
-
-          <label>اختر العميل</label>
-
-          <select
-            id="clientSelect"
-            onchange="loadRequests()"
-          >
-            <option value="">
-              اختر العميل
-            </option>
-          </select>
-
-        </div>
-
-
-        <button
-          class="secondary"
-          onclick="logout()"
-        >
-          تسجيل الخروج
-        </button>
-
-      </div>
-
-    </div>
-
-
-    <div class="card">
-
-      <h2>طلبات التواصل</h2>
-
-      <p
-        id="clientInfo"
-        class="muted"
-      >
-        اختر العميل أولًا.
-      </p>
-
-      <div id="requestCount"></div>
-
-      <div id="requestsList"></div>
-
-    </div>
-
-  </div>
+<button class="secondary" onclick="logout()">تسجيل الخروج</button>
 
 </div>
 
+<div class="card">
+
+<h2>طلبات التواصل</h2>
+
+<div id="count" class="muted"></div>
+
+<div id="list">اختر العميل.</div>
+
+</div>
+
+</div>
+</div>
 
 <script>
 
-let adminPassword = "";
-let currentRequests = [];
+let adminPassword="";
 
-
-/*
-==================================================
-Messages
-==================================================
-*/
-
-function showMessage(text, type = "ok") {
-
-  const box =
-    document.getElementById("message");
-
-  box.textContent = text;
-  box.className = type;
-  box.style.display = "block";
-
-  setTimeout(() => {
-    box.style.display = "none";
-    box.className = "";
-  }, 4000);
+function requestedClient(){
+  return (new URLSearchParams(window.location.search).get("client") || "")
+    .trim()
+    .toLowerCase();
 }
 
+async function api(url,payload){
 
-/*
-==================================================
-API
-==================================================
-*/
+  const response=await fetch(url,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({
+      password:adminPassword,
+      ...payload
+    })
+  });
 
-async function postAPI(url, payload) {
+  let data={};
 
-  const response =
-    await fetch(url, {
-      method: "POST",
+  try{
+    data=await response.json();
+  }catch{}
 
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-        password: adminPassword,
-        ...payload
-      })
-    });
-
-
-  let data = {};
-
-  try {
-    data = await response.json();
-  } catch {
-    data = {};
-  }
-
-
-  if (!response.ok) {
-    throw new Error(
-      data.error ||
-      data.details ||
-      "حدث خطأ في الاتصال"
-    );
+  if(!response.ok){
+    throw new Error(data.error || data.details || "حدث خطأ");
   }
 
   return data;
 }
 
+function showMessage(text,type="ok"){
 
-/*
-==================================================
-Login
-==================================================
-*/
+  const box=document.getElementById("message");
 
-async function login() {
+  box.textContent=text;
+  box.className=type;
+  box.style.display="block";
 
-  const password =
-    document
-      .getElementById("password")
-      .value
-      .trim();
+  setTimeout(()=>{
+    box.style.display="none";
+  },3000);
+}
 
+async function login(){
 
-  if (!password) {
-    alert("أدخل كلمة مرور الإدارة");
+  const value=document.getElementById("password").value.trim();
+
+  if(!value){
+    alert("أدخل كلمة المرور");
     return;
   }
 
+  adminPassword=value;
 
-  adminPassword = password;
-
-
-  try {
+  try{
 
     await loadClients();
 
-    document
-      .getElementById("loginBox")
-      .style.display = "none";
+    document.getElementById("loginBox").style.display="none";
+    document.getElementById("app").style.display="block";
 
-    document
-      .getElementById("app")
-      .style.display = "block";
+  }catch(error){
 
-  } catch (error) {
+    adminPassword="";
+    alert(error.message);
 
-    adminPassword = "";
-
-    alert(
-      "تعذر تسجيل الدخول: " +
-      error.message
-    );
   }
 }
 
+function logout(){
 
-/*
-==================================================
-Logout
-==================================================
-*/
+  adminPassword="";
 
-function logout() {
-
-  adminPassword = "";
-  currentRequests = [];
-
-  document
-    .getElementById("password")
-    .value = "";
-
-  document
-    .getElementById("app")
-    .style.display = "none";
-
-  document
-    .getElementById("loginBox")
-    .style.display = "block";
+  document.getElementById("app").style.display="none";
+  document.getElementById("loginBox").style.display="block";
 }
 
+async function loadClients(){
 
-/*
-==================================================
-Clients
-==================================================
-*/
+  const data=await api("/api/client-admin",{
+    action:"list"
+  });
 
-async function loadClients() {
+  const clients=
+    Array.isArray(data.clients) ? data.clients :
+    Array.isArray(data.items) ? data.items :
+    Array.isArray(data) ? data : [];
 
-  const data =
-    await postAPI(
-      "/api/client-admin",
-      {
-        action: "list"
-      }
-    );
+  const select=document.getElementById("clientSelect");
 
+  select.innerHTML='<option value="">اختر العميل</option>';
 
-  const clients =
-    Array.isArray(data.clients)
-      ? data.clients
-      : Array.isArray(data.items)
-        ? data.items
-        : Array.isArray(data)
-          ? data
-          : [];
+  clients.forEach(client=>{
 
+    if(!client?.slug) return;
 
-  const select =
-    document.getElementById(
-      "clientSelect"
-    );
+    const option=document.createElement("option");
 
+    option.value=String(client.slug).trim().toLowerCase();
 
-  select.innerHTML =
-    '<option value="">اختر العميل</option>';
-
-
-  clients.forEach(client => {
-
-    const option =
-      document.createElement("option");
-
-    option.value =
-      client.slug;
-
-    option.textContent =
+    option.textContent=
       client.name ||
       client.config?.brand_name ||
       client.slug;
@@ -462,192 +179,133 @@ async function loadClients() {
     select.appendChild(option);
   });
 
+  const wanted=requestedClient();
 
-  const firstBike =
-    clients.find(
+  if(wanted){
+
+    const exists=clients.some(
       client =>
-        client.slug === "first-bike"
+        String(client.slug || "").trim().toLowerCase() === wanted
     );
 
+    if(exists){
+      select.value=wanted;
+      await loadRequests();
+      return;
+    }
+  }
 
-  if (firstBike) {
-
-    select.value =
-      "first-bike";
-
+  if(clients.length){
+    select.value=String(clients[0].slug).trim().toLowerCase();
     await loadRequests();
   }
 }
 
+async function clientChanged(){
 
-/*
-==================================================
-Load Requests
-==================================================
-*/
+  const slug=document.getElementById("clientSelect").value;
 
-async function loadRequests() {
+  if(slug){
 
-  const clientSlug =
-    document
-      .getElementById("clientSelect")
-      .value;
+    const url=new URL(window.location.href);
 
+    url.searchParams.set("client",slug);
 
-  const list =
-    document.getElementById(
-      "requestsList"
+    history.replaceState(
+      {},
+      "",
+      url.pathname + url.search
     );
+  }
 
+  await loadRequests();
+}
 
-  const counter =
-    document.getElementById(
-      "requestCount"
-    );
+async function loadRequests(){
 
+  const slug=document.getElementById("clientSelect").value;
 
-  if (!clientSlug) {
+  const list=document.getElementById("list");
+  const count=document.getElementById("count");
 
-    currentRequests = [];
+  if(!slug){
 
-    list.innerHTML = "";
-    counter.innerHTML = "";
-
-    document
-      .getElementById("clientInfo")
-      .textContent =
-        "اختر العميل أولًا.";
-
+    list.innerHTML="اختر العميل.";
+    count.textContent="";
     return;
   }
 
+  list.innerHTML="جاري التحميل...";
 
-  list.innerHTML =
-    "<p>جاري التحميل...</p>";
+  try{
 
+    const data=await api("/api/contact-admin",{
+      action:"list",
+      client_slug:slug
+    });
 
-  try {
+    const items=Array.isArray(data.requests)
+      ? data.requests
+      : [];
 
-    const data =
-      await postAPI(
-        "/api/contact-admin",
-        {
-          action: "list",
-          client_slug: clientSlug
-        }
-      );
+    count.textContent="إجمالي الطلبات: "+items.length;
 
+    render(items);
 
-    currentRequests =
-      Array.isArray(data.requests)
-        ? data.requests
-        : [];
+  }catch(error){
 
+    list.innerHTML="";
+    showMessage(error.message,"error");
 
-    document
-      .getElementById("clientInfo")
-      .textContent =
-        `العميل: ${
-          data.client?.name ||
-          clientSlug
-        }`;
-
-
-    counter.innerHTML =
-      `<span class="counter">
-        إجمالي الطلبات:
-        ${currentRequests.length}
-      </span>`;
-
-
-    renderRequests();
-
-  } catch (error) {
-
-    list.innerHTML = "";
-
-    showMessage(
-      error.message,
-      "error"
-    );
   }
 }
 
+function render(items){
 
-/*
-==================================================
-Render
-==================================================
-*/
+  const list=document.getElementById("list");
 
-function renderRequests() {
+  list.innerHTML="";
 
-  const list =
-    document.getElementById(
-      "requestsList"
-    );
+  if(!items.length){
 
-
-  list.innerHTML = "";
-
-
-  if (currentRequests.length === 0) {
-
-    list.innerHTML =
-      `<div class="empty">
-        لا توجد طلبات تواصل لهذا العميل.
-      </div>`;
+    list.innerHTML=
+      '<p class="muted">لا توجد طلبات تواصل لهذا العميل.</p>';
 
     return;
   }
 
+  items.forEach(item=>{
 
-  currentRequests.forEach(item => {
+    const div=document.createElement("div");
 
-    const card =
-      document.createElement("div");
+    div.className="request";
 
-    card.className =
-      "request-card";
-
-
-    const typeLabel =
-      item.request_type === "callback"
+    const type=
+      item.request_type==="callback"
         ? "طلب معاودة اتصال"
         : "طلب التواصل مع موظف";
 
-
-    const statusLabel =
-      getStatusLabel(item.status);
-
-
-    const createdAt =
+    const date=
       item.created_at
-        ? new Date(item.created_at)
-            .toLocaleString("ar-AE")
+        ? new Date(item.created_at).toLocaleString("ar-AE")
         : "";
 
+    div.innerHTML=`
 
-    card.innerHTML = `
-
-      <span class="badge ${escapeHtml(item.status || "new")}">
-        ${escapeHtml(statusLabel)}
+      <span class="badge">
+        ${escapeHtml(statusLabel(item.status))}
       </span>
 
-      <h3>
-        ${escapeHtml(typeLabel)}
-      </h3>
+      <h3>${escapeHtml(type)}</h3>
 
       <p>
         <strong>الاسم:</strong>
-        ${escapeHtml(item.customer_name)}
+        ${escapeHtml(item.customer_name || "")}
       </p>
 
       <p>
         <strong>الهاتف:</strong>
-        <span class="phone">
-          ${escapeHtml(item.phone)}
-        </span>
+        ${escapeHtml(item.phone || "")}
       </p>
 
       <p>
@@ -655,170 +313,96 @@ function renderRequests() {
         ${escapeHtml(item.reason || "غير محدد")}
       </p>
 
-      <p class="muted">
-        ${escapeHtml(createdAt)}
-      </p>
+      <p class="muted">${escapeHtml(date)}</p>
 
-      <label>
-        حالة الطلب
-      </label>
+      <label>حالة الطلب</label>
 
-      <select
-        id="status-${item.id}"
-      >
-        <option
-          value="new"
-          ${item.status === "new" ? "selected" : ""}
-        >
+      <select id="status-${item.id}">
+
+        <option value="new"
+          ${item.status==="new" ? "selected" : ""}>
           جديد
         </option>
 
-        <option
-          value="in_progress"
-          ${item.status === "in_progress" ? "selected" : ""}
-        >
+        <option value="in_progress"
+          ${item.status==="in_progress" ? "selected" : ""}>
           قيد المتابعة
         </option>
 
-        <option
-          value="completed"
-          ${item.status === "completed" ? "selected" : ""}
-        >
+        <option value="completed"
+          ${item.status==="completed" ? "selected" : ""}>
           مكتمل
         </option>
 
-        <option
-          value="closed"
-          ${item.status === "closed" ? "selected" : ""}
-        >
+        <option value="closed"
+          ${item.status==="closed" ? "selected" : ""}>
           مغلق
         </option>
+
       </select>
 
       <button
         class="success"
-        onclick="updateStatus('${item.id}')"
-      >
+        onclick="updateStatus('${item.id}')">
         حفظ الحالة
       </button>
     `;
 
-
-    list.appendChild(card);
+    list.appendChild(div);
   });
 }
 
+function statusLabel(status){
 
-/*
-==================================================
-Status
-==================================================
-*/
-
-function getStatusLabel(status) {
-
-  if (status === "in_progress") {
-    return "قيد المتابعة";
-  }
-
-  if (status === "completed") {
-    return "مكتمل";
-  }
-
-  if (status === "closed") {
-    return "مغلق";
-  }
+  if(status==="in_progress") return "قيد المتابعة";
+  if(status==="completed") return "مكتمل";
+  if(status==="closed") return "مغلق";
 
   return "جديد";
 }
 
+async function updateStatus(id){
 
-async function updateStatus(requestId) {
+  const slug=document.getElementById("clientSelect").value;
+  const status=document.getElementById("status-"+id).value;
 
-  const clientSlug =
-    document
-      .getElementById("clientSelect")
-      .value;
+  try{
 
+    await api("/api/contact-admin",{
+      action:"update_status",
+      client_slug:slug,
+      request_id:id,
+      status
+    });
 
-  const select =
-    document.getElementById(
-      `status-${requestId}`
-    );
-
-
-  if (!select) {
-    return;
-  }
-
-
-  try {
-
-    await postAPI(
-      "/api/contact-admin",
-      {
-        action: "update_status",
-        client_slug: clientSlug,
-        request_id: requestId,
-        status: select.value
-      }
-    );
-
-
-    showMessage(
-      "تم تحديث حالة الطلب بنجاح."
-    );
-
+    showMessage("تم تحديث الحالة.");
 
     await loadRequests();
 
-  } catch (error) {
+  }catch(error){
 
-    showMessage(
-      error.message,
-      "error"
-    );
+    showMessage(error.message,"error");
+
   }
 }
 
+function escapeHtml(value){
 
-/*
-==================================================
-Escape HTML
-==================================================
-*/
-
-function escapeHtml(value) {
-
-  const div =
-    document.createElement("div");
-
-  div.textContent =
-    value == null
-      ? ""
-      : String(value);
-
-  return div.innerHTML;
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
+document.getElementById("password")
+.addEventListener("keydown",event=>{
 
-/*
-==================================================
-Enter Login
-==================================================
-*/
-
-document
-  .getElementById("password")
-  .addEventListener(
-    "keydown",
-    event => {
-
-      if (event.key === "Enter") {
-        login();
-      }
-    }
-  );
+  if(event.key==="Enter"){
+    login();
+  }
+});
 
 </script>
 
