@@ -7,143 +7,31 @@
 
 <style>
 *{box-sizing:border-box}
-
-body{
-  margin:0;
-  font-family:Arial,Tahoma,sans-serif;
-  background:#f4f6f8;
-  color:#111827;
-}
-
-.header{
-  background:#111827;
-  color:white;
-  padding:22px;
-}
-
-.header-inner{
-  max-width:1200px;
-  margin:auto;
-}
-
-.header h1{
-  margin:0 0 6px;
-  font-size:25px;
-}
-
-.header p{
-  margin:0;
-  color:#d1d5db;
-}
-
-.container{
-  max-width:1200px;
-  margin:auto;
-  padding:24px;
-}
-
-.top{
-  background:white;
-  border-radius:14px;
-  padding:18px;
-  margin-bottom:20px;
-  border:1px solid #e5e7eb;
-}
-
-select,button{
-  width:100%;
-  padding:11px;
-  margin-top:8px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
-  font-size:15px;
-}
-
-button{
-  background:#111827;
-  color:white;
-  border:0;
-  cursor:pointer;
-  font-weight:bold;
-}
-
-.grid{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:15px;
-}
-
-.card{
-  background:white;
-  border-radius:14px;
-  padding:18px;
-  border:1px solid #e5e7eb;
-  box-shadow:0 3px 10px rgba(0,0,0,.04);
-}
-
-.card .label{
-  color:#6b7280;
-  font-size:14px;
-}
-
-.card .value{
-  font-size:28px;
-  font-weight:bold;
-  margin-top:8px;
-}
-
-.section{
-  background:white;
-  border-radius:14px;
-  padding:20px;
-  margin-top:20px;
-  border:1px solid #e5e7eb;
-}
-
-.section h2{
-  margin-top:0;
-}
-
-table{
-  width:100%;
-  border-collapse:collapse;
-}
-
-th,td{
-  padding:11px;
-  border-bottom:1px solid #e5e7eb;
-  text-align:right;
-}
-
-th{
-  background:#f9fafb;
-}
-
-.message{
-  display:none;
-  padding:12px;
-  margin-bottom:15px;
-  border-radius:8px;
-}
-
-.error{
-  display:block;
-  background:#fee2e2;
-  color:#991b1b;
-}
-
-.back{
-  display:inline-block;
-  margin-bottom:18px;
-  text-decoration:none;
-  color:#111827;
-  font-weight:bold;
-}
+body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#111827}
+.header{background:#111827;color:#fff;padding:22px}
+.header-inner{max-width:1200px;margin:auto}
+.header h1{margin:0 0 6px;font-size:25px}
+.header p{margin:0;color:#d1d5db}
+.container{max-width:1200px;margin:auto;padding:24px}
+.top{background:#fff;border-radius:14px;padding:18px;margin-bottom:20px;border:1px solid #e5e7eb}
+select,button{width:100%;padding:11px;margin-top:8px;border-radius:8px;border:1px solid #d1d5db;font-size:15px}
+button{background:#111827;color:#fff;border:0;cursor:pointer;font-weight:bold}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:15px}
+.card{background:#fff;border-radius:14px;padding:18px;border:1px solid #e5e7eb;box-shadow:0 3px 10px rgba(0,0,0,.04)}
+.card .label{color:#6b7280;font-size:14px}
+.card .value{font-size:28px;font-weight:bold;margin-top:8px}
+.section{background:#fff;border-radius:14px;padding:20px;margin-top:20px;border:1px solid #e5e7eb}
+.section h2{margin-top:0}
+table{width:100%;border-collapse:collapse}
+th,td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:right}
+th{background:#f9fafb}
+.message{display:none;padding:12px;margin-bottom:15px;border-radius:8px}
+.error{display:block;background:#fee2e2;color:#991b1b}
+.back{display:inline-block;margin-bottom:18px;text-decoration:none;color:#111827;font-weight:bold}
 
 @media(max-width:900px){
   .grid{grid-template-columns:repeat(2,1fr)}
 }
-
 @media(max-width:550px){
   .grid{grid-template-columns:1fr}
   .container{padding:14px}
@@ -222,13 +110,9 @@ th{
 
 </div>
 
-
 <div class="section">
-
 <h2>الأسئلة الأكثر شيوعًا</h2>
-
 <div style="overflow-x:auto">
-
 <table>
 <thead>
 <tr>
@@ -236,25 +120,16 @@ th{
 <th>العدد</th>
 </tr>
 </thead>
-
 <tbody id="questionsTable">
-<tr>
-<td colspan="2">جاري التحميل...</td>
-</tr>
+<tr><td colspan="2">جاري التحميل...</td></tr>
 </tbody>
-
 </table>
-
 </div>
 </div>
-
 
 <div class="section">
-
 <h2>أوقات الذروة</h2>
-
 <div style="overflow-x:auto">
-
 <table>
 <thead>
 <tr>
@@ -262,25 +137,16 @@ th{
 <th>عدد المحادثات</th>
 </tr>
 </thead>
-
 <tbody id="hoursTable">
-<tr>
-<td colspan="2">جاري التحميل...</td>
-</tr>
+<tr><td colspan="2">جاري التحميل...</td></tr>
 </tbody>
-
 </table>
-
 </div>
 </div>
-
 
 <div class="section">
-
 <h2>الإحصائيات اليومية</h2>
-
 <div style="overflow-x:auto">
-
 <table>
 <thead>
 <tr>
@@ -289,22 +155,18 @@ th{
 <th>الرسائل</th>
 </tr>
 </thead>
-
 <tbody id="dailyTable">
-<tr>
-<td colspan="3">جاري التحميل...</td>
-</tr>
+<tr><td colspan="3">جاري التحميل...</td></tr>
 </tbody>
-
 </table>
-
 </div>
 </div>
 
 </main>
 
-
 <script>
+
+const STORAGE_KEY="novaire_control_client";
 
 const knownClients=[
   {slug:"first-bike",name:"First Bike"},
@@ -313,11 +175,21 @@ const knownClients=[
 ];
 
 function requestedClient(){
-  return (
+
+  const fromUrl=(
     new URLSearchParams(window.location.search)
       .get("client") || ""
   ).trim().toLowerCase();
+
+  if(fromUrl){
+    return fromUrl;
+  }
+
+  return (
+    localStorage.getItem(STORAGE_KEY) || ""
+  ).trim().toLowerCase();
 }
+
 
 async function loadClients(){
 
@@ -344,9 +216,11 @@ async function loadClients(){
             data.brand_name ||
             client.name
         });
+
       }
 
     }catch{}
+
   }
 
   const clients=valid.length ? valid : knownClients;
@@ -361,26 +235,36 @@ async function loadClients(){
     option.textContent=client.name;
 
     select.appendChild(option);
+
   });
 
   const wanted=requestedClient();
 
   if(clients.some(c=>c.slug===wanted)){
+
     select.value=wanted;
+
   }else if(clients.length){
+
     select.value=clients[0].slug;
+
+  }
+
+  if(select.value){
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      select.value
+    );
+
+    updateUrl(select.value);
   }
 
   await loadDashboard();
 }
 
 
-function changeClient(){
-
-  const slug=
-    document.getElementById("clientSelect").value;
-
-  if(!slug) return;
+function updateUrl(slug){
 
   const url=new URL(window.location.href);
 
@@ -391,6 +275,22 @@ function changeClient(){
     "",
     url.pathname+url.search
   );
+}
+
+
+function changeClient(){
+
+  const slug=
+    document.getElementById("clientSelect").value;
+
+  if(!slug) return;
+
+  localStorage.setItem(
+    STORAGE_KEY,
+    slug
+  );
+
+  updateUrl(slug);
 
   loadDashboard();
 }
@@ -415,11 +315,13 @@ async function loadDashboard(){
     const data=await response.json();
 
     if(!response.ok){
+
       throw new Error(
         data.error ||
         data.details ||
         "تعذر تحميل الإحصائيات"
       );
+
     }
 
     renderDashboard(data);
@@ -443,6 +345,7 @@ function pick(obj,names,fallback=0){
     ){
       return obj[name];
     }
+
   }
 
   return fallback;
@@ -519,7 +422,6 @@ function renderDashboard(data){
     ])
   );
 
-
   const language=
     data.languages ||
     data.language_stats ||
@@ -548,7 +450,6 @@ function renderDashboard(data){
       "english_count"
     ],0))
   );
-
 
   renderQuestions(
     data.common_questions ||
@@ -634,6 +535,7 @@ function renderQuestions(items){
       "</td>";
 
     table.appendChild(row);
+
   });
 }
 
@@ -675,6 +577,7 @@ function renderHours(items){
       "</td>";
 
     table.appendChild(row);
+
   });
 }
 
@@ -722,6 +625,7 @@ function renderDaily(items){
       "</td>";
 
     table.appendChild(row);
+
   });
 }
 
