@@ -124,7 +124,7 @@ async function getKnowledgeBase(clientId) {
 
 /*
 ==================================================
-Text normalization
+Text helpers
 ==================================================
 */
 
@@ -132,32 +132,19 @@ function normalizeText(value) {
 
   return String(value || "")
     .toLowerCase()
-
-    /*
-      Arabic diacritics
-    */
     .replace(
       /[\u064B-\u065F\u0670\u06D6-\u06ED]/g,
       ""
     )
-
-    /*
-      Normalize Arabic letters
-    */
     .replace(/[أإآ]/g, "ا")
     .replace(/ى/g, "ي")
     .replace(/ؤ/g, "و")
     .replace(/ئ/g, "ي")
     .replace(/ة/g, "ه")
-
-    /*
-      Remove punctuation
-    */
     .replace(
       /[^\p{L}\p{N}\s]/gu,
       " "
     )
-
     .replace(/\s+/g, " ")
     .trim();
 }
@@ -226,7 +213,7 @@ function tokenize(value) {
 
 /*
 ==================================================
-Choose relevant knowledge
+Knowledge selection
 ==================================================
 */
 
@@ -249,10 +236,6 @@ function scoreKnowledgeItem(
     return 0;
   }
 
-
-  /*
-    Strong exact / containment match
-  */
 
   if (
     normalizedStoredQuestion ===
@@ -305,31 +288,6 @@ function scoreKnowledgeItem(
   }
 
 
-  /*
-    Prefer newer item slightly when scores tie
-  */
-
-  if (item.updated_at) {
-
-    const age =
-      Date.now() -
-      new Date(item.updated_at).getTime();
-
-    const thirtyDays =
-      30 * 24 * 60 * 60 * 1000;
-
-
-    if (
-      Number.isFinite(age) &&
-      age >= 0 &&
-      age <= thirtyDays
-    ) {
-
-      score += 2;
-    }
-  }
-
-
   return score;
 }
 
@@ -347,11 +305,6 @@ function selectRelevantKnowledge(
     return [];
   }
 
-
-  /*
-    When the knowledge base is still small,
-    sending it all is safe and preserves recall.
-  */
 
   if (
     rows.length <=
@@ -399,12 +352,6 @@ function selectRelevantKnowledge(
       );
 
 
-  /*
-    If lexical matching found nothing,
-    send only the newest few items instead
-    of the entire database.
-  */
-
   if (relevant.length === 0) {
 
     return rows.slice(
@@ -434,16 +381,10 @@ function buildKnowledgeText(rows) {
 
   return rows
     .map(
-      (row, index) => {
-
-        return (
-          `${index + 1}. ` +
-          `السؤال/الموضوع: ${row.question.trim()}\n` +
-          `الإجابة المعتمدة: ${row.answer.trim()}`
-        );
-      }
+      (row, index) =>
+        `${index + 1}. السؤال/الموضوع: ${row.question.trim()}\n` +
+        `الإجابة المعتمدة: ${row.answer.trim()}`
     )
-
     .join("\n\n");
 }
 
@@ -680,7 +621,7 @@ async function updateResolutionStatus(
 
 /*
 ==================================================
-Latest user message
+Messages helpers
 ==================================================
 */
 
@@ -708,12 +649,6 @@ function getLatestUserMessage(messages) {
 }
 
 
-/*
-==================================================
-Trim conversation history
-==================================================
-*/
-
 function prepareMessagesForClaude(messages) {
 
   if (!Array.isArray(messages)) {
@@ -722,7 +657,6 @@ function prepareMessagesForClaude(messages) {
 
 
   return messages
-
     .filter(
       message =>
         message &&
@@ -755,18 +689,18 @@ function prepareMessagesForClaude(messages) {
 
 /*
 ==================================================
-Clean hidden marker
+Streaming helpers
 ==================================================
 */
 
-function cleanAssistantText(text) {
+function writeStreamEvent(
+  res,
+  data
+) {
 
-  return String(text || "")
-    .replaceAll(
-      UNANSWERED_MARKER,
-      ""
-    )
-    .trim();
+  res.write(
+    JSON.stringify(data) + "\n"
+  );
 }
 
 
@@ -843,9 +777,7 @@ module.exports = async function handler(
 
 
     const latestUserMessage =
-      getLatestUserMessage(
-        messages
-      );
+      getLatestUserMessage(messages);
 
 
     if (!latestUserMessage) {
@@ -859,7 +791,7 @@ module.exports = async function handler(
 
     /*
     ==============================================
-    1. Get client
+    Client
     ==============================================
     */
 
@@ -869,13 +801,13 @@ module.exports = async function handler(
 
     /*
     ==============================================
-    2. Conversation + knowledge in parallel
+    Conversation + Knowledge Base in parallel
     ==============================================
     */
 
     const [
       conversation,
-      knowledgeResult
+      knowledgeBase
     ] = await Promise.all([
       getOrCreateConversation(
         client.id,
@@ -901,26 +833,27 @@ module.exports = async function handler(
 
     /*
     ==============================================
-    3. Save user's message
+    Start saving user's message without delaying AI
     ==============================================
     */
 
-    await saveMessage(
-      conversation.id,
-      "user",
-      latestUserMessage
-    );
+    const saveUserMessagePromise =
+      saveMessage(
+        conversation.id,
+        "user",
+        latestUserMessage
+      );
 
 
     /*
     ==============================================
-    4. Select only relevant knowledge
+    Relevant knowledge
     ==============================================
     */
 
     const relevantKnowledge =
       selectRelevantKnowledge(
-        knowledgeResult,
+        knowledgeBase,
         latestUserMessage
       );
 
@@ -933,7 +866,7 @@ module.exports = async function handler(
 
     /*
     ==============================================
-    5. Shorter system prompt
+    System Prompt
     ==============================================
     */
 
@@ -957,23 +890,17 @@ ${knowledgeText}
 
 قواعد إلزامية:
 - أجب فقط من المعلومات الأساسية أو المعلومات المعتمدة أعلاه.
-- افهم معنى سؤال العميل؛ لا يشترط التطابق الحرفي.
+- افهم معنى السؤال؛ لا يشترط التطابق الحرفي.
 - يمكنك إعادة صياغة المعلومة دون تغيير معناها.
 - لا تخترع أسعارًا أو شروطًا أو سياسات أو خدمات أو مواعيد.
-- إذا لم توجد إجابة مؤكدة، أخبر العميل أن المعلومة تحتاج تأكيدًا من First Bike، ثم أضف في نهاية الرد ${UNANSWERED_MARKER}
-- لا تضف العلامة إذا كانت لديك إجابة مؤكدة.
-- لا تذكر قاعدة المعرفة أو العلامة أو أي معلومات إدارية للعميل.
+- إذا لم توجد إجابة مؤكدة، أخبر العميل أن المعلومة تحتاج تأكيدًا من First Bike ثم أضف في نهاية الرد ${UNANSWERED_MARKER}
+- لا تضف العلامة إذا كانت الإجابة مؤكدة.
+- لا تذكر قاعدة المعرفة أو العلامة أو المعلومات الداخلية للعميل.
 - إذا احتاج العميل موظفًا أو اتصالًا، يمكن إرشاده إلى زر التحدث مع مسؤول أو طلب اتصال.
-- اجعل الرد قصيرًا وطبيعيًا ومهنيًا.
+- اجعل الرد مختصرًا وطبيعيًا ومهنيًا.
 - لغة الرد الحالية: ${safeLanguage === "en" ? "English" : "العربية"}.
 `;
 
-
-    /*
-    ==============================================
-    6. Send only recent useful messages
-    ==============================================
-    */
 
     const claudeMessages =
       prepareMessagesForClaude(
@@ -983,7 +910,7 @@ ${knowledgeText}
 
     /*
     ==============================================
-    7. Anthropic
+    Anthropic Streaming Request
     ==============================================
     */
 
@@ -1012,6 +939,9 @@ ${knowledgeText}
               max_tokens:
                 MAX_ANTHROPIC_TOKENS,
 
+              stream:
+                true,
+
               system:
                 systemPrompt,
 
@@ -1022,73 +952,384 @@ ${knowledgeText}
       );
 
 
-    const anthropicText =
-      await anthropicResponse.text();
-
-
     if (!anthropicResponse.ok) {
 
+      const errorText =
+        await anthropicResponse.text();
+
       throw new Error(
-        `Anthropic error ${anthropicResponse.status}: ${anthropicText}`
+        `Anthropic error ${anthropicResponse.status}: ${errorText}`
       );
     }
 
 
-    const anthropicData =
-      JSON.parse(
-        anthropicText
-      );
-
-
-    const rawAnswer =
-      anthropicData?.content?.[0]?.text
-        ? anthropicData.content[0].text
-        : "";
-
-
-    if (!rawAnswer) {
+    if (!anthropicResponse.body) {
 
       throw new Error(
-        "Anthropic returned no answer"
+        "Anthropic returned no stream"
       );
     }
 
 
     /*
     ==============================================
-    8. Detect unanswered
+    Start response stream to browser
     ==============================================
     */
 
-    const isUnanswered =
-      rawAnswer.includes(
+    res.statusCode = 200;
+
+    res.setHeader(
+      "Content-Type",
+      "application/x-ndjson; charset=utf-8"
+    );
+
+    res.setHeader(
+      "Cache-Control",
+      "no-cache, no-transform"
+    );
+
+    res.setHeader(
+      "Connection",
+      "keep-alive"
+    );
+
+    res.setHeader(
+      "X-Accel-Buffering",
+      "no"
+    );
+
+
+    if (
+      typeof res.flushHeaders === "function"
+    ) {
+
+      res.flushHeaders();
+    }
+
+
+    writeStreamEvent(
+      res,
+      {
+        type: "start",
+
+        conversation_id:
+          conversation.id,
+
+        session_id,
+
+        language:
+          safeLanguage
+      }
+    );
+
+
+    /*
+    ==============================================
+    Read Anthropic SSE stream
+    ==============================================
+    */
+
+    const reader =
+      anthropicResponse.body.getReader();
+
+    const decoder =
+      new TextDecoder();
+
+
+    let streamBuffer = "";
+
+    let answerBuffer = "";
+
+    let pendingOutput = "";
+
+    let isUnanswered = false;
+
+    let inputTokens = null;
+
+    let outputTokens = null;
+
+
+    /*
+      We keep a small tail before sending text
+      so the hidden [[UNANSWERED]] marker
+      never becomes visible to the customer.
+    */
+
+    const markerTailLength =
+      UNANSWERED_MARKER.length - 1;
+
+
+    function processVisibleText(text) {
+
+      if (!text) {
+        return;
+      }
+
+
+      answerBuffer += text;
+      pendingOutput += text;
+
+
+      if (
+        pendingOutput.includes(
+          UNANSWERED_MARKER
+        )
+      ) {
+
+        isUnanswered = true;
+
+        pendingOutput =
+          pendingOutput.replaceAll(
+            UNANSWERED_MARKER,
+            ""
+          );
+      }
+
+
+      if (
+        pendingOutput.length >
+        markerTailLength
+      ) {
+
+        const safeLength =
+          pendingOutput.length -
+          markerTailLength;
+
+        const safeText =
+          pendingOutput.slice(
+            0,
+            safeLength
+          );
+
+
+        pendingOutput =
+          pendingOutput.slice(
+            safeLength
+          );
+
+
+        if (safeText) {
+
+          writeStreamEvent(
+            res,
+            {
+              type: "delta",
+              text: safeText
+            }
+          );
+        }
+      }
+    }
+
+
+    while (true) {
+
+      const {
+        done,
+        value
+      } = await reader.read();
+
+
+      if (done) {
+        break;
+      }
+
+
+      streamBuffer +=
+        decoder.decode(
+          value,
+          {
+            stream: true
+          }
+        );
+
+
+      const lines =
+        streamBuffer.split("\n");
+
+
+      streamBuffer =
+        lines.pop() || "";
+
+
+      for (const rawLine of lines) {
+
+        const line =
+          rawLine.trim();
+
+
+        if (
+          !line.startsWith("data:")
+        ) {
+
+          continue;
+        }
+
+
+        const jsonText =
+          line.slice(5).trim();
+
+
+        if (
+          !jsonText ||
+          jsonText === "[DONE]"
+        ) {
+
+          continue;
+        }
+
+
+        let event;
+
+
+        try {
+
+          event =
+            JSON.parse(jsonText);
+
+        } catch (error) {
+
+          continue;
+        }
+
+
+        /*
+        ------------------------------------------
+        Input token usage
+        ------------------------------------------
+        */
+
+        if (
+          event.type === "message_start" &&
+          event.message &&
+          event.message.usage
+        ) {
+
+          inputTokens =
+            event.message.usage.input_tokens ??
+            null;
+        }
+
+
+        /*
+        ------------------------------------------
+        Text delta
+        ------------------------------------------
+        */
+
+        if (
+          event.type === "content_block_delta" &&
+          event.delta &&
+          event.delta.type === "text_delta"
+        ) {
+
+          processVisibleText(
+            event.delta.text || ""
+          );
+        }
+
+
+        /*
+        ------------------------------------------
+        Output token usage
+        ------------------------------------------
+        */
+
+        if (
+          event.type === "message_delta" &&
+          event.usage
+        ) {
+
+          outputTokens =
+            event.usage.output_tokens ??
+            outputTokens;
+        }
+      }
+    }
+
+
+    /*
+    ==============================================
+    Flush remaining safe text
+    ==============================================
+    */
+
+    if (
+      pendingOutput.includes(
         UNANSWERED_MARKER
-      );
+      )
+    ) {
+
+      isUnanswered = true;
+
+      pendingOutput =
+        pendingOutput.replaceAll(
+          UNANSWERED_MARKER,
+          ""
+        );
+    }
 
 
     const cleanAnswer =
-      cleanAssistantText(
-        rawAnswer
+      String(
+        answerBuffer || ""
+      )
+        .replaceAll(
+          UNANSWERED_MARKER,
+          ""
+        )
+        .trim();
+
+
+    const finalVisibleTail =
+      String(
+        pendingOutput || ""
+      )
+        .replaceAll(
+          UNANSWERED_MARKER,
+          ""
+        );
+
+
+    if (finalVisibleTail) {
+
+      writeStreamEvent(
+        res,
+        {
+          type: "delta",
+          text: finalVisibleTail
+        }
       );
+    }
 
 
     /*
     ==============================================
-    9. Save result operations in parallel
+    Save data
     ==============================================
     */
+
+    try {
+
+      await saveUserMessagePromise;
+
+    } catch (error) {
+
+      console.error(
+        "USER MESSAGE SAVE ERROR:",
+        error
+      );
+    }
+
 
     const saveAssistantPromise =
       saveMessage(
         conversation.id,
         "assistant",
         cleanAnswer,
-
-        anthropicData.usage?.input_tokens ??
-          null,
-
-        anthropicData.usage?.output_tokens ??
-          null
+        inputTokens,
+        outputTokens
       );
 
 
@@ -1119,62 +1360,73 @@ ${knowledgeText}
         : Promise.resolve(null);
 
 
-    const [
-      ,
-      resolvedByAi
-    ] = await Promise.all([
-      saveAssistantPromise,
-      resolutionPromise,
-      unansweredPromise
-    ]);
+    const results =
+      await Promise.allSettled([
+        saveAssistantPromise,
+        resolutionPromise,
+        unansweredPromise
+      ]);
+
+
+    let resolvedByAi =
+      !isUnanswered;
+
+
+    if (
+      results[1].status === "fulfilled"
+    ) {
+
+      resolvedByAi =
+        results[1].value;
+    }
 
 
     /*
     ==============================================
-    10. Return clean response
+    Done event
     ==============================================
     */
 
-    if (
-      anthropicData.content &&
-      anthropicData.content[0]
-    ) {
+    writeStreamEvent(
+      res,
+      {
+        type: "done",
 
-      anthropicData.content[0].text =
-        cleanAnswer;
-    }
+        novaire: {
+          client_id:
+            client.id,
 
+          conversation_id:
+            conversation.id,
 
-    return res.status(200).json({
+          session_id,
 
-      ...anthropicData,
+          language:
+            safeLanguage,
 
-      novaire: {
+          unanswered:
+            isUnanswered,
 
-        client_id:
-          client.id,
+          resolved_by_ai:
+            resolvedByAi,
 
-        conversation_id:
-          conversation.id,
+          knowledge_items:
+            knowledgeBase.length,
 
-        session_id,
+          knowledge_items_used:
+            relevantKnowledge.length,
 
-        language:
-          safeLanguage,
+          input_tokens:
+            inputTokens,
 
-        unanswered:
-          isUnanswered,
-
-        resolved_by_ai:
-          resolvedByAi,
-
-        knowledge_items:
-          knowledgeResult.length,
-
-        knowledge_items_used:
-          relevantKnowledge.length
+          output_tokens:
+            outputTokens
+        }
       }
-    });
+    );
+
+
+    res.end();
 
 
   } catch (error) {
@@ -1183,6 +1435,38 @@ ${knowledgeText}
       "CHAT API ERROR:",
       error
     );
+
+
+    /*
+      If streaming has already started,
+      send an error event instead of JSON.
+    */
+
+    if (res.headersSent) {
+
+      try {
+
+        writeStreamEvent(
+          res,
+          {
+            type: "error",
+            error:
+              "Unable to process chat request"
+          }
+        );
+
+        res.end();
+
+      } catch (streamError) {
+
+        try {
+          res.end();
+        } catch {}
+      }
+
+
+      return;
+    }
 
 
     return res.status(500).json({
