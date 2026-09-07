@@ -1,5 +1,18 @@
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL;
+
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const RESEND_API_KEY =
+  process.env.RESEND_API_KEY;
+
+const NOTIFICATION_EMAIL =
+  process.env.NOVAIRE_NOTIFICATION_EMAIL;
+
+const NOTIFICATION_FROM =
+  process.env.NOVAIRE_NOTIFICATION_FROM ||
+  "NOVAIRE <onboarding@resend.dev>";
 
 
 /*
@@ -8,31 +21,46 @@ Supabase
 ==================================================
 */
 
-async function supabaseRequest(path, options = {}) {
+async function supabaseRequest(
+  path,
+  options = {}
+) {
 
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
+  if (
+    !SUPABASE_URL ||
+    !SUPABASE_KEY
+  ) {
     throw new Error(
       "Supabase environment variables are missing"
     );
   }
 
-  const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/${path}`,
-    {
-      ...options,
+  const response =
+    await fetch(
+      `${SUPABASE_URL}/rest/v1/${path}`,
+      {
+        ...options,
 
-      headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
-        ...(options.headers || {})
+        headers: {
+          apikey:
+            SUPABASE_KEY,
+
+          Authorization:
+            `Bearer ${SUPABASE_KEY}`,
+
+          "Content-Type":
+            "application/json",
+
+          ...(options.headers || {})
+        }
       }
-    }
-  );
+    );
 
-  const text = await response.text();
+  const text =
+    await response.text();
 
   if (!response.ok) {
+
     throw new Error(
       `Supabase ${response.status}: ${text}`
     );
@@ -43,8 +71,11 @@ async function supabaseRequest(path, options = {}) {
   }
 
   try {
+
     return JSON.parse(text);
+
   } catch {
+
     return text;
   }
 }
@@ -67,13 +98,377 @@ function cleanText(value) {
 function normalizeSlug(value) {
 
   const slug =
-    cleanText(value).toLowerCase();
+    cleanText(value)
+      .toLowerCase();
 
-  if (!/^[a-z0-9_-]{2,80}$/.test(slug)) {
+  if (
+    !/^[a-z0-9_-]{2,80}$/.test(
+      slug
+    )
+  ) {
     return "";
   }
 
   return slug;
+}
+
+
+function escapeHtml(value) {
+
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+function formatRequestType(
+  requestType
+) {
+
+  if (
+    requestType ===
+    "human_handoff"
+  ) {
+    return "تحويل إلى موظف";
+  }
+
+  if (
+    requestType ===
+    "callback"
+  ) {
+    return "طلب معاودة اتصال";
+  }
+
+  return requestType;
+}
+
+
+/*
+==================================================
+Email Notification
+==================================================
+*/
+
+async function sendNotification({
+  client,
+  requestType,
+  customerName,
+  phone,
+  reason,
+  conversationId
+}) {
+
+  /*
+    إذا لم نربط خدمة البريد بعد
+    لا نوقف طلب العميل.
+  */
+
+  if (
+    !RESEND_API_KEY ||
+    !NOTIFICATION_EMAIL
+  ) {
+
+    console.log(
+      "Email notification skipped: configuration missing"
+    );
+
+    return {
+      sent: false,
+      skipped: true
+    };
+  }
+
+
+  const typeText =
+    formatRequestType(
+      requestType
+    );
+
+
+  const clientName =
+    client?.config?.brand_name ||
+    client?.name ||
+    client?.slug ||
+    "Client";
+
+
+  const subject =
+    `NOVAIRE | ${typeText} جديد — ${clientName}`;
+
+
+  const html = `
+    <div
+      dir="rtl"
+      style="
+        font-family:Arial,Tahoma,sans-serif;
+        max-width:650px;
+        margin:auto;
+        color:#111827;
+        line-height:1.8;
+      "
+    >
+
+      <div
+        style="
+          background:#111827;
+          color:white;
+          padding:22px;
+          border-radius:12px 12px 0 0;
+        "
+      >
+
+        <h2 style="margin:0;">
+          NOVAIRE Smart Response
+        </h2>
+
+        <div
+          style="
+            color:#d1d5db;
+            margin-top:5px;
+          "
+        >
+          إشعار طلب تواصل جديد
+        </div>
+
+      </div>
+
+
+      <div
+        style="
+          border:1px solid #e5e7eb;
+          border-top:0;
+          padding:24px;
+          border-radius:0 0 12px 12px;
+        "
+      >
+
+        <p>
+          تم تسجيل طلب جديد من مساعد
+          <strong>
+            ${escapeHtml(clientName)}
+          </strong>.
+        </p>
+
+
+        <table
+          style="
+            width:100%;
+            border-collapse:collapse;
+          "
+        >
+
+          <tr>
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+                font-weight:bold;
+              "
+            >
+              نوع الطلب
+            </td>
+
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+              "
+            >
+              ${escapeHtml(typeText)}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+                font-weight:bold;
+              "
+            >
+              العميل
+            </td>
+
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+              "
+            >
+              ${escapeHtml(clientName)}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+                font-weight:bold;
+              "
+            >
+              الاسم
+            </td>
+
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+              "
+            >
+              ${escapeHtml(customerName)}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+                font-weight:bold;
+              "
+            >
+              الهاتف
+            </td>
+
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+              "
+            >
+              ${escapeHtml(phone)}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+                font-weight:bold;
+              "
+            >
+              السبب
+            </td>
+
+            <td
+              style="
+                padding:9px;
+                border-bottom:1px solid #eee;
+              "
+            >
+              ${escapeHtml(
+                reason || "غير محدد"
+              )}
+            </td>
+          </tr>
+
+
+          <tr>
+            <td
+              style="
+                padding:9px;
+                font-weight:bold;
+              "
+            >
+              Conversation ID
+            </td>
+
+            <td style="padding:9px;">
+              ${escapeHtml(
+                conversationId
+              )}
+            </td>
+          </tr>
+
+        </table>
+
+
+        <p
+          style="
+            margin-top:22px;
+            color:#6b7280;
+            font-size:13px;
+          "
+        >
+          هذا إشعار تلقائي صادر من
+          NOVAIRE Smart Response.
+        </p>
+
+      </div>
+
+    </div>
+  `;
+
+
+  const response =
+    await fetch(
+      "https://api.resend.com/emails",
+      {
+        method: "POST",
+
+        headers: {
+          Authorization:
+            `Bearer ${RESEND_API_KEY}`,
+
+          "Content-Type":
+            "application/json"
+        },
+
+        body: JSON.stringify({
+          from:
+            NOTIFICATION_FROM,
+
+          to: [
+            NOTIFICATION_EMAIL
+          ],
+
+          subject,
+
+          html
+        })
+      }
+    );
+
+
+  const text =
+    await response.text();
+
+
+  if (!response.ok) {
+
+    throw new Error(
+      `Email notification failed ${response.status}: ${text}`
+    );
+  }
+
+
+  let result = null;
+
+  try {
+
+    result =
+      JSON.parse(text);
+
+  } catch {
+
+    result =
+      text;
+  }
+
+
+  return {
+    sent: true,
+    result
+  };
 }
 
 
@@ -83,7 +478,9 @@ Get Client
 ==================================================
 */
 
-async function getClient(clientSlug) {
+async function getClient(
+  clientSlug
+) {
 
   const result =
     await supabaseRequest(
@@ -113,6 +510,7 @@ async function getClient(clientSlug) {
     client.config &&
     client.config.active === false
   ) {
+
     return {
       ...client,
       inactive: true
@@ -215,6 +613,7 @@ async function createConversation(
     !Array.isArray(result) ||
     !result[0]?.id
   ) {
+
     throw new Error(
       "Unable to create conversation"
     );
@@ -259,11 +658,6 @@ async function getOrCreateConversation(
 
   } catch (error) {
 
-    /*
-      حماية إضافية إذا تم إنشاء نفس المحادثة
-      في نفس اللحظة من طلب آخر.
-    */
-
     const retry =
       await getConversation(
         clientId,
@@ -287,13 +681,22 @@ Handler
 ==================================================
 */
 
-module.exports = async function handler(req, res) {
+module.exports =
+async function handler(
+  req,
+  res
+) {
 
-  if (req.method !== "POST") {
+  if (
+    req.method !== "POST"
+  ) {
 
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
+    return res
+      .status(405)
+      .json({
+        error:
+          "Method not allowed"
+      });
   }
 
 
@@ -355,10 +758,12 @@ module.exports = async function handler(req, res) {
 
     if (!clientSlug) {
 
-      return res.status(400).json({
-        error:
-          "Valid client_slug is required"
-      });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Valid client_slug is required"
+        });
     }
 
 
@@ -370,10 +775,12 @@ module.exports = async function handler(req, res) {
 
     if (!sessionId) {
 
-      return res.status(400).json({
-        error:
-          "session_id is required"
-      });
+      return res
+        .status(400)
+        .json({
+          error:
+            "session_id is required"
+        });
     }
 
 
@@ -384,14 +791,18 @@ module.exports = async function handler(req, res) {
     */
 
     if (
-      requestType !== "human_handoff" &&
-      requestType !== "callback"
+      requestType !==
+        "human_handoff" &&
+      requestType !==
+        "callback"
     ) {
 
-      return res.status(400).json({
-        error:
-          "Invalid request_type"
-      });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Invalid request_type"
+        });
     }
 
 
@@ -406,16 +817,18 @@ module.exports = async function handler(req, res) {
       !phone
     ) {
 
-      return res.status(400).json({
-        error:
-          "Name and phone are required"
-      });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Name and phone are required"
+        });
     }
 
 
     /*
     ==================================================
-    Get Selected Client
+    Client
     ==================================================
     */
 
@@ -427,25 +840,29 @@ module.exports = async function handler(req, res) {
 
     if (!client) {
 
-      return res.status(404).json({
-        error:
-          "Client not found"
-      });
+      return res
+        .status(404)
+        .json({
+          error:
+            "Client not found"
+        });
     }
 
 
     if (client.inactive) {
 
-      return res.status(403).json({
-        error:
-          "Client is inactive"
-      });
+      return res
+        .status(403)
+        .json({
+          error:
+            "Client is inactive"
+        });
     }
 
 
     /*
     ==================================================
-    Find Or Create Conversation
+    Conversation
     ==================================================
     */
 
@@ -505,7 +922,8 @@ module.exports = async function handler(req, res) {
     */
 
     const updateField =
-      requestType === "human_handoff"
+      requestType ===
+        "human_handoff"
         ? "human_handoff"
         : "callback_requested";
 
@@ -535,32 +953,81 @@ module.exports = async function handler(req, res) {
 
     /*
     ==================================================
+    Notification
+    ==================================================
+    */
+
+    let notification = {
+      sent: false
+    };
+
+
+    try {
+
+      notification =
+        await sendNotification({
+          client,
+          requestType,
+          customerName,
+          phone,
+          reason,
+          conversationId:
+            conversation.id
+        });
+
+    } catch (notificationError) {
+
+      /*
+        مهم:
+        فشل البريد لا يلغي
+        طلب العميل.
+      */
+
+      console.error(
+        "CONTACT NOTIFICATION ERROR:",
+        notificationError
+      );
+
+      notification = {
+        sent: false,
+        error: true
+      };
+    }
+
+
+    /*
+    ==================================================
     Success
     ==================================================
     */
 
-    return res.status(200).json({
+    return res
+      .status(200)
+      .json({
 
-      success:
-        true,
+        success:
+          true,
 
-      client: {
-        id:
-          client.id,
+        client: {
+          id:
+            client.id,
 
-        name:
-          client.name,
+          name:
+            client.name,
 
-        slug:
-          client.slug
-      },
+          slug:
+            client.slug
+        },
 
-      request_type:
-        requestType,
+        request_type:
+          requestType,
 
-      conversation_id:
-        conversation.id
-    });
+        conversation_id:
+          conversation.id,
+
+        notification_sent:
+          notification.sent === true
+      });
 
 
   } catch (error) {
@@ -571,9 +1038,11 @@ module.exports = async function handler(req, res) {
     );
 
 
-    return res.status(500).json({
-      error:
-        "Internal server error"
-    });
+    return res
+      .status(500)
+      .json({
+        error:
+          "Internal server error"
+      });
   }
 };
