@@ -98,13 +98,10 @@ button,input,textarea,select{
   margin-bottom:18px;
 }
 
-.login{
+.loading{
   max-width:420px;
   margin:90px auto;
-}
-
-.login h2{
-  margin-top:0;
+  text-align:center;
 }
 
 input,textarea,select{
@@ -269,6 +266,7 @@ textarea{
 .top-actions{
   display:flex;
   gap:8px;
+  flex-wrap:wrap;
 }
 
 .empty{
@@ -321,34 +319,11 @@ textarea{
 
 <div class="container">
 
-  <!-- LOGIN -->
-  <section id="loginView" class="card login">
-    <h2>NOVAIRE Admin</h2>
-    <div class="sub">إدارة عملاء Smart Response</div>
-
-    <div class="field" style="margin-top:20px">
-      <label>كلمة مرور الإدارة</label>
-      <input
-        id="passwordInput"
-        type="password"
-        autocomplete="current-password"
-        placeholder="••••••••"
-      >
-    </div>
-
-    <button
-      id="loginBtn"
-      class="btn btn-gold"
-      style="width:100%"
-    >
-      دخول
-    </button>
-
-    <div id="loginMessage" class="message"></div>
+  <section id="loadingView" class="card loading">
+    <h2>NOVAIRE</h2>
+    <div class="sub">جاري التحقق من جلسة الإدارة...</div>
   </section>
 
-
-  <!-- APP -->
   <section id="appView" style="display:none">
 
     <div class="header">
@@ -360,6 +335,14 @@ textarea{
       </div>
 
       <div class="top-actions">
+
+        <button
+          id="controlBtn"
+          class="btn btn-gray"
+        >
+          لوحة التحكم
+        </button>
+
         <button
           id="refreshBtn"
           class="btn btn-gray"
@@ -378,29 +361,33 @@ textarea{
           id="logoutBtn"
           class="btn btn-red"
         >
-          خروج
+          تسجيل الخروج
         </button>
+
       </div>
     </div>
 
 
-    <!-- CLIENTS -->
     <div class="card">
+
       <div class="form-title">
+
         <h2>العملاء</h2>
+
         <span
           id="clientCount"
           class="small"
         ></span>
+
       </div>
 
       <div id="clientsContainer">
         <div class="empty">جاري التحميل...</div>
       </div>
+
     </div>
 
 
-    <!-- FORM -->
     <div
       id="clientFormCard"
       class="card"
@@ -408,6 +395,7 @@ textarea{
     >
 
       <div class="form-title">
+
         <h2 id="formHeading">
           إضافة عميل جديد
         </h2>
@@ -418,6 +406,7 @@ textarea{
         >
           إغلاق
         </button>
+
       </div>
 
 
@@ -568,10 +557,12 @@ textarea{
             الخدمات بالعربية
             — خدمة في كل سطر
           </label>
+
           <textarea
             id="servicesAr"
             placeholder="الخدمة الأولى&#10;الخدمة الثانية"
           ></textarea>
+
         </div>
 
         <div class="field">
@@ -579,10 +570,12 @@ textarea{
             Services in English
             — one per line
           </label>
+
           <textarea
             id="servicesEn"
             placeholder="Service One&#10;Service Two"
           ></textarea>
+
         </div>
 
       </div>
@@ -661,7 +654,6 @@ textarea{
 
 <script>
 
-let adminPassword = "";
 let clients = [];
 
 
@@ -693,6 +685,75 @@ function clearMessage(element){
 
 
 /* ==============================
+   AUTH
+============================== */
+
+async function checkAuth(){
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin-auth",
+        {
+          method:"GET",
+          credentials:"same-origin",
+          cache:"no-store"
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if(
+      !response.ok ||
+      !data.authenticated
+    ){
+      window.location.href =
+        "/control.html";
+
+      return false;
+    }
+
+    return true;
+
+  }catch{
+
+    window.location.href =
+      "/control.html";
+
+    return false;
+  }
+}
+
+
+async function logout(){
+
+  try{
+
+    await fetch(
+      "/api/admin-auth",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+        credentials:"same-origin",
+        body:JSON.stringify({
+          action:"logout"
+        })
+      }
+    );
+
+  }catch{}
+
+  window.location.href =
+    "/control.html";
+}
+
+
+/* ==============================
    API
 ============================== */
 
@@ -709,11 +770,11 @@ async function adminRequest(payload){
             "application/json"
         },
 
-        body:JSON.stringify({
-          password:
-            adminPassword,
-          ...payload
-        })
+        credentials:"same-origin",
+
+        body:JSON.stringify(
+          payload
+        )
       }
     );
 
@@ -725,6 +786,13 @@ async function adminRequest(payload){
   }catch{}
 
   if(!response.ok){
+
+    if(
+      response.status === 401
+    ){
+      window.location.href =
+        "/control.html";
+    }
 
     const error =
       new Error(
@@ -739,74 +807,6 @@ async function adminRequest(payload){
   }
 
   return data;
-}
-
-
-/* ==============================
-   LOGIN
-============================== */
-
-async function login(){
-
-  clearMessage(
-    $("loginMessage")
-  );
-
-  const password =
-    $("passwordInput").value;
-
-  if(!password){
-
-    showMessage(
-      $("loginMessage"),
-      "أدخل كلمة المرور.",
-      "error"
-    );
-
-    return;
-  }
-
-  adminPassword =
-    password;
-
-  $("loginBtn").disabled =
-    true;
-
-  try{
-
-    const data =
-      await adminRequest({
-        action:"list"
-      });
-
-    clients =
-      data.clients || [];
-
-    $("loginView").style.display =
-      "none";
-
-    $("appView").style.display =
-      "block";
-
-    renderClients();
-
-  }catch(error){
-
-    adminPassword = "";
-
-    showMessage(
-      $("loginMessage"),
-      error.status === 401
-        ? "كلمة المرور غير صحيحة."
-        : "تعذر الاتصال بخدمة الإدارة.",
-      "error"
-    );
-
-  }finally{
-
-    $("loginBtn").disabled =
-      false;
-  }
 }
 
 
@@ -1336,7 +1336,6 @@ async function saveClient(){
         clientId || undefined,
 
       name,
-
       slug,
 
       brand_name:
@@ -1507,24 +1506,31 @@ async function deleteClient(
 
 
 /* ==============================
-   EVENTS
+   START
 ============================== */
 
-$("loginBtn")
-  .addEventListener(
-    "click",
-    login
-  );
+async function start(){
 
-$("passwordInput")
-  .addEventListener(
-    "keydown",
-    event => {
-      if(event.key === "Enter"){
-        login();
-      }
-    }
-  );
+  const authenticated =
+    await checkAuth();
+
+  if(!authenticated){
+    return;
+  }
+
+  $("loadingView").style.display =
+    "none";
+
+  $("appView").style.display =
+    "block";
+
+  await loadClients();
+}
+
+
+/* ==============================
+   EVENTS
+============================== */
 
 $("newClientBtn")
   .addEventListener(
@@ -1536,6 +1542,15 @@ $("refreshBtn")
   .addEventListener(
     "click",
     loadClients
+  );
+
+$("controlBtn")
+  .addEventListener(
+    "click",
+    () => {
+      window.location.href =
+        "/control.html";
+    }
   );
 
 $("closeFormBtn")
@@ -1563,20 +1578,11 @@ $("saveClientBtn")
 $("logoutBtn")
   .addEventListener(
     "click",
-    () => {
-      adminPassword = "";
-      clients = [];
-
-      $("passwordInput").value =
-        "";
-
-      $("appView").style.display =
-        "none";
-
-      $("loginView").style.display =
-        "block";
-    }
+    logout
   );
+
+
+start();
 
 </script>
 
