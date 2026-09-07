@@ -1,6 +1,12 @@
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const ADMIN_PASSWORD = process.env.NOVAIRE_ADMIN_PASSWORD;
+const SUPABASE_URL =
+  process.env.SUPABASE_URL;
+
+const SUPABASE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+const {
+  isAdminSession
+} = require("./_admin-session");
 
 
 /*
@@ -9,28 +15,43 @@ Supabase
 ==================================================
 */
 
-async function supabaseRequest(path, options = {}) {
+async function supabaseRequest(
+  path,
+  options = {}
+) {
 
   const response = await fetch(
     `${SUPABASE_URL}/rest/v1/${path}`,
     {
-      method: options.method || "GET",
+      method:
+        options.method || "GET",
 
       headers: {
-        apikey: SUPABASE_KEY,
-        Authorization: `Bearer ${SUPABASE_KEY}`,
-        "Content-Type": "application/json",
+        apikey:
+          SUPABASE_KEY,
+
+        Authorization:
+          `Bearer ${SUPABASE_KEY}`,
+
+        "Content-Type":
+          "application/json",
+
         Prefer:
-          options.prefer || "return=representation"
+          options.prefer ||
+          "return=representation"
       },
 
-      body: options.body
-        ? JSON.stringify(options.body)
-        : undefined
+      body:
+        options.body
+          ? JSON.stringify(
+              options.body
+            )
+          : undefined
     }
   );
 
-  const text = await response.text();
+  const text =
+    await response.text();
 
   if (!response.ok) {
     throw new Error(
@@ -51,6 +72,7 @@ Helpers
 */
 
 function cleanText(value) {
+
   return typeof value === "string"
     ? value.trim()
     : "";
@@ -60,9 +82,12 @@ function cleanText(value) {
 function normalizeSlug(value) {
 
   const slug =
-    cleanText(value).toLowerCase();
+    cleanText(value)
+      .toLowerCase();
 
-  if (!/^[a-z0-9_-]{2,80}$/.test(slug)) {
+  if (
+    !/^[a-z0-9_-]{2,80}$/.test(slug)
+  ) {
     return "";
   }
 
@@ -71,22 +96,10 @@ function normalizeSlug(value) {
 
 
 function normalizeLanguage(value) {
+
   return value === "en"
     ? "en"
     : "ar";
-}
-
-
-function isAuthorized(req) {
-
-  const suppliedPassword =
-    cleanText(req.body?.password);
-
-  return Boolean(
-    ADMIN_PASSWORD &&
-    suppliedPassword &&
-    suppliedPassword === ADMIN_PASSWORD
-  );
 }
 
 
@@ -96,14 +109,17 @@ Client
 ==================================================
 */
 
-async function getClient(clientSlug) {
+async function getClient(
+  clientSlug
+) {
 
-  const rows = await supabaseRequest(
-    `clients` +
-    `?slug=eq.${encodeURIComponent(clientSlug)}` +
-    `&select=id,name,slug,config` +
-    `&limit=1`
-  );
+  const rows =
+    await supabaseRequest(
+      `clients` +
+      `?slug=eq.${encodeURIComponent(clientSlug)}` +
+      `&select=id,name,slug,config` +
+      `&limit=1`
+    );
 
   if (
     !Array.isArray(rows) ||
@@ -139,11 +155,6 @@ async function saveToKnowledgeBase(
     );
 
 
-  /*
-    إذا كانت المعلومة موجودة عند نفس العميل،
-    يتم تحديثها بدل إنشاء نسخة أخرى.
-  */
-
   if (
     Array.isArray(existingRows) &&
     existingRows.length > 0
@@ -158,21 +169,28 @@ async function saveToKnowledgeBase(
         `?id=eq.${encodeURIComponent(knowledgeId)}` +
         `&client_id=eq.${encodeURIComponent(clientId)}`,
         {
-          method: "PATCH",
+          method:
+            "PATCH",
 
-          prefer: "return=representation",
+          prefer:
+            "return=representation",
 
           body: {
             answer,
             language,
-            active: true,
-            updated_at: new Date().toISOString()
+            active:
+              true,
+
+            updated_at:
+              new Date()
+                .toISOString()
           }
         }
       );
 
     return {
-      action: "updated",
+      action:
+        "updated",
 
       record:
         Array.isArray(updated) &&
@@ -183,33 +201,39 @@ async function saveToKnowledgeBase(
   }
 
 
-  /*
-    إذا لم تكن موجودة،
-    ننشئها لهذا العميل فقط.
-  */
-
   const inserted =
     await supabaseRequest(
       "knowledge_base",
       {
-        method: "POST",
+        method:
+          "POST",
 
-        prefer: "return=representation",
+        prefer:
+          "return=representation",
 
         body: {
-          client_id: clientId,
+          client_id:
+            clientId,
+
           question,
+
           answer,
+
           language,
-          source: "admin",
-          active: true
+
+          source:
+            "admin",
+
+          active:
+            true
         }
       }
     );
 
 
   return {
-    action: "created",
+    action:
+      "created",
 
     record:
       Array.isArray(inserted) &&
@@ -226,81 +250,119 @@ Handler
 ==================================================
 */
 
-module.exports = async function handler(req, res) {
+module.exports =
+async function handler(
+  req,
+  res
+) {
 
-  if (req.method !== "POST") {
+  res.setHeader(
+    "Cache-Control",
+    "no-store"
+  );
 
-    return res.status(405).json({
-      error: "Method not allowed"
-    });
+
+  if (
+    req.method !== "POST"
+  ) {
+
+    return res
+      .status(405)
+      .json({
+        error:
+          "Method not allowed"
+      });
   }
 
 
   if (
     !SUPABASE_URL ||
-    !SUPABASE_KEY ||
-    !ADMIN_PASSWORD
+    !SUPABASE_KEY
   ) {
 
-    return res.status(500).json({
-      error: "Server configuration is incomplete"
-    });
+    return res
+      .status(500)
+      .json({
+        error:
+          "Server configuration is incomplete"
+      });
   }
 
 
-  if (!isAuthorized(req)) {
+  if (
+    !isAdminSession(req)
+  ) {
 
-    return res.status(401).json({
-      error: "Unauthorized"
-    });
+    return res
+      .status(401)
+      .json({
+        error:
+          "Unauthorized"
+      });
   }
 
 
   try {
 
+    const body =
+      req.body || {};
+
+
     const action =
-      cleanText(req.body?.action);
+      cleanText(
+        body.action
+      );
 
 
     /*
     ==================================================
-    تحديد العميل من الطلب
+    Client
     ==================================================
     */
 
     const clientSlug =
       normalizeSlug(
-        req.body?.client_slug
+        body.client_slug
       );
 
 
     if (!clientSlug) {
 
-      return res.status(400).json({
-        error: "Valid client_slug is required"
-      });
+      return res
+        .status(400)
+        .json({
+          error:
+            "Valid client_slug is required"
+        });
     }
 
 
     const client =
-      await getClient(clientSlug);
+      await getClient(
+        clientSlug
+      );
 
 
     if (!client) {
 
-      return res.status(404).json({
-        error: "Client not found"
-      });
+      return res
+        .status(404)
+        .json({
+          error:
+            "Client not found"
+        });
     }
 
 
     /*
     ==================================================
-    عرض الأسئلة غير المجابة للعميل المحدد فقط
+    List
     ==================================================
     */
 
-    if (action === "list") {
+    if (
+      action === "list"
+    ) {
 
       const questions =
         await supabaseRequest(
@@ -312,77 +374,83 @@ module.exports = async function handler(req, res) {
         );
 
 
-      res.setHeader(
-        "Cache-Control",
-        "no-store, no-cache, must-revalidate"
-      );
+      return res
+        .status(200)
+        .json({
 
+          success:
+            true,
 
-      return res.status(200).json({
+          client: {
+            id:
+              client.id,
 
-        success: true,
+            name:
+              client.name,
 
-        client: {
-          id: client.id,
-          name: client.name,
-          slug: client.slug
-        },
+            slug:
+              client.slug
+          },
 
-        questions:
-          Array.isArray(questions)
-            ? questions
-            : []
-      });
+          questions:
+            Array.isArray(
+              questions
+            )
+              ? questions
+              : []
+        });
     }
 
 
     /*
     ==================================================
-    اعتماد الإجابة
+    Resolve
     ==================================================
     */
 
-    if (action === "resolve") {
+    if (
+      action === "resolve"
+    ) {
 
       const questionId =
         cleanText(
-          req.body?.question_id
+          body.question_id
         );
 
 
       const approvedAnswer =
         cleanText(
-          req.body?.approved_answer
+          body.approved_answer
         );
 
 
       const language =
         normalizeLanguage(
-          req.body?.language
+          body.language
         );
 
 
       if (!questionId) {
 
-        return res.status(400).json({
-          error: "question_id is required"
-        });
+        return res
+          .status(400)
+          .json({
+            error:
+              "question_id is required"
+          });
       }
 
 
       if (!approvedAnswer) {
 
-        return res.status(400).json({
-          error: "approved_answer is required"
-        });
+        return res
+          .status(400)
+          .json({
+            error:
+              "approved_answer is required"
+          });
       }
 
-
-      /*
-        مهم:
-        لا نقبل السؤال إلا إذا كان تابعًا
-        للعميل المحدد.
-      */
 
       const existingRows =
         await supabaseRequest(
@@ -395,13 +463,18 @@ module.exports = async function handler(req, res) {
 
 
       if (
-        !Array.isArray(existingRows) ||
+        !Array.isArray(
+          existingRows
+        ) ||
         existingRows.length === 0
       ) {
 
-        return res.status(404).json({
-          error: "Question not found for this client"
-        });
+        return res
+          .status(404)
+          .json({
+            error:
+              "Question not found for this client"
+          });
       }
 
 
@@ -409,23 +482,19 @@ module.exports = async function handler(req, res) {
         existingRows[0];
 
 
-      /*
-        إذا كان السؤال محلولًا مسبقًا
-      */
+      if (
+        unansweredQuestion.resolved ===
+        true
+      ) {
 
-      if (unansweredQuestion.resolved === true) {
-
-        return res.status(409).json({
-          error: "Question is already resolved"
-        });
+        return res
+          .status(409)
+          .json({
+            error:
+              "Question is already resolved"
+          });
       }
 
-
-      /*
-      ==================================================
-      1. حفظ الإجابة في قاعدة معرفة العميل
-      ==================================================
-      */
 
       const knowledgeResult =
         await saveToKnowledgeBase(
@@ -436,59 +505,74 @@ module.exports = async function handler(req, res) {
         );
 
 
-      /*
-      ==================================================
-      2. إغلاق السؤال غير المجاب
-      ==================================================
-      */
-
       const updatedRows =
         await supabaseRequest(
           `unanswered_questions` +
           `?id=eq.${encodeURIComponent(questionId)}` +
           `&client_id=eq.${encodeURIComponent(client.id)}`,
           {
-            method: "PATCH",
+            method:
+              "PATCH",
 
-            prefer: "return=representation",
+            prefer:
+              "return=representation",
 
             body: {
-              approved_answer: approvedAnswer,
-              resolved: true,
-              resolved_at: new Date().toISOString()
+              approved_answer:
+                approvedAnswer,
+
+              resolved:
+                true,
+
+              resolved_at:
+                new Date()
+                  .toISOString()
             }
           }
         );
 
 
-      return res.status(200).json({
+      return res
+        .status(200)
+        .json({
 
-        success: true,
+          success:
+            true,
 
-        message:
-          "Approved answer saved to selected client's knowledge base",
+          message:
+            "Approved answer saved to selected client's knowledge base",
 
-        client: {
-          id: client.id,
-          name: client.name,
-          slug: client.slug
-        },
+          client: {
+            id:
+              client.id,
 
-        question:
-          Array.isArray(updatedRows) &&
-          updatedRows.length > 0
-            ? updatedRows[0]
-            : null,
+            name:
+              client.name,
 
-        knowledge_base:
-          knowledgeResult
-      });
+            slug:
+              client.slug
+          },
+
+          question:
+            Array.isArray(
+              updatedRows
+            ) &&
+            updatedRows.length > 0
+              ? updatedRows[0]
+              : null,
+
+          knowledge_base:
+            knowledgeResult
+        });
     }
 
 
-    return res.status(400).json({
-      error: "Invalid action"
-    });
+    return res
+      .status(400)
+      .json({
+        error:
+          "Invalid action"
+      });
 
 
   } catch (error) {
@@ -499,13 +583,15 @@ module.exports = async function handler(req, res) {
     );
 
 
-    return res.status(500).json({
+    return res
+      .status(500)
+      .json({
 
-      error:
-        "Unable to manage unanswered questions",
+        error:
+          "Unable to manage unanswered questions",
 
-      details:
-        error.message
-    });
+        details:
+          error.message
+      });
   }
 };
