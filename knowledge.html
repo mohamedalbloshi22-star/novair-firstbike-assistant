@@ -7,27 +7,118 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#1f2937}
-.container{max-width:1100px;margin:auto;padding:24px}
-.card{background:#fff;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
+body{
+  margin:0;
+  font-family:Arial,Tahoma,sans-serif;
+  background:#f4f6f8;
+  color:#1f2937
+}
+.container{
+  max-width:1100px;
+  margin:auto;
+  padding:24px
+}
+.card{
+  background:#fff;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 3px 12px rgba(0,0,0,.06)
+}
 h1,h2{margin-top:0}
-.muted{color:#6b7280;font-size:14px}
-input,textarea,select,button{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin:6px 0 12px}
-textarea{min-height:100px;resize:vertical}
-button{border:0;cursor:pointer;font-weight:bold}
-.primary{background:#111827;color:white}
-.secondary{background:#e5e7eb;color:#111827}
-.danger{background:#b91c1c;color:white}
-.success{background:#047857;color:white}
-.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.item{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;background:#fafafa}
-.item p{line-height:1.6}
-.actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
-#app{display:none}
-#message{display:none;padding:12px;border-radius:8px;margin-bottom:15px}
-#message.ok{display:block;background:#d1fae5;color:#065f46}
-#message.error{display:block;background:#fee2e2;color:#991b1b}
-@media(max-width:700px){.grid,.actions{grid-template-columns:1fr}}
+.muted{
+  color:#6b7280;
+  font-size:14px
+}
+input,textarea,select,button{
+  width:100%;
+  padding:11px;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  font-size:15px;
+  margin:6px 0 12px
+}
+textarea{
+  min-height:100px;
+  resize:vertical
+}
+button{
+  border:0;
+  cursor:pointer;
+  font-weight:bold
+}
+.primary{
+  background:#111827;
+  color:white
+}
+.secondary{
+  background:#e5e7eb;
+  color:#111827
+}
+.danger{
+  background:#b91c1c;
+  color:white
+}
+.success{
+  background:#047857;
+  color:white
+}
+.grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px
+}
+.item{
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:14px;
+  background:#fafafa
+}
+.item p{
+  line-height:1.6
+}
+.actions{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px
+}
+.top-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px
+}
+#app{
+  display:none
+}
+#loadingBox{
+  max-width:420px;
+  margin:90px auto;
+  text-align:center
+}
+#message{
+  display:none;
+  padding:12px;
+  border-radius:8px;
+  margin-bottom:15px
+}
+#message.ok{
+  display:block;
+  background:#d1fae5;
+  color:#065f46
+}
+#message.error{
+  display:block;
+  background:#fee2e2;
+  color:#991b1b
+}
+@media(max-width:700px){
+  .grid,
+  .actions,
+  .top-actions{
+    grid-template-columns:1fr
+  }
+}
 </style>
 </head>
 
@@ -35,18 +126,10 @@ button{border:0;cursor:pointer;font-weight:bold}
 
 <div class="container">
 
-<div class="card" id="loginBox">
+<div class="card" id="loadingBox">
 <h1>NOVAIRE</h1>
 <h2>قاعدة المعرفة</h2>
-
-<input
-id="password"
-type="password"
-placeholder="كلمة مرور الإدارة">
-
-<button class="primary" onclick="login()">
-دخول
-</button>
+<p class="muted">جاري التحقق من جلسة الإدارة...</p>
 </div>
 
 
@@ -54,7 +137,11 @@ placeholder="كلمة مرور الإدارة">
 
 <div id="message"></div>
 
+
 <div class="card">
+
+<h1>NOVAIRE</h1>
+<h2>قاعدة المعرفة</h2>
 
 <label>العميل</label>
 
@@ -64,9 +151,21 @@ onchange="clientChanged()">
 <option value="">اختر العميل</option>
 </select>
 
-<button class="secondary" onclick="logout()">
+<div class="top-actions">
+
+<button
+class="secondary"
+onclick="goControl()">
+لوحة التحكم
+</button>
+
+<button
+class="danger"
+onclick="logout()">
 تسجيل الخروج
 </button>
+
+</div>
 
 </div>
 
@@ -87,7 +186,9 @@ onchange="clientChanged()">
 <option value="en">English</option>
 </select>
 
-<button class="primary" onclick="createItem()">
+<button
+class="primary"
+onclick="createItem()">
 إضافة إلى قاعدة المعرفة
 </button>
 
@@ -99,7 +200,7 @@ onchange="clientChanged()">
 <h2>المعلومات الحالية</h2>
 
 <div id="list">
-اختر العميل.
+جاري التحميل...
 </div>
 
 </div>
@@ -110,262 +211,483 @@ onchange="clientChanged()">
 
 <script>
 
-let adminPassword = "";
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
 
-const params = new URLSearchParams(window.location.search);
-const requestedClient = params.get("client") || "";
-
-
-async function api(url,payload){
-
-const response = await fetch(url,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-password:adminPassword,
-...payload
-})
-});
-
-let data={};
-
-try{
-data=await response.json();
-}catch{}
-
-if(!response.ok){
-throw new Error(data.error || data.details || "حدث خطأ");
-}
-
-return data;
-}
+const requestedClient =
+  params.get("client") || "";
 
 
-function message(text,type="ok"){
+/*
+================================
+AUTH
+================================
+*/
 
-const box=document.getElementById("message");
+async function checkAuth(){
 
-box.textContent=text;
-box.className=type;
-box.style.display="block";
+  try{
 
-setTimeout(()=>{
-box.style.display="none";
-},3000);
+    const response =
+      await fetch(
+        "/api/admin-auth",
+        {
+          method:"GET",
+          credentials:"same-origin",
+          cache:"no-store"
+        }
+      );
 
-}
+    const data =
+      await response.json();
 
+    if(
+      !response.ok ||
+      !data.authenticated
+    ){
 
-async function login(){
+      window.location.href =
+        "/control.html";
 
-const value=document.getElementById("password").value.trim();
+      return false;
+    }
 
-if(!value){
-alert("أدخل كلمة المرور");
-return;
-}
+    return true;
 
-adminPassword=value;
+  }catch{
 
-try{
+    window.location.href =
+      "/control.html";
 
-await loadClients();
-
-document.getElementById("loginBox").style.display="none";
-document.getElementById("app").style.display="block";
-
-}catch(error){
-
-adminPassword="";
-alert(error.message);
-
-}
-
+    return false;
+  }
 }
 
 
-function logout(){
+async function logout(){
 
-adminPassword="";
+  try{
 
-document.getElementById("app").style.display="none";
-document.getElementById("loginBox").style.display="block";
+    await fetch(
+      "/api/admin-auth",
+      {
+        method:"POST",
 
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        credentials:"same-origin",
+
+        body:JSON.stringify({
+          action:"logout"
+        })
+      }
+    );
+
+  }catch{}
+
+  window.location.href =
+    "/control.html";
 }
 
+
+function goControl(){
+
+  window.location.href =
+    "/control.html";
+}
+
+
+/*
+================================
+API
+================================
+*/
+
+async function api(
+  url,
+  payload
+){
+
+  const response =
+    await fetch(
+      url,
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        credentials:"same-origin",
+
+        body:JSON.stringify(
+          payload
+        )
+      }
+    );
+
+  let data = {};
+
+  try{
+    data =
+      await response.json();
+  }catch{}
+
+  if(!response.ok){
+
+    if(
+      response.status === 401
+    ){
+
+      window.location.href =
+        "/control.html";
+    }
+
+    throw new Error(
+      data.error ||
+      data.details ||
+      "حدث خطأ"
+    );
+  }
+
+  return data;
+}
+
+
+/*
+================================
+MESSAGE
+================================
+*/
+
+function message(
+  text,
+  type="ok"
+){
+
+  const box =
+    document.getElementById(
+      "message"
+    );
+
+  box.textContent =
+    text;
+
+  box.className =
+    type;
+
+  box.style.display =
+    "block";
+
+  setTimeout(
+    ()=>{
+      box.style.display =
+        "none";
+    },
+    3000
+  );
+}
+
+
+/*
+================================
+LOAD CLIENTS
+================================
+*/
 
 async function loadClients(){
 
-const data=await api("/api/client-admin",{
-action:"list"
-});
+  const data =
+    await api(
+      "/api/client-admin",
+      {
+        action:"list"
+      }
+    );
 
-const clients=
-Array.isArray(data.clients)
-?data.clients
-:Array.isArray(data.items)
-?data.items
-:Array.isArray(data)
-?data
-:[];
+  const clients =
+    Array.isArray(
+      data.clients
+    )
+      ? data.clients
+      : Array.isArray(
+          data.items
+        )
+        ? data.items
+        : Array.isArray(data)
+          ? data
+          : [];
 
-const select=document.getElementById("clientSelect");
+  const select =
+    document.getElementById(
+      "clientSelect"
+    );
 
-select.innerHTML='<option value="">اختر العميل</option>';
-
-clients.forEach(client=>{
-
-const option=document.createElement("option");
-
-option.value=client.slug;
-
-option.textContent=
-client.name ||
-client.config?.brand_name ||
-client.slug;
-
-select.appendChild(option);
-
-});
+  select.innerHTML =
+    '<option value="">اختر العميل</option>';
 
 
-if(requestedClient){
+  clients.forEach(
+    client=>{
 
-const exists=clients.some(
-client=>client.slug===requestedClient
-);
+      const option =
+        document.createElement(
+          "option"
+        );
 
-if(exists){
-select.value=requestedClient;
-await loadKnowledge();
-return;
+      option.value =
+        client.slug;
+
+      option.textContent =
+        client.name ||
+        client.config?.brand_name ||
+        client.slug;
+
+      select.appendChild(
+        option
+      );
+    }
+  );
+
+
+  if(requestedClient){
+
+    const exists =
+      clients.some(
+        client =>
+          client.slug ===
+          requestedClient
+      );
+
+    if(exists){
+
+      select.value =
+        requestedClient;
+
+      await loadKnowledge();
+
+      return;
+    }
+  }
+
+
+  if(clients.length){
+
+    select.value =
+      clients[0].slug;
+
+    await loadKnowledge();
+
+  }else{
+
+    document.getElementById(
+      "list"
+    ).innerHTML =
+      "لا يوجد عملاء.";
+  }
 }
 
-}
 
-
-if(clients.length){
-
-select.value=clients[0].slug;
-await loadKnowledge();
-
-}
-
-}
-
+/*
+================================
+CLIENT CHANGE
+================================
+*/
 
 async function clientChanged(){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
 
-if(slug){
+  if(slug){
 
-const newUrl=
-window.location.pathname+
-"?client="+encodeURIComponent(slug);
+    const newUrl =
+      window.location.pathname +
+      "?client=" +
+      encodeURIComponent(
+        slug
+      );
 
-history.replaceState({}, "", newUrl);
+    history.replaceState(
+      {},
+      "",
+      newUrl
+    );
+  }
 
+  await loadKnowledge();
 }
 
-await loadKnowledge();
 
-}
-
+/*
+================================
+LOAD KNOWLEDGE
+================================
+*/
 
 async function loadKnowledge(){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
 
-const list=document.getElementById("list");
+  const list =
+    document.getElementById(
+      "list"
+    );
 
-if(!slug){
-list.innerHTML="اختر العميل.";
-return;
+  if(!slug){
+
+    list.innerHTML =
+      "اختر العميل.";
+
+    return;
+  }
+
+  list.innerHTML =
+    "جاري التحميل...";
+
+  try{
+
+    const data =
+      await api(
+        "/api/knowledge-admin",
+        {
+          action:"list",
+          client_slug:slug
+        }
+      );
+
+    const items =
+      Array.isArray(
+        data.items
+      )
+        ? data.items
+        : Array.isArray(
+            data.knowledge
+          )
+          ? data.knowledge
+          : [];
+
+    render(items);
+
+  }catch(error){
+
+    list.innerHTML = "";
+
+    message(
+      error.message,
+      "error"
+    );
+  }
 }
 
-list.innerHTML="جاري التحميل...";
 
-try{
-
-const data=await api("/api/knowledge-admin",{
-action:"list",
-client_slug:slug
-});
-
-const items=
-Array.isArray(data.items)
-?data.items
-:Array.isArray(data.knowledge)
-?data.knowledge
-:[];
-
-render(items);
-
-}catch(error){
-
-list.innerHTML="";
-message(error.message,"error");
-
-}
-
-}
-
+/*
+================================
+RENDER
+================================
+*/
 
 function render(items){
 
-const list=document.getElementById("list");
+  const list =
+    document.getElementById(
+      "list"
+    );
 
-list.innerHTML="";
+  list.innerHTML = "";
 
-if(!items.length){
+  if(!items.length){
 
-list.innerHTML=
-'<p class="muted">لا توجد معلومات لهذا العميل.</p>';
+    list.innerHTML =
+      '<p class="muted">لا توجد معلومات لهذا العميل.</p>';
 
-return;
+    return;
+  }
 
-}
 
+  items.forEach(
+    item=>{
 
-items.forEach(item=>{
+      const div =
+        document.createElement(
+          "div"
+        );
 
-const div=document.createElement("div");
-div.className="item";
+      div.className =
+        "item";
 
-div.innerHTML=`
+      div.innerHTML = `
 
 <label>السؤال</label>
-<textarea id="q-${item.id}">${escapeHtml(item.question || "")}</textarea>
+
+<textarea id="q-${item.id}">${escapeHtml(
+  item.question || ""
+)}</textarea>
 
 <label>الإجابة</label>
-<textarea id="a-${item.id}">${escapeHtml(item.answer || "")}</textarea>
+
+<textarea id="a-${item.id}">${escapeHtml(
+  item.answer || ""
+)}</textarea>
 
 <label>اللغة</label>
 
 <select id="l-${item.id}">
-<option value="ar" ${item.language==="ar"?"selected":""}>العربية</option>
-<option value="en" ${item.language==="en"?"selected":""}>English</option>
+
+<option
+value="ar"
+${item.language==="ar"
+  ? "selected"
+  : ""}>
+العربية
+</option>
+
+<option
+value="en"
+${item.language==="en"
+  ? "selected"
+  : ""}>
+English
+</option>
+
 </select>
 
 <p class="muted">
 الحالة:
-${item.active===false ? "متوقفة" : "فعالة"}
+${item.active===false
+  ? "متوقفة"
+  : "فعالة"}
 </p>
 
 <div class="actions">
 
-<button class="success"
+<button
+class="success"
 onclick="updateItem('${item.id}')">
 حفظ
 </button>
 
-<button class="secondary"
+<button
+class="secondary"
 onclick="toggleItem('${item.id}')">
-${item.active===false ? "تفعيل" : "إيقاف"}
+${item.active===false
+  ? "تفعيل"
+  : "إيقاف"}
 </button>
 
-<button class="danger"
+<button
+class="danger"
 onclick="deleteItem('${item.id}')">
 حذف
 </button>
@@ -373,141 +695,304 @@ onclick="deleteItem('${item.id}')">
 </div>
 `;
 
-list.appendChild(div);
-
-});
-
+      list.appendChild(
+        div
+      );
+    }
+  );
 }
 
+
+/*
+================================
+CREATE
+================================
+*/
 
 async function createItem(){
 
-const slug=document.getElementById("clientSelect").value;
-const question=document.getElementById("question").value.trim();
-const answer=document.getElementById("answer").value.trim();
-const language=document.getElementById("language").value;
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
 
-if(!slug || !question || !answer){
-alert("اختر العميل واكتب السؤال والإجابة");
-return;
+  const question =
+    document.getElementById(
+      "question"
+    ).value.trim();
+
+  const answer =
+    document.getElementById(
+      "answer"
+    ).value.trim();
+
+  const language =
+    document.getElementById(
+      "language"
+    ).value;
+
+  if(
+    !slug ||
+    !question ||
+    !answer
+  ){
+
+    alert(
+      "اختر العميل واكتب السؤال والإجابة"
+    );
+
+    return;
+  }
+
+
+  try{
+
+    await api(
+      "/api/knowledge-admin",
+      {
+        action:"create",
+        client_slug:slug,
+        question,
+        answer,
+        language
+      }
+    );
+
+    document.getElementById(
+      "question"
+    ).value = "";
+
+    document.getElementById(
+      "answer"
+    ).value = "";
+
+    message(
+      "تمت الإضافة بنجاح"
+    );
+
+    await loadKnowledge();
+
+  }catch(error){
+
+    message(
+      error.message,
+      "error"
+    );
+  }
 }
 
-try{
 
-await api("/api/knowledge-admin",{
-action:"create",
-client_slug:slug,
-question,
-answer,
-language
-});
-
-document.getElementById("question").value="";
-document.getElementById("answer").value="";
-
-message("تمت الإضافة بنجاح");
-
-await loadKnowledge();
-
-}catch(error){
-message(error.message,"error");
-}
-
-}
-
+/*
+================================
+UPDATE
+================================
+*/
 
 async function updateItem(id){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
 
-try{
+  try{
 
-await api("/api/knowledge-admin",{
-action:"update",
-client_slug:slug,
-id,
-question:document.getElementById("q-"+id).value.trim(),
-answer:document.getElementById("a-"+id).value.trim(),
-language:document.getElementById("l-"+id).value
-});
+    await api(
+      "/api/knowledge-admin",
+      {
+        action:"update",
+        client_slug:slug,
+        id,
 
-message("تم الحفظ");
+        question:
+          document.getElementById(
+            "q-"+id
+          ).value.trim(),
 
-await loadKnowledge();
+        answer:
+          document.getElementById(
+            "a-"+id
+          ).value.trim(),
 
-}catch(error){
-message(error.message,"error");
+        language:
+          document.getElementById(
+            "l-"+id
+          ).value
+      }
+    );
+
+    message(
+      "تم الحفظ"
+    );
+
+    await loadKnowledge();
+
+  }catch(error){
+
+    message(
+      error.message,
+      "error"
+    );
+  }
 }
 
-}
 
+/*
+================================
+TOGGLE
+================================
+*/
 
 async function toggleItem(id){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
 
-try{
+  try{
 
-await api("/api/knowledge-admin",{
-action:"toggle",
-client_slug:slug,
-id
-});
+    await api(
+      "/api/knowledge-admin",
+      {
+        action:"toggle",
+        client_slug:slug,
+        id
+      }
+    );
 
-await loadKnowledge();
+    await loadKnowledge();
 
-}catch(error){
-message(error.message,"error");
+  }catch(error){
+
+    message(
+      error.message,
+      "error"
+    );
+  }
 }
 
-}
 
+/*
+================================
+DELETE
+================================
+*/
 
 async function deleteItem(id){
 
-if(!confirm("هل تريد حذف هذه المعلومة؟")){
-return;
+  if(
+    !confirm(
+      "هل تريد حذف هذه المعلومة؟"
+    )
+  ){
+    return;
+  }
+
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
+
+  try{
+
+    await api(
+      "/api/knowledge-admin",
+      {
+        action:"delete",
+        client_slug:slug,
+        id
+      }
+    );
+
+    message(
+      "تم الحذف"
+    );
+
+    await loadKnowledge();
+
+  }catch(error){
+
+    message(
+      error.message,
+      "error"
+    );
+  }
 }
 
-const slug=document.getElementById("clientSelect").value;
 
-try{
-
-await api("/api/knowledge-admin",{
-action:"delete",
-client_slug:slug,
-id
-});
-
-message("تم الحذف");
-
-await loadKnowledge();
-
-}catch(error){
-message(error.message,"error");
-}
-
-}
-
+/*
+================================
+ESCAPE
+================================
+*/
 
 function escapeHtml(value){
 
-return String(value)
-.replace(/&/g,"&amp;")
-.replace(/</g,"&lt;")
-.replace(/>/g,"&gt;")
-.replace(/"/g,"&quot;")
-.replace(/'/g,"&#039;");
-
+  return String(value)
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 }
 
 
-document.getElementById("password")
-.addEventListener("keydown",event=>{
-if(event.key==="Enter"){
-login();
+/*
+================================
+START
+================================
+*/
+
+async function start(){
+
+  const authenticated =
+    await checkAuth();
+
+  if(!authenticated){
+    return;
+  }
+
+  document.getElementById(
+    "loadingBox"
+  ).style.display =
+    "none";
+
+  document.getElementById(
+    "app"
+  ).style.display =
+    "block";
+
+  try{
+
+    await loadClients();
+
+  }catch(error){
+
+    message(
+      error.message,
+      "error"
+    );
+  }
 }
-});
+
+
+start();
 
 </script>
 
