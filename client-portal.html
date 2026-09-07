@@ -50,6 +50,11 @@ button{
   color:white;
 }
 
+.logout:disabled{
+  opacity:.6;
+  cursor:not-allowed;
+}
+
 main{
   width:min(1200px,92%);
   margin:30px auto;
@@ -144,7 +149,6 @@ th{
 }
 
 @media(max-width:650px){
-
   header{
     align-items:flex-start;
   }
@@ -170,6 +174,7 @@ th{
   </div>
 
   <button
+    id="logoutButton"
     class="logout"
     onclick="logout()"
   >
@@ -391,26 +396,11 @@ function escapeHtml(value){
   return String(
     value ?? ""
   )
-  .replaceAll(
-    "&",
-    "&amp;"
-  )
-  .replaceAll(
-    "<",
-    "&lt;"
-  )
-  .replaceAll(
-    ">",
-    "&gt;"
-  )
-  .replaceAll(
-    '"',
-    "&quot;"
-  )
-  .replaceAll(
-    "'",
-    "&#039;"
-  );
+  .replaceAll("&","&amp;")
+  .replaceAll("<","&lt;")
+  .replaceAll(">","&gt;")
+  .replaceAll('"',"&quot;")
+  .replaceAll("'","&#039;");
 }
 
 
@@ -423,20 +413,16 @@ async function loadPortal(){
         "/api/dashboard",
         {
           method:"GET",
-
-          credentials:
-            "same-origin"
+          credentials:"same-origin"
         }
       );
 
 
-    if(
-      response.status ===
-      401
-    ){
+    if(response.status === 401){
 
-      location.href =
-        "/client-login.html";
+      location.replace(
+        "/client-login.html"
+      );
 
       return;
     }
@@ -467,59 +453,51 @@ async function loadPortal(){
     document.getElementById(
       "totalConversations"
     ).textContent =
-      data.stats
-        .total_conversations;
+      data.stats.total_conversations;
 
 
     document.getElementById(
       "aiRate"
     ).textContent =
-      data.stats
-        .ai_resolution_rate +
+      data.stats.ai_resolution_rate +
       "%";
 
 
     document.getElementById(
       "contacts"
     ).textContent =
-      data.stats
-        .contact_requests;
+      data.stats.contact_requests;
 
 
     document.getElementById(
       "unanswered"
     ).textContent =
-      data.stats
-        .unanswered_questions;
+      data.stats.unanswered_questions;
 
 
     document.getElementById(
       "handoffs"
     ).textContent =
-      data.stats
-        .human_handoffs;
+      data.stats.human_handoffs;
 
 
     document.getElementById(
       "callbacks"
     ).textContent =
-      data.stats
-        .callback_requests;
+      data.stats.callback_requests;
 
 
     document.getElementById(
       "arabic"
     ).textContent =
-      data.languages
-        .arabic_percent +
+      data.languages.arabic_percent +
       "%";
 
 
     document.getElementById(
       "english"
     ).textContent =
-      data.languages
-        .english_percent +
+      data.languages.english_percent +
       "%";
 
 
@@ -582,9 +560,7 @@ async function loadPortal(){
 }
 
 
-function renderPeakHours(
-  items
-){
+function renderPeakHours(items){
 
   const container =
     document.getElementById(
@@ -592,10 +568,7 @@ function renderPeakHours(
     );
 
 
-  if(
-    !items ||
-    !items.length
-  ){
+  if(!items || !items.length){
 
     container.innerHTML =
       '<div class="empty">لا توجد بيانات كافية بعد.</div>';
@@ -612,41 +585,30 @@ function renderPeakHours(
     "</tr>";
 
 
-  items.forEach(
-    item => {
+  items.forEach(item => {
 
-      html +=
-        "<tr>" +
+    html +=
+      "<tr>" +
 
-        "<td>" +
-        escapeHtml(
-          item.hour
-        ) +
-        ":00</td>" +
+      "<td>" +
+      escapeHtml(item.hour) +
+      ":00</td>" +
 
-        "<td>" +
-        escapeHtml(
-          item.conversations
-        ) +
-        "</td>" +
+      "<td>" +
+      escapeHtml(item.conversations) +
+      "</td>" +
 
-        "</tr>";
-    }
-  );
+      "</tr>";
+  });
 
 
-  html +=
-    "</table>";
+  html += "</table>";
 
-
-  container.innerHTML =
-    html;
+  container.innerHTML = html;
 }
 
 
-function renderCommonQuestions(
-  items
-){
+function renderCommonQuestions(items){
 
   const container =
     document.getElementById(
@@ -654,10 +616,7 @@ function renderCommonQuestions(
     );
 
 
-  if(
-    !items ||
-    !items.length
-  ){
+  if(!items || !items.length){
 
     container.innerHTML =
       '<div class="empty">لا توجد بيانات كافية بعد.</div>';
@@ -675,41 +634,30 @@ function renderCommonQuestions(
     "</tr>";
 
 
-  items.forEach(
-    item => {
+  items.forEach(item => {
 
-      html +=
-        "<tr>" +
+    html +=
+      "<tr>" +
 
-        "<td>" +
-        escapeHtml(
-          item.question
-        ) +
-        "</td>" +
+      "<td>" +
+      escapeHtml(item.question) +
+      "</td>" +
 
-        "<td>" +
-        escapeHtml(
-          item.count
-        ) +
-        "</td>" +
+      "<td>" +
+      escapeHtml(item.count) +
+      "</td>" +
 
-        "</tr>";
-    }
-  );
+      "</tr>";
+  });
 
 
-  html +=
-    "</table>";
+  html += "</table>";
 
-
-  container.innerHTML =
-    html;
+  container.innerHTML = html;
 }
 
 
-function renderContacts(
-  items
-){
+function renderContacts(items){
 
   const container =
     document.getElementById(
@@ -717,10 +665,7 @@ function renderContacts(
     );
 
 
-  if(
-    !items ||
-    !items.length
-  ){
+  if(!items || !items.length){
 
     container.innerHTML =
       '<div class="empty">لا توجد طلبات تواصل.</div>';
@@ -740,57 +685,46 @@ function renderContacts(
     "</tr>";
 
 
-  items.forEach(
-    item => {
+  items.forEach(item => {
 
-      html +=
-        "<tr>" +
+    html +=
+      "<tr>" +
 
-        "<td>" +
-        escapeHtml(
-          item.customer_name ||
-          "-"
-        ) +
-        "</td>" +
+      "<td>" +
+      escapeHtml(
+        item.customer_name || "-"
+      ) +
+      "</td>" +
 
-        "<td>" +
-        escapeHtml(
-          item.phone ||
-          "-"
-        ) +
-        "</td>" +
+      "<td>" +
+      escapeHtml(
+        item.phone || "-"
+      ) +
+      "</td>" +
 
-        "<td>" +
-        escapeHtml(
-          item.request_type ||
-          "-"
-        ) +
-        "</td>" +
+      "<td>" +
+      escapeHtml(
+        item.request_type || "-"
+      ) +
+      "</td>" +
 
-        "<td>" +
-        escapeHtml(
-          item.status ||
-          "-"
-        ) +
-        "</td>" +
+      "<td>" +
+      escapeHtml(
+        item.status || "-"
+      ) +
+      "</td>" +
 
-        "</tr>";
-    }
-  );
+      "</tr>";
+  });
 
 
-  html +=
-    "</table>";
+  html += "</table>";
 
-
-  container.innerHTML =
-    html;
+  container.innerHTML = html;
 }
 
 
-function renderUnanswered(
-  items
-){
+function renderUnanswered(items){
 
   const container =
     document.getElementById(
@@ -798,10 +732,7 @@ function renderUnanswered(
     );
 
 
-  if(
-    !items ||
-    !items.length
-  ){
+  if(!items || !items.length){
 
     container.innerHTML =
       '<div class="empty">لا توجد أسئلة مسجلة.</div>';
@@ -819,52 +750,98 @@ function renderUnanswered(
     "</tr>";
 
 
-  items.forEach(
-    item => {
+  items.forEach(item => {
 
-      html +=
-        "<tr>" +
+    html +=
+      "<tr>" +
 
-        "<td>" +
-        escapeHtml(
-          item.question
-        ) +
-        "</td>" +
+      "<td>" +
+      escapeHtml(item.question) +
+      "</td>" +
 
-        "<td>" +
-        (
-          item.resolved
-          ?
-          "تمت المعالجة"
-          :
-          "بانتظار المعالجة"
-        ) +
-        "</td>" +
+      "<td>" +
+      (
+        item.resolved
+        ?
+        "تمت المعالجة"
+        :
+        "بانتظار المعالجة"
+      ) +
+      "</td>" +
 
-        "</tr>";
-    }
-  );
+      "</tr>";
+  });
 
 
-  html +=
-    "</table>";
+  html += "</table>";
 
-
-  container.innerHTML =
-    html;
+  container.innerHTML = html;
 }
 
 
-function logout(){
+async function logout(){
 
-  document.cookie =
-    "novaire_client_session=;" +
-    " Max-Age=0;" +
-    " path=/";
+  const button =
+    document.getElementById(
+      "logoutButton"
+    );
 
 
-  location.href =
-    "/client-login.html";
+  button.disabled = true;
+  button.textContent =
+    "جاري تسجيل الخروج...";
+
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/client-auth",
+        {
+          method:"POST",
+
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+
+          credentials:
+            "same-origin",
+
+          body:
+            JSON.stringify({
+              action:"logout"
+            })
+        }
+      );
+
+
+    if(!response.ok){
+
+      throw new Error(
+        "Logout failed"
+      );
+    }
+
+
+    location.replace(
+      "/client-login.html"
+    );
+
+
+  }catch(error){
+
+    console.error(error);
+
+    button.disabled = false;
+
+    button.textContent =
+      "تسجيل الخروج";
+
+    alert(
+      "تعذر تسجيل الخروج. حاول مرة أخرى."
+    );
+  }
 }
 
 
