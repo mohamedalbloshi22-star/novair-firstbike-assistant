@@ -4,8 +4,9 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const ADMIN_PASSWORD =
-  process.env.NOVAIRE_ADMIN_PASSWORD;
+const {
+  isAdminSession
+} = require("./_admin-session");
 
 
 /*
@@ -107,25 +108,6 @@ function normalizeLanguage(value) {
 }
 
 
-function isAuthorized(body) {
-
-  const password =
-    cleanText(
-      body?.password
-    );
-
-  if (
-    !ADMIN_PASSWORD ||
-    !password
-  ) {
-    return false;
-  }
-
-  return password ===
-    ADMIN_PASSWORD;
-}
-
-
 /*
 ==================================================
 Get Client
@@ -220,12 +202,6 @@ async function createKnowledge(
     };
   }
 
-
-  /*
-  ----------------------------------------------
-  Exact duplicate check inside same client only
-  ----------------------------------------------
-  */
 
   const duplicates =
     await supabaseRequest(
@@ -345,12 +321,6 @@ async function updateKnowledge(
     };
   }
 
-
-  /*
-  ----------------------------------------------
-  Make sure item belongs to selected client
-  ----------------------------------------------
-  */
 
   const existing =
     await supabaseRequest(
@@ -475,8 +445,8 @@ async function toggleKnowledge(
 
   await supabaseRequest(
     `knowledge_base` +
-    `?id=eq.${encodeURIComponent(id)}` +
-    `&client_id=eq.${encodeURIComponent(clientId)}`,
+      `?id=eq.${encodeURIComponent(id)}` +
+      `&client_id=eq.${encodeURIComponent(clientId)}`,
     {
       method:
         "PATCH",
@@ -561,8 +531,8 @@ async function deleteKnowledge(
 
   await supabaseRequest(
     `knowledge_base` +
-    `?id=eq.${encodeURIComponent(id)}` +
-    `&client_id=eq.${encodeURIComponent(clientId)}`,
+      `?id=eq.${encodeURIComponent(id)}` +
+      `&client_id=eq.${encodeURIComponent(clientId)}`,
     {
       method:
         "DELETE",
@@ -595,6 +565,12 @@ async function handler(
   res
 ) {
 
+  res.setHeader(
+    "Cache-Control",
+    "no-store"
+  );
+
+
   if (
     req.method !== "POST"
   ) {
@@ -610,8 +586,7 @@ async function handler(
 
   if (
     !SUPABASE_URL ||
-    !SUPABASE_KEY ||
-    !ADMIN_PASSWORD
+    !SUPABASE_KEY
   ) {
 
     return res
@@ -623,36 +598,24 @@ async function handler(
   }
 
 
+  if (
+    !isAdminSession(req)
+  ) {
+
+    return res
+      .status(401)
+      .json({
+        error:
+          "Unauthorized"
+      });
+  }
+
+
   try {
 
     const body =
       req.body || {};
 
-
-    /*
-    ----------------------------------------------
-    Auth
-    ----------------------------------------------
-    */
-
-    if (
-      !isAuthorized(body)
-    ) {
-
-      return res
-        .status(401)
-        .json({
-          error:
-            "Unauthorized"
-        });
-    }
-
-
-    /*
-    ----------------------------------------------
-    Client
-    ----------------------------------------------
-    */
 
     const clientSlug =
       normalizeSlug(
@@ -694,12 +657,6 @@ async function handler(
       );
 
 
-    /*
-    ----------------------------------------------
-    List
-    ----------------------------------------------
-    */
-
     if (
       action === "list"
     ) {
@@ -731,12 +688,6 @@ async function handler(
     }
 
 
-    /*
-    ----------------------------------------------
-    Create
-    ----------------------------------------------
-    */
-
     if (
       action === "create"
     ) {
@@ -756,12 +707,6 @@ async function handler(
         );
     }
 
-
-    /*
-    ----------------------------------------------
-    Update
-    ----------------------------------------------
-    */
 
     if (
       action === "update"
@@ -783,12 +728,6 @@ async function handler(
     }
 
 
-    /*
-    ----------------------------------------------
-    Toggle
-    ----------------------------------------------
-    */
-
     if (
       action === "toggle"
     ) {
@@ -808,12 +747,6 @@ async function handler(
         );
     }
 
-
-    /*
-    ----------------------------------------------
-    Delete
-    ----------------------------------------------
-    */
 
     if (
       action === "delete"
