@@ -14,17 +14,18 @@ body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#1118
 .header p{margin:0;color:#d1d5db}
 .container{max-width:1200px;margin:auto;padding:24px}
 
-.login-box{
+.loading-box{
   max-width:460px;
   margin:50px auto;
   background:#fff;
   border-radius:14px;
   padding:24px;
   border:1px solid #e5e7eb;
-  box-shadow:0 3px 12px rgba(0,0,0,.06)
+  box-shadow:0 3px 12px rgba(0,0,0,.06);
+  text-align:center
 }
 
-input,select,button{
+select,button{
   width:100%;
   padding:11px;
   margin-top:8px;
@@ -42,6 +43,7 @@ button{
 }
 
 button:hover{opacity:.9}
+button:disabled{opacity:.6;cursor:wait}
 
 .top{
   background:#fff;
@@ -53,7 +55,7 @@ button:hover{opacity:.9}
 
 .top-actions{
   display:grid;
-  grid-template-columns:1fr auto;
+  grid-template-columns:1fr auto auto;
   gap:10px;
   align-items:end
 }
@@ -62,6 +64,12 @@ button:hover{opacity:.9}
   width:auto;
   min-width:110px;
   background:#991b1b
+}
+
+.control{
+  width:auto;
+  min-width:120px;
+  background:#374151
 }
 
 .grid{
@@ -78,8 +86,16 @@ button:hover{opacity:.9}
   box-shadow:0 3px 10px rgba(0,0,0,.04)
 }
 
-.card .label{color:#6b7280;font-size:14px}
-.card .value{font-size:28px;font-weight:bold;margin-top:8px}
+.card .label{
+  color:#6b7280;
+  font-size:14px
+}
+
+.card .value{
+  font-size:28px;
+  font-weight:bold;
+  margin-top:8px
+}
 
 .section{
   background:#fff;
@@ -89,8 +105,17 @@ button:hover{opacity:.9}
   border:1px solid #e5e7eb
 }
 
-table{width:100%;border-collapse:collapse}
-th,td{padding:11px;border-bottom:1px solid #e5e7eb;text-align:right}
+table{
+  width:100%;
+  border-collapse:collapse
+}
+
+th,td{
+  padding:11px;
+  border-bottom:1px solid #e5e7eb;
+  text-align:right
+}
+
 th{background:#f9fafb}
 
 .message{
@@ -106,25 +131,17 @@ th{background:#f9fafb}
   color:#991b1b
 }
 
-.back{
-  display:inline-block;
-  margin-bottom:18px;
-  text-decoration:none;
-  color:#111827;
-  font-weight:bold
-}
-
 .hidden{display:none!important}
 
 @media(max-width:900px){
   .grid{grid-template-columns:repeat(2,1fr)}
+  .top-actions{grid-template-columns:1fr}
+  .logout,.control{width:100%}
 }
 
 @media(max-width:550px){
   .grid{grid-template-columns:1fr}
   .container{padding:14px}
-  .top-actions{grid-template-columns:1fr}
-  .logout{width:100%}
 }
 </style>
 </head>
@@ -140,26 +157,10 @@ th{background:#f9fafb}
 
 <main class="container">
 
-<a class="back" href="/control.html">← العودة إلى لوحة التحكم</a>
-
-<div id="loginBox" class="login-box">
-
-<h2>دخول الإدارة</h2>
-<p>أدخل كلمة مرور NOVAIRE لعرض إحصائيات العملاء.</p>
-
-<input
-  id="passwordInput"
-  type="password"
-  placeholder="كلمة المرور"
-  autocomplete="current-password"
->
-
-<button id="loginButton" type="button">دخول</button>
-
-<div id="loginMessage" class="message" style="margin-top:12px"></div>
-
+<div id="loadingBox" class="loading-box">
+<h2>NOVAIRE</h2>
+<p>جاري التحقق من جلسة الإدارة...</p>
 </div>
-
 
 <div id="dashboardContent" class="hidden">
 
@@ -177,7 +178,17 @@ th{background:#f9fafb}
 </select>
 </div>
 
-<button id="logoutButton" class="logout" type="button">
+<button
+id="controlButton"
+class="control"
+type="button">
+لوحة التحكم
+</button>
+
+<button
+id="logoutButton"
+class="logout"
+type="button">
 تسجيل الخروج
 </button>
 
@@ -237,11 +248,16 @@ th{background:#f9fafb}
 
 <div class="section">
 <h2>الأسئلة الأكثر شيوعًا</h2>
+
 <div style="overflow-x:auto">
 <table>
 <thead>
-<tr><th>السؤال</th><th>العدد</th></tr>
+<tr>
+<th>السؤال</th>
+<th>العدد</th>
+</tr>
 </thead>
+
 <tbody id="questionsTable">
 <tr><td colspan="2">—</td></tr>
 </tbody>
@@ -252,11 +268,16 @@ th{background:#f9fafb}
 
 <div class="section">
 <h2>أوقات الذروة</h2>
+
 <div style="overflow-x:auto">
 <table>
 <thead>
-<tr><th>الساعة</th><th>عدد المحادثات</th></tr>
+<tr>
+<th>الساعة</th>
+<th>عدد المحادثات</th>
+</tr>
 </thead>
+
 <tbody id="hoursTable">
 <tr><td colspan="2">—</td></tr>
 </tbody>
@@ -267,6 +288,7 @@ th{background:#f9fafb}
 
 <div class="section">
 <h2>الإحصائيات اليومية</h2>
+
 <div style="overflow-x:auto">
 <table>
 <thead>
@@ -276,6 +298,7 @@ th{background:#f9fafb}
 <th>الرسائل</th>
 </tr>
 </thead>
+
 <tbody id="dailyTable">
 <tr><td colspan="3">—</td></tr>
 </tbody>
@@ -287,61 +310,203 @@ th{background:#f9fafb}
 
 </main>
 
+
 <script>
 
-const STORAGE_KEY="novaire_control_client";
+const STORAGE_KEY =
+  "novaire_control_client";
 
-let adminPassword="";
+const loadingBox =
+  document.getElementById(
+    "loadingBox"
+  );
 
-const loginBox=document.getElementById("loginBox");
-const dashboardContent=document.getElementById("dashboardContent");
-const passwordInput=document.getElementById("passwordInput");
-const loginButton=document.getElementById("loginButton");
-const loginMessage=document.getElementById("loginMessage");
-const clientSelect=document.getElementById("clientSelect");
+const dashboardContent =
+  document.getElementById(
+    "dashboardContent"
+  );
+
+const clientSelect =
+  document.getElementById(
+    "clientSelect"
+  );
 
 
 function requestedClient(){
 
-  const params=new URLSearchParams(window.location.search);
+  const params =
+    new URLSearchParams(
+      window.location.search
+    );
 
-  const fromUrl=String(
-    params.get("client") || ""
-  ).trim().toLowerCase();
+  const fromUrl =
+    String(
+      params.get("client") || ""
+    )
+    .trim()
+    .toLowerCase();
 
-  if(fromUrl) return fromUrl;
+  if(fromUrl){
+    return fromUrl;
+  }
 
   return String(
-    localStorage.getItem(STORAGE_KEY) || ""
-  ).trim().toLowerCase();
+    localStorage.getItem(
+      STORAGE_KEY
+    ) || ""
+  )
+  .trim()
+  .toLowerCase();
 }
 
 
+/*
+================================
+AUTH
+================================
+*/
+
+async function checkAuth(){
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/admin-auth",
+        {
+          method:"GET",
+          credentials:"same-origin",
+          cache:"no-store"
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if(
+      !response.ok ||
+      !data.authenticated
+    ){
+
+      window.location.href =
+        "/control.html";
+
+      return false;
+    }
+
+    return true;
+
+  }catch{
+
+    window.location.href =
+      "/control.html";
+
+    return false;
+  }
+}
+
+
+async function logout(){
+
+  try{
+
+    await fetch(
+      "/api/admin-auth",
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        credentials:"same-origin",
+
+        body:JSON.stringify({
+          action:"logout"
+        })
+      }
+    );
+
+  }catch{}
+
+  window.location.href =
+    "/control.html";
+}
+
+
+/*
+================================
+CLIENTS
+================================
+*/
+
 async function getClients(){
 
-  const response=await fetch(
-    "/api/public-clients",
-    {
-      method:"GET",
-      cache:"no-store"
-    }
-  );
+  const response =
+    await fetch(
+      "/api/client-admin",
+      {
+        method:"POST",
 
-  const data=await response.json();
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
 
-  if(!response.ok){
+        credentials:"same-origin",
+
+        cache:"no-store",
+
+        body:JSON.stringify({
+          action:"list"
+        })
+      }
+    );
+
+  let data={};
+
+  try{
+    data=
+      await response.json();
+  }catch{}
+
+
+  if(response.status===401){
+
+    window.location.href =
+      "/control.html";
+
     throw new Error(
-      data.error || "تعذر تحميل العملاء."
+      "Unauthorized"
     );
   }
 
-  const clients=Array.isArray(data.clients)
-    ? data.clients
-    : [];
+
+  if(!response.ok){
+
+    throw new Error(
+      data.error ||
+      "تعذر تحميل العملاء."
+    );
+  }
+
+
+  const clients =
+    Array.isArray(data.clients)
+      ? data.clients
+      : Array.isArray(data.items)
+        ? data.items
+        : [];
+
 
   if(!clients.length){
-    throw new Error("لا يوجد عملاء.");
+
+    throw new Error(
+      "لا يوجد عملاء."
+    );
   }
+
 
   return clients;
 }
@@ -349,245 +514,282 @@ async function getClients(){
 
 function fillClients(clients){
 
-  clientSelect.innerHTML="";
+  clientSelect.innerHTML =
+    "";
 
-  clients.forEach(client=>{
 
-    if(!client.slug) return;
+  clients.forEach(
+    client=>{
 
-    const option=document.createElement("option");
+      if(!client?.slug){
+        return;
+      }
 
-    option.value=client.slug;
 
-    option.textContent=
-      client.name ||
-      client.brand_name ||
-      client.slug;
+      const option =
+        document.createElement(
+          "option"
+        );
 
-    clientSelect.appendChild(option);
-  });
 
-  const wanted=requestedClient();
+      option.value =
+        String(
+          client.slug
+        )
+        .trim()
+        .toLowerCase();
 
-  const exists=Array.from(
-    clientSelect.options
-  ).some(option=>option.value===wanted);
+
+      option.textContent =
+        client.name ||
+        client.config?.brand_name ||
+        client.slug;
+
+
+      clientSelect.appendChild(
+        option
+      );
+    }
+  );
+
+
+  const wanted =
+    requestedClient();
+
+
+  const exists =
+    Array.from(
+      clientSelect.options
+    ).some(
+      option =>
+        option.value === wanted
+    );
+
 
   if(exists){
-    clientSelect.value=wanted;
+
+    clientSelect.value =
+      wanted;
+
   }else{
-    clientSelect.selectedIndex=0;
+
+    clientSelect.selectedIndex =
+      0;
   }
 
+
   if(!clientSelect.value){
-    throw new Error("لا يوجد عميل صالح.");
+
+    throw new Error(
+      "لا يوجد عميل صالح."
+    );
   }
 }
 
 
-async function requestDashboard(slug,password){
+/*
+================================
+DASHBOARD REQUEST
+================================
+*/
 
-  const response=await fetch(
-    "/api/dashboard",
-    {
-      method:"POST",
-      headers:{
-        "Content-Type":"application/json"
-      },
-      body:JSON.stringify({
-        password:password,
-        client_slug:slug
-      })
-    }
-  );
+async function requestDashboard(
+  slug
+){
+
+  const response =
+    await fetch(
+      "/api/dashboard",
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        credentials:
+          "same-origin",
+
+        body:JSON.stringify({
+          client_slug:slug
+        })
+      }
+    );
+
 
   let data={};
 
   try{
-    data=await response.json();
+    data=
+      await response.json();
   }catch{}
 
+
   if(response.status===401){
-    throw new Error("كلمة المرور غير صحيحة.");
+
+    window.location.href =
+      "/control.html";
+
+    throw new Error(
+      "Unauthorized"
+    );
   }
 
+
   if(!response.ok){
+
     throw new Error(
       data.error ||
       "تعذر تحميل الإحصائيات."
     );
   }
 
+
   return data;
 }
 
 
-async function login(){
-
-  const password=passwordInput.value;
-
-  if(!password){
-    showLoginError("أدخل كلمة المرور.");
-    return;
-  }
-
-  loginButton.disabled=true;
-  loginButton.textContent="جاري التحقق...";
-  clearLoginMessage();
-
-  try{
-
-    const clients=await getClients();
-
-    fillClients(clients);
-
-    /*
-      أهم إصلاح:
-      لا نفتح اللوحة قبل نجاح طلب API المحمي.
-    */
-
-    const data=await requestDashboard(
-      clientSelect.value,
-      password
-    );
-
-    adminPassword=password;
-
-    localStorage.setItem(
-      STORAGE_KEY,
-      clientSelect.value
-    );
-
-    updateUrl(clientSelect.value);
-
-    renderDashboard(data);
-
-    loginBox.classList.add("hidden");
-    dashboardContent.classList.remove("hidden");
-
-  }catch(error){
-
-    adminPassword="";
-
-    dashboardContent.classList.add("hidden");
-    loginBox.classList.remove("hidden");
-
-    showLoginError(
-      error.message ||
-      "تعذر تسجيل الدخول."
-    );
-
-  }finally{
-
-    loginButton.disabled=false;
-    loginButton.textContent="دخول";
-  }
-}
-
+/*
+================================
+LOAD DASHBOARD
+================================
+*/
 
 async function loadDashboard(){
 
-  if(!adminPassword) return;
+  const slug =
+    clientSelect.value;
 
-  const slug=clientSelect.value;
 
-  if(!slug) return;
+  if(!slug){
+    return;
+  }
+
 
   clearMessage();
 
-  try{
 
-    const data=await requestDashboard(
-      slug,
-      adminPassword
+  const refreshButton =
+    document.getElementById(
+      "refreshButton"
     );
 
-    renderDashboard(data);
+
+  refreshButton.disabled =
+    true;
+
+
+  try{
+
+    const data =
+      await requestDashboard(
+        slug
+      );
+
+
+    renderDashboard(
+      data
+    );
+
 
   }catch(error){
 
     if(
-      error.message ===
-      "كلمة المرور غير صحيحة."
+      error.message !==
+      "Unauthorized"
     ){
 
-      logout();
-
-      showLoginError(
-        "انتهت صلاحية الدخول أو كلمة المرور غير صحيحة."
+      showError(
+        error.message
       );
-
-      return;
     }
 
-    showError(error.message);
+  }finally{
+
+    refreshButton.disabled =
+      false;
   }
 }
 
 
-function changeClient(){
+/*
+================================
+CHANGE CLIENT
+================================
+*/
 
-  const slug=clientSelect.value;
+async function changeClient(){
 
-  if(!slug) return;
+  const slug =
+    clientSelect.value;
+
+
+  if(!slug){
+    return;
+  }
+
 
   localStorage.setItem(
     STORAGE_KEY,
     slug
   );
 
-  updateUrl(slug);
 
-  loadDashboard();
+  updateUrl(
+    slug
+  );
+
+
+  await loadDashboard();
 }
 
 
 function updateUrl(slug){
 
-  const url=new URL(
-    window.location.href
-  );
+  const url =
+    new URL(
+      window.location.href
+    );
+
 
   url.searchParams.set(
     "client",
     slug
   );
 
+
   history.replaceState(
     {},
     "",
-    url.pathname+url.search
+    url.pathname +
+    url.search
   );
 }
 
 
-function logout(){
+/*
+================================
+RENDER
+================================
+*/
 
-  adminPassword="";
+function pick(
+  obj,
+  names,
+  fallback=0
+){
 
-  passwordInput.value="";
-
-  dashboardContent.classList.add(
-    "hidden"
-  );
-
-  loginBox.classList.remove(
-    "hidden"
-  );
-
-  clearMessage();
-}
-
-
-function pick(obj,names,fallback=0){
-
-  for(const name of names){
+  for(
+    const name of names
+  ){
 
     if(
       obj &&
       obj[name] !== undefined &&
       obj[name] !== null
     ){
+
       return obj[name];
     }
   }
@@ -598,100 +800,141 @@ function pick(obj,names,fallback=0){
 
 function renderDashboard(data){
 
-  const summary=
+  const summary =
     data.summary ||
     data.stats ||
     data.dashboard ||
     data;
 
+
   setValue(
     "conversations",
-    pick(summary,[
-      "total_conversations",
-      "conversations"
-    ])
+    pick(
+      summary,
+      [
+        "total_conversations",
+        "conversations"
+      ]
+    )
   );
+
 
   setValue(
     "messages",
-    pick(summary,[
-      "total_messages",
-      "messages"
-    ])
+    pick(
+      summary,
+      [
+        "total_messages",
+        "messages"
+      ]
+    )
   );
 
-  let resolution=pick(
-    summary,
-    [
-      "ai_resolution_rate",
-      "resolution_rate",
-      "resolved_by_ai_rate"
-    ],
-    0
-  );
+
+  let resolution =
+    pick(
+      summary,
+      [
+        "ai_resolution_rate",
+        "resolution_rate",
+        "resolved_by_ai_rate"
+      ],
+      0
+    );
+
 
   if(
-    typeof resolution==="number" &&
-    resolution<=1 &&
-    resolution>0
+    typeof resolution ===
+      "number" &&
+    resolution <= 1 &&
+    resolution > 0
   ){
-    resolution=resolution*100;
+
+    resolution =
+      resolution * 100;
   }
+
 
   setValue(
     "resolution",
-    formatPercent(resolution)
+    formatPercent(
+      resolution
+    )
   );
+
 
   setValue(
     "unanswered",
-    pick(summary,[
-      "unanswered_questions",
-      "unanswered_count",
-      "total_unanswered"
-    ])
+    pick(
+      summary,
+      [
+        "unanswered_questions",
+        "unanswered_count",
+        "total_unanswered"
+      ]
+    )
   );
+
 
   setValue(
     "handoff",
-    pick(summary,[
-      "human_handoff",
-      "human_handoff_count",
-      "handoffs"
-    ])
+    pick(
+      summary,
+      [
+        "human_handoff",
+        "human_handoff_count",
+        "handoffs"
+      ]
+    )
   );
+
 
   setValue(
     "callback",
-    pick(summary,[
-      "callback_requested",
-      "callback_count",
-      "callbacks"
-    ])
+    pick(
+      summary,
+      [
+        "callback_requested",
+        "callback_count",
+        "callbacks"
+      ]
+    )
   );
 
-  const language=
+
+  const language =
     data.languages ||
     data.language_stats ||
     {};
 
+
   setValue(
     "arabic",
-    pick(language,[
-      "ar",
-      "arabic",
-      "arabic_count"
-    ],0)
+    pick(
+      language,
+      [
+        "ar",
+        "arabic",
+        "arabic_count"
+      ],
+      0
+    )
   );
+
 
   setValue(
     "english",
-    pick(language,[
-      "en",
-      "english",
-      "english_count"
-    ],0)
+    pick(
+      language,
+      [
+        "en",
+        "english",
+        "english_count"
+      ],
+      0
+    )
   );
+
 
   renderQuestions(
     data.common_questions ||
@@ -699,11 +942,13 @@ function renderDashboard(data){
     []
   );
 
+
   renderHours(
     data.peak_hours ||
     data.hours ||
     []
   );
+
 
   renderDaily(
     data.daily_stats ||
@@ -713,191 +958,267 @@ function renderDashboard(data){
 }
 
 
-function setValue(id,value){
-  document.getElementById(id).textContent=
+function setValue(
+  id,
+  value
+){
+
+  document.getElementById(
+    id
+  ).textContent =
     value ?? 0;
 }
 
 
-function formatPercent(value){
+function formatPercent(
+  value
+){
 
   if(
-    typeof value==="string" &&
+    typeof value === "string" &&
     value.includes("%")
   ){
     return value;
   }
 
-  const number=Number(value);
 
-  if(Number.isNaN(number)){
+  const number =
+    Number(value);
+
+
+  if(
+    Number.isNaN(number)
+  ){
     return "0%";
   }
 
-  return number.toFixed(1)+"%";
+
+  return number.toFixed(1) +
+    "%";
 }
 
 
+/*
+================================
+TABLES
+================================
+*/
+
 function renderQuestions(items){
 
-  const table=document.getElementById(
-    "questionsTable"
-  );
+  const table =
+    document.getElementById(
+      "questionsTable"
+    );
 
   table.innerHTML="";
 
-  if(!Array.isArray(items) || !items.length){
-    table.innerHTML=
+
+  if(
+    !Array.isArray(items) ||
+    !items.length
+  ){
+
+    table.innerHTML =
       '<tr><td colspan="2">لا توجد بيانات.</td></tr>';
+
     return;
   }
 
-  items.forEach(item=>{
 
-    const row=document.createElement("tr");
+  items.forEach(
+    item=>{
 
-    row.innerHTML=
-      "<td>"+
-      escapeHtml(
-        item.question ||
-        item.content ||
-        item.text ||
-        ""
-      )+
-      "</td>"+
-      "<td>"+
-      escapeHtml(
-        item.count ||
-        item.total ||
-        item.frequency ||
-        0
-      )+
-      "</td>";
+      const row =
+        document.createElement(
+          "tr"
+        );
 
-    table.appendChild(row);
-  });
+
+      row.innerHTML =
+        "<td>" +
+        escapeHtml(
+          item.question ||
+          item.content ||
+          item.text ||
+          ""
+        ) +
+        "</td>" +
+
+        "<td>" +
+        escapeHtml(
+          item.count ||
+          item.total ||
+          item.frequency ||
+          0
+        ) +
+        "</td>";
+
+
+      table.appendChild(
+        row
+      );
+    }
+  );
 }
 
 
 function renderHours(items){
 
-  const table=document.getElementById(
-    "hoursTable"
-  );
+  const table =
+    document.getElementById(
+      "hoursTable"
+    );
 
   table.innerHTML="";
 
-  if(!Array.isArray(items) || !items.length){
-    table.innerHTML=
+
+  if(
+    !Array.isArray(items) ||
+    !items.length
+  ){
+
+    table.innerHTML =
       '<tr><td colspan="2">لا توجد بيانات.</td></tr>';
+
     return;
   }
 
-  items.forEach(item=>{
 
-    const row=document.createElement("tr");
+  items.forEach(
+    item=>{
 
-    row.innerHTML=
-      "<td>"+
-      escapeHtml(
-        item.hour ??
-        item.hour_uae ??
-        ""
-      )+
-      "</td>"+
-      "<td>"+
-      escapeHtml(
-        item.count ??
-        item.conversations ??
-        item.total ??
-        0
-      )+
-      "</td>";
+      const row =
+        document.createElement(
+          "tr"
+        );
 
-    table.appendChild(row);
-  });
+
+      row.innerHTML =
+        "<td>" +
+        escapeHtml(
+          item.hour ??
+          item.hour_uae ??
+          ""
+        ) +
+        "</td>" +
+
+        "<td>" +
+        escapeHtml(
+          item.count ??
+          item.conversations ??
+          item.total ??
+          0
+        ) +
+        "</td>";
+
+
+      table.appendChild(
+        row
+      );
+    }
+  );
 }
 
 
 function renderDaily(items){
 
-  const table=document.getElementById(
-    "dailyTable"
-  );
+  const table =
+    document.getElementById(
+      "dailyTable"
+    );
 
   table.innerHTML="";
 
-  if(!Array.isArray(items) || !items.length){
-    table.innerHTML=
+
+  if(
+    !Array.isArray(items) ||
+    !items.length
+  ){
+
+    table.innerHTML =
       '<tr><td colspan="3">لا توجد بيانات.</td></tr>';
+
     return;
   }
 
-  items.forEach(item=>{
 
-    const row=document.createElement("tr");
+  items.forEach(
+    item=>{
 
-    row.innerHTML=
-      "<td>"+
-      escapeHtml(
-        item.date ||
-        item.day ||
-        ""
-      )+
-      "</td>"+
-      "<td>"+
-      escapeHtml(
-        item.conversations ??
-        item.total_conversations ??
-        0
-      )+
-      "</td>"+
-      "<td>"+
-      escapeHtml(
-        item.messages ??
-        item.total_messages ??
-        0
-      )+
-      "</td>";
+      const row =
+        document.createElement(
+          "tr"
+        );
 
-    table.appendChild(row);
-  });
+
+      row.innerHTML =
+        "<td>" +
+        escapeHtml(
+          item.date ||
+          item.day ||
+          ""
+        ) +
+        "</td>" +
+
+        "<td>" +
+        escapeHtml(
+          item.conversations ??
+          item.total_conversations ??
+          0
+        ) +
+        "</td>" +
+
+        "<td>" +
+        escapeHtml(
+          item.messages ??
+          item.total_messages ??
+          0
+        ) +
+        "</td>";
+
+
+      table.appendChild(
+        row
+      );
+    }
+  );
 }
 
 
+/*
+================================
+MESSAGES
+================================
+*/
+
 function showError(text){
 
-  const box=document.getElementById(
-    "message"
-  );
+  const box =
+    document.getElementById(
+      "message"
+    );
 
-  box.textContent=text;
-  box.className="message error";
+  box.textContent =
+    text;
+
+  box.className =
+    "message error";
 }
 
 
 function clearMessage(){
 
-  const box=document.getElementById(
-    "message"
-  );
+  const box =
+    document.getElementById(
+      "message"
+    );
 
-  box.textContent="";
-  box.className="message";
-}
+  box.textContent =
+    "";
 
-
-function showLoginError(text){
-
-  loginMessage.textContent=text;
-  loginMessage.className="message error";
-}
-
-
-function clearLoginMessage(){
-
-  loginMessage.textContent="";
-  loginMessage.className="message";
+  box.className =
+    "message";
 }
 
 
@@ -912,24 +1233,102 @@ function escapeHtml(value){
 }
 
 
-loginButton.addEventListener(
-  "click",
-  login
-);
+/*
+================================
+START
+================================
+*/
 
-passwordInput.addEventListener(
-  "keydown",
-  event=>{
-    if(event.key==="Enter"){
-      login();
-    }
+async function start(){
+
+  const authenticated =
+    await checkAuth();
+
+
+  if(!authenticated){
+    return;
   }
-);
+
+
+  try{
+
+    const clients =
+      await getClients();
+
+
+    fillClients(
+      clients
+    );
+
+
+    localStorage.setItem(
+      STORAGE_KEY,
+      clientSelect.value
+    );
+
+
+    updateUrl(
+      clientSelect.value
+    );
+
+
+    const data =
+      await requestDashboard(
+        clientSelect.value
+      );
+
+
+    renderDashboard(
+      data
+    );
+
+
+    loadingBox.classList.add(
+      "hidden"
+    );
+
+
+    dashboardContent.classList.remove(
+      "hidden"
+    );
+
+
+  }catch(error){
+
+    console.error(error);
+
+
+    if(
+      error.message ===
+      "Unauthorized"
+    ){
+      return;
+    }
+
+
+    loadingBox.innerHTML =
+      "<h2>تعذر تحميل الإحصائيات</h2>" +
+      "<p>" +
+      escapeHtml(
+        error.message ||
+        "حدث خطأ."
+      ) +
+      "</p>";
+  }
+}
+
+
+/*
+================================
+EVENTS
+================================
+*/
 
 clientSelect.addEventListener(
   "change",
   changeClient
 );
+
 
 document.getElementById(
   "refreshButton"
@@ -938,12 +1337,27 @@ document.getElementById(
   loadDashboard
 );
 
+
 document.getElementById(
   "logoutButton"
 ).addEventListener(
   "click",
   logout
 );
+
+
+document.getElementById(
+  "controlButton"
+).addEventListener(
+  "click",
+  ()=>{
+    window.location.href =
+      "/control.html";
+  }
+);
+
+
+start();
 
 </script>
 
