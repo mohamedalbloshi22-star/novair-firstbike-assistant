@@ -47,6 +47,15 @@ function sign(value) {
 }
 
 
+function clearClientCookie(res) {
+
+  res.setHeader(
+    "Set-Cookie",
+    `${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`
+  );
+}
+
+
 async function getClient(slug) {
 
   const response =
@@ -82,6 +91,7 @@ async function handler(req, res) {
     "no-store"
   );
 
+
   if (req.method !== "POST") {
 
     res.status(405).json({
@@ -114,12 +124,35 @@ async function handler(req, res) {
         ? JSON.parse(req.body || "{}")
         : req.body || {};
 
+
+    const action =
+      String(
+        body.action || "login"
+      )
+        .trim()
+        .toLowerCase();
+
+
+    if (action === "logout") {
+
+      clearClientCookie(res);
+
+      res.status(200).json({
+        success: true,
+        authenticated: false
+      });
+
+      return;
+    }
+
+
     const slug =
       String(
         body.client_slug || ""
       )
         .trim()
         .toLowerCase();
+
 
     const password =
       String(
@@ -242,6 +275,7 @@ async function handler(req, res) {
 
     res.status(200).json({
       success: true,
+      authenticated: true,
       client: {
         name: client.name,
         slug: client.slug
