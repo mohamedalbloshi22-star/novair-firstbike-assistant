@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NOVAIRE Client Portal</title>
+
+<style>
+body{
+  margin:0;
+  background:#171717;
+  color:#f5f1e8;
+  font-family:Arial,Tahoma,sans-serif;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  min-height:100vh;
+}
+.box{
+  width:min(400px,calc(100% - 32px));
+  background:#232323;
+  border:1px solid #3a3a3a;
+  border-radius:14px;
+  padding:28px;
+}
+h1{
+  margin:0 0 8px;
+  color:#f2a93b;
+}
+p{
+  color:#b9b2a7;
+  margin-bottom:24px;
+}
+input{
+  width:100%;
+  box-sizing:border-box;
+  margin-bottom:12px;
+  padding:13px;
+  border-radius:8px;
+  border:1px solid #3a3a3a;
+  background:#171717;
+  color:white;
+}
+button{
+  width:100%;
+  padding:13px;
+  border:0;
+  border-radius:8px;
+  background:#f2a93b;
+  color:#111;
+  font-weight:bold;
+  cursor:pointer;
+}
+#error{
+  color:#ff8170;
+  margin-top:14px;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+<h1>NOVAIRE</h1>
+<p>بوابة العميل</p>
+
+<input
+  id="clientSlug"
+  placeholder="رمز العميل"
+  autocomplete="username"
+>
+
+<input
+  id="password"
+  type="password"
+  placeholder="كلمة المرور"
+  autocomplete="current-password"
+>
+
+<button id="loginBtn">
+دخول
+</button>
+
+<div id="error"></div>
+</div>
+
+<script>
+
+const slug =
+  new URLSearchParams(
+    location.search
+  ).get("client");
+
+if(slug){
+  document.getElementById(
+    "clientSlug"
+  ).value = slug;
+}
+
+async function login(){
+
+  const clientSlug =
+    document.getElementById(
+      "clientSlug"
+    ).value.trim().toLowerCase();
+
+  const password =
+    document.getElementById(
+      "password"
+    ).value;
+
+  const error =
+    document.getElementById(
+      "error"
+    );
+
+  error.textContent = "";
+
+  if(!clientSlug || !password){
+    error.textContent =
+      "أدخل رمز العميل وكلمة المرور.";
+    return;
+  }
+
+  try{
+
+    const response =
+      await fetch(
+        "/api/client-auth",
+        {
+          method:"POST",
+          headers:{
+            "Content-Type":
+              "application/json"
+          },
+          credentials:"same-origin",
+          body:JSON.stringify({
+            client_slug:clientSlug,
+            password
+          })
+        }
+      );
+
+    const data =
+      await response.json();
+
+    if(
+      !response.ok ||
+      !data.success
+    ){
+      error.textContent =
+        data.error ||
+        "بيانات الدخول غير صحيحة.";
+      return;
+    }
+
+    location.href =
+      "/client-portal.html";
+
+  }catch{
+
+    error.textContent =
+      "تعذر الاتصال بالنظام.";
+  }
+}
+
+document.getElementById(
+  "loginBtn"
+).onclick = login;
+
+document.getElementById(
+  "password"
+).addEventListener(
+  "keydown",
+  e=>{
+    if(e.key === "Enter"){
+      login();
+    }
+  }
+);
+
+</script>
+
+</body>
+</html>
