@@ -4,8 +4,9 @@ const SUPABASE_URL =
 const SUPABASE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-const ADMIN_PASSWORD =
-  process.env.NOVAIRE_ADMIN_PASSWORD;
+const {
+  isAdminSession
+} = require("./_admin-session");
 
 
 /*
@@ -189,31 +190,6 @@ function normalizePrices(value) {
 
 /*
 ==================================================
-Password
-==================================================
-*/
-
-function isAuthorized(body) {
-
-  const password =
-    cleanText(
-      body?.password
-    );
-
-  if (
-    !ADMIN_PASSWORD ||
-    !password
-  ) {
-    return false;
-  }
-
-  return password ===
-    ADMIN_PASSWORD;
-}
-
-
-/*
-==================================================
 List clients
 ==================================================
 */
@@ -358,12 +334,6 @@ async function createClient(
   }
 
 
-  /*
-  ----------------------------------------------
-  Check slug duplication
-  ----------------------------------------------
-  */
-
   const existing =
     await supabaseRequest(
       `clients` +
@@ -387,12 +357,6 @@ async function createClient(
     };
   }
 
-
-  /*
-  ----------------------------------------------
-  Config
-  ----------------------------------------------
-  */
 
   const config = {
 
@@ -594,12 +558,6 @@ async function updateClient(
     ) ||
     existing.slug;
 
-
-  /*
-  ----------------------------------------------
-  Check slug duplicate if changed
-  ----------------------------------------------
-  */
 
   if (
     slug !== existing.slug
@@ -896,11 +854,6 @@ async function deleteClient(
   }
 
 
-  /*
-  IMPORTANT:
-  We do not allow deleting First Bike accidentally.
-  */
-
   if (
     client.slug ===
     "first-bike"
@@ -950,6 +903,12 @@ async function handler(
   res
 ) {
 
+  res.setHeader(
+    "Cache-Control",
+    "no-store"
+  );
+
+
   if (
     req.method !==
     "POST"
@@ -966,8 +925,7 @@ async function handler(
 
   if (
     !SUPABASE_URL ||
-    !SUPABASE_KEY ||
-    !ADMIN_PASSWORD
+    !SUPABASE_KEY
   ) {
 
     return res
@@ -979,30 +937,29 @@ async function handler(
   }
 
 
+  /*
+  ==================================================
+  Unified admin session authentication
+  ==================================================
+  */
+
+  if (
+    !isAdminSession(req)
+  ) {
+
+    return res
+      .status(401)
+      .json({
+        error:
+          "Unauthorized"
+      });
+  }
+
+
   try {
 
     const body =
       req.body || {};
-
-
-    /*
-    ----------------------------------------------
-    Auth
-    ----------------------------------------------
-    */
-
-    if (
-      !isAuthorized(body)
-    ) {
-
-      return res
-        .status(401)
-        .json({
-          error:
-            "Unauthorized"
-        });
-    }
-
 
     const action =
       cleanText(
