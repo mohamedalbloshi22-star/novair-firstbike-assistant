@@ -7,21 +7,102 @@
 
 <style>
 *{box-sizing:border-box}
-body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#f4f6f8;color:#1f2937}
-.container{max-width:1000px;margin:auto;padding:24px}
-.card{background:white;border-radius:14px;padding:20px;margin-bottom:18px;box-shadow:0 3px 12px rgba(0,0,0,.06)}
-.item{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:14px;background:#fafafa}
-input,textarea,select,button{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:8px;font-size:15px;margin:6px 0 12px}
-textarea{min-height:90px}
-button{border:0;cursor:pointer;font-weight:bold}
-.primary{background:#111827;color:white}
-.success{background:#047857;color:white}
-.secondary{background:#e5e7eb;color:#111827}
-.muted{color:#6b7280;font-size:14px}
-#app{display:none}
-#message{display:none;padding:12px;border-radius:8px;margin-bottom:15px}
-#message.ok{display:block;background:#d1fae5;color:#065f46}
-#message.error{display:block;background:#fee2e2;color:#991b1b}
+body{
+  margin:0;
+  font-family:Arial,Tahoma,sans-serif;
+  background:#f4f6f8;
+  color:#1f2937
+}
+.container{
+  max-width:1000px;
+  margin:auto;
+  padding:24px
+}
+.card{
+  background:white;
+  border-radius:14px;
+  padding:20px;
+  margin-bottom:18px;
+  box-shadow:0 3px 12px rgba(0,0,0,.06)
+}
+.item{
+  border:1px solid #e5e7eb;
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:14px;
+  background:#fafafa
+}
+input,textarea,select,button{
+  width:100%;
+  padding:11px;
+  border:1px solid #d1d5db;
+  border-radius:8px;
+  font-size:15px;
+  margin:6px 0 12px
+}
+textarea{
+  min-height:90px;
+  resize:vertical
+}
+button{
+  border:0;
+  cursor:pointer;
+  font-weight:bold
+}
+.primary{
+  background:#111827;
+  color:white
+}
+.success{
+  background:#047857;
+  color:white
+}
+.secondary{
+  background:#e5e7eb;
+  color:#111827
+}
+.danger{
+  background:#b91c1c;
+  color:white
+}
+.muted{
+  color:#6b7280;
+  font-size:14px
+}
+.top-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px
+}
+#app{
+  display:none
+}
+#loadingBox{
+  max-width:420px;
+  margin:90px auto;
+  text-align:center
+}
+#message{
+  display:none;
+  padding:12px;
+  border-radius:8px;
+  margin-bottom:15px
+}
+#message.ok{
+  display:block;
+  background:#d1fae5;
+  color:#065f46
+}
+#message.error{
+  display:block;
+  background:#fee2e2;
+  color:#991b1b
+}
+@media(max-width:700px){
+  .top-actions{
+    grid-template-columns:1fr
+  }
+}
 </style>
 </head>
 
@@ -29,15 +110,10 @@ button{border:0;cursor:pointer;font-weight:bold}
 
 <div class="container">
 
-<div class="card" id="loginBox">
+<div class="card" id="loadingBox">
 <h1>NOVAIRE</h1>
 <h2>الأسئلة غير المجابة</h2>
-
-<input id="password" type="password" placeholder="كلمة مرور الإدارة">
-
-<button class="primary" onclick="login()">
-دخول
-</button>
+<p class="muted">جاري التحقق من جلسة الإدارة...</p>
 </div>
 
 
@@ -45,17 +121,35 @@ button{border:0;cursor:pointer;font-weight:bold}
 
 <div id="message"></div>
 
+
 <div class="card">
+
+<h1>NOVAIRE</h1>
+<h2>الأسئلة غير المجابة</h2>
 
 <label>العميل</label>
 
-<select id="clientSelect" onchange="clientChanged()">
+<select
+id="clientSelect"
+onchange="clientChanged()">
 <option value="">اختر العميل</option>
 </select>
 
-<button class="secondary" onclick="logout()">
+<div class="top-actions">
+
+<button
+class="secondary"
+onclick="goControl()">
+لوحة التحكم
+</button>
+
+<button
+class="danger"
+onclick="logout()">
 تسجيل الخروج
 </button>
+
+</div>
 
 </div>
 
@@ -65,7 +159,7 @@ button{border:0;cursor:pointer;font-weight:bold}
 <h2>الأسئلة التي تحتاج إجابة</h2>
 
 <div id="list">
-اختر العميل.
+جاري التحميل...
 </div>
 
 </div>
@@ -77,249 +171,430 @@ button{border:0;cursor:pointer;font-weight:bold}
 
 <script>
 
-let adminPassword="";
+const params =
+  new URLSearchParams(
+    window.location.search
+  );
 
-const params=new URLSearchParams(window.location.search);
-const requestedClient=params.get("client")||"";
-
-
-async function api(url,payload){
-
-const response=await fetch(url,{
-method:"POST",
-headers:{"Content-Type":"application/json"},
-body:JSON.stringify({
-password:adminPassword,
-...payload
-})
-});
-
-let data={};
-
-try{
-data=await response.json();
-}catch{}
-
-if(!response.ok){
-throw new Error(data.error||data.details||"حدث خطأ");
-}
-
-return data;
-}
+const requestedClient =
+  params.get("client") || "";
 
 
-function showMessage(text,type="ok"){
+/*
+================================
+AUTH
+================================
+*/
 
-const box=document.getElementById("message");
+async function checkAuth(){
 
-box.textContent=text;
-box.className=type;
-box.style.display="block";
+  try{
 
-setTimeout(()=>{
-box.style.display="none";
-},3000);
+    const response =
+      await fetch(
+        "/api/admin-auth",
+        {
+          method:"GET",
+          credentials:"same-origin",
+          cache:"no-store"
+        }
+      );
 
-}
+    const data =
+      await response.json();
 
+    if(
+      !response.ok ||
+      !data.authenticated
+    ){
 
-async function login(){
+      window.location.href =
+        "/control.html";
 
-const value=document.getElementById("password").value.trim();
+      return false;
+    }
 
-if(!value){
-alert("أدخل كلمة المرور");
-return;
-}
+    return true;
 
-adminPassword=value;
+  }catch{
 
-try{
+    window.location.href =
+      "/control.html";
 
-await loadClients();
-
-document.getElementById("loginBox").style.display="none";
-document.getElementById("app").style.display="block";
-
-}catch(error){
-
-adminPassword="";
-alert(error.message);
-
-}
-
+    return false;
+  }
 }
 
 
-function logout(){
+async function logout(){
 
-adminPassword="";
+  try{
 
-document.getElementById("app").style.display="none";
-document.getElementById("loginBox").style.display="block";
+    await fetch(
+      "/api/admin-auth",
+      {
+        method:"POST",
 
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        credentials:"same-origin",
+
+        body:JSON.stringify({
+          action:"logout"
+        })
+      }
+    );
+
+  }catch{}
+
+  window.location.href =
+    "/control.html";
 }
 
+
+function goControl(){
+
+  window.location.href =
+    "/control.html";
+}
+
+
+/*
+================================
+API
+================================
+*/
+
+async function api(
+  url,
+  payload
+){
+
+  const response =
+    await fetch(
+      url,
+      {
+        method:"POST",
+
+        headers:{
+          "Content-Type":
+            "application/json"
+        },
+
+        credentials:"same-origin",
+
+        body:JSON.stringify(
+          payload
+        )
+      }
+    );
+
+  let data = {};
+
+  try{
+    data =
+      await response.json();
+  }catch{}
+
+  if(!response.ok){
+
+    if(
+      response.status === 401
+    ){
+
+      window.location.href =
+        "/control.html";
+    }
+
+    throw new Error(
+      data.error ||
+      data.details ||
+      "حدث خطأ"
+    );
+  }
+
+  return data;
+}
+
+
+/*
+================================
+MESSAGE
+================================
+*/
+
+function showMessage(
+  text,
+  type="ok"
+){
+
+  const box =
+    document.getElementById(
+      "message"
+    );
+
+  box.textContent =
+    text;
+
+  box.className =
+    type;
+
+  box.style.display =
+    "block";
+
+  setTimeout(
+    ()=>{
+      box.style.display =
+        "none";
+    },
+    3000
+  );
+}
+
+
+/*
+================================
+CLIENTS
+================================
+*/
 
 async function loadClients(){
 
-const data=await api("/api/client-admin",{
-action:"list"
-});
+  const data =
+    await api(
+      "/api/client-admin",
+      {
+        action:"list"
+      }
+    );
 
-const clients=
-Array.isArray(data.clients)
-?data.clients
-:Array.isArray(data.items)
-?data.items
-:Array.isArray(data)
-?data
-:[];
+  const clients =
+    Array.isArray(data.clients)
+      ? data.clients
+      : Array.isArray(data.items)
+        ? data.items
+        : Array.isArray(data)
+          ? data
+          : [];
 
-const select=document.getElementById("clientSelect");
+  const select =
+    document.getElementById(
+      "clientSelect"
+    );
 
-select.innerHTML='<option value="">اختر العميل</option>';
-
-clients.forEach(client=>{
-
-const option=document.createElement("option");
-
-option.value=client.slug;
-
-option.textContent=
-client.name||
-client.config?.brand_name||
-client.slug;
-
-select.appendChild(option);
-
-});
+  select.innerHTML =
+    '<option value="">اختر العميل</option>';
 
 
-if(requestedClient){
+  clients.forEach(
+    client=>{
 
-const exists=clients.some(
-client=>client.slug===requestedClient
-);
+      const option =
+        document.createElement(
+          "option"
+        );
 
-if(exists){
+      option.value =
+        client.slug;
 
-select.value=requestedClient;
+      option.textContent =
+        client.name ||
+        client.config?.brand_name ||
+        client.slug;
 
-await loadQuestions();
+      select.appendChild(
+        option
+      );
+    }
+  );
 
-return;
 
+  if(requestedClient){
+
+    const exists =
+      clients.some(
+        client =>
+          client.slug ===
+          requestedClient
+      );
+
+    if(exists){
+
+      select.value =
+        requestedClient;
+
+      await loadQuestions();
+
+      return;
+    }
+  }
+
+
+  if(clients.length){
+
+    select.value =
+      clients[0].slug;
+
+    await loadQuestions();
+
+  }else{
+
+    document.getElementById(
+      "list"
+    ).innerHTML =
+      "لا يوجد عملاء.";
+  }
 }
 
-}
 
-
-if(clients.length){
-
-select.value=clients[0].slug;
-
-await loadQuestions();
-
-}
-
-}
-
+/*
+================================
+CLIENT CHANGE
+================================
+*/
 
 async function clientChanged(){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
 
-if(slug){
+  if(slug){
 
-history.replaceState(
-{},
-"",
-window.location.pathname+
-"?client="+encodeURIComponent(slug)
-);
+    history.replaceState(
+      {},
+      "",
+      window.location.pathname +
+      "?client=" +
+      encodeURIComponent(slug)
+    );
+  }
 
+  await loadQuestions();
 }
 
-await loadQuestions();
 
-}
-
+/*
+================================
+LOAD QUESTIONS
+================================
+*/
 
 async function loadQuestions(){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
 
-const list=document.getElementById("list");
+  const list =
+    document.getElementById(
+      "list"
+    );
 
-if(!slug){
+  if(!slug){
 
-list.innerHTML="اختر العميل.";
+    list.innerHTML =
+      "اختر العميل.";
 
-return;
+    return;
+  }
 
+  list.innerHTML =
+    "جاري التحميل...";
+
+  try{
+
+    const data =
+      await api(
+        "/api/unanswered-admin",
+        {
+          action:"list",
+          client_slug:slug
+        }
+      );
+
+    const items =
+      Array.isArray(
+        data.questions
+      )
+        ? data.questions
+        : Array.isArray(
+            data.items
+          )
+          ? data.items
+          : [];
+
+    render(items);
+
+  }catch(error){
+
+    list.innerHTML = "";
+
+    showMessage(
+      error.message,
+      "error"
+    );
+  }
 }
 
-list.innerHTML="جاري التحميل...";
 
-try{
-
-const data=await api("/api/unanswered-admin",{
-action:"list",
-client_slug:slug
-});
-
-const items=
-Array.isArray(data.questions)
-?data.questions
-:Array.isArray(data.items)
-?data.items
-:[];
-
-render(items);
-
-}catch(error){
-
-list.innerHTML="";
-
-showMessage(error.message,"error");
-
-}
-
-}
-
+/*
+================================
+RENDER
+================================
+*/
 
 function render(items){
 
-const list=document.getElementById("list");
+  const list =
+    document.getElementById(
+      "list"
+    );
 
-list.innerHTML="";
+  list.innerHTML = "";
 
-if(!items.length){
+  if(!items.length){
 
-list.innerHTML=
-'<p class="muted">لا توجد أسئلة غير مجابة لهذا العميل.</p>';
+    list.innerHTML =
+      '<p class="muted">لا توجد أسئلة غير مجابة لهذا العميل.</p>';
 
-return;
+    return;
+  }
 
-}
 
+  items.forEach(
+    item=>{
 
-items.forEach(item=>{
+      const div =
+        document.createElement(
+          "div"
+        );
 
-const div=document.createElement("div");
+      div.className =
+        "item";
 
-div.className="item";
+      div.innerHTML = `
 
-div.innerHTML=`
-
-<h3>${escapeHtml(item.question||"")}</h3>
+<h3>${escapeHtml(
+  item.question || ""
+)}</h3>
 
 <p class="muted">
 تاريخ السؤال:
 ${item.created_at
-?escapeHtml(new Date(item.created_at).toLocaleString("ar-AE"))
-:""}
+  ? escapeHtml(
+      new Date(
+        item.created_at
+      ).toLocaleString(
+        "ar-AE"
+      )
+    )
+  : ""}
 </p>
 
 <label>الإجابة المعتمدة</label>
@@ -331,85 +606,156 @@ placeholder="اكتب الإجابة التي تريد أن يتعلمها ال�
 
 <label>اللغة</label>
 
-<select id="language-${item.id}">
+<select
+id="language-${item.id}">
 <option value="ar">العربية</option>
 <option value="en">English</option>
 </select>
 
 <button
 class="success"
-onclick="resolveQuestion('${item.id}')"
->
+onclick="resolveQuestion('${item.id}')">
 اعتماد الإجابة وإضافتها لقاعدة المعرفة
 </button>
 `;
 
-list.appendChild(div);
-
-});
-
+      list.appendChild(
+        div
+      );
+    }
+  );
 }
 
+
+/*
+================================
+RESOLVE
+================================
+*/
 
 async function resolveQuestion(id){
 
-const slug=document.getElementById("clientSelect").value;
+  const slug =
+    document.getElementById(
+      "clientSelect"
+    ).value;
 
-const answer=document.getElementById("answer-"+id).value.trim();
+  const answer =
+    document.getElementById(
+      "answer-"+id
+    ).value.trim();
 
-const language=document.getElementById("language-"+id).value;
+  const language =
+    document.getElementById(
+      "language-"+id
+    ).value;
 
-if(!answer){
 
-alert("اكتب الإجابة أولًا");
+  if(!answer){
 
-return;
+    alert(
+      "اكتب الإجابة أولًا"
+    );
 
+    return;
+  }
+
+
+  try{
+
+    await api(
+      "/api/unanswered-admin",
+      {
+        action:"resolve",
+
+        client_slug:
+          slug,
+
+        question_id:
+          id,
+
+        approved_answer:
+          answer,
+
+        language
+      }
+    );
+
+
+    showMessage(
+      "تم اعتماد الإجابة وإضافتها لقاعدة المعرفة."
+    );
+
+    await loadQuestions();
+
+  }catch(error){
+
+    showMessage(
+      error.message,
+      "error"
+    );
+  }
 }
 
-try{
 
-await api("/api/unanswered-admin",{
-action:"resolve",
-client_slug:slug,
-id,
-answer,
-language
-});
-
-showMessage("تم اعتماد الإجابة وإضافتها لقاعدة المعرفة.");
-
-await loadQuestions();
-
-}catch(error){
-
-showMessage(error.message,"error");
-
-}
-
-}
-
+/*
+================================
+ESCAPE
+================================
+*/
 
 function escapeHtml(value){
 
-return String(value)
-.replace(/&/g,"&amp;")
-.replace(/</g,"&lt;")
-.replace(/>/g,"&gt;")
-.replace(/"/g,"&quot;")
-.replace(/'/g,"&#039;");
-
+  return String(value)
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
 }
 
 
-document.getElementById("password")
-.addEventListener("keydown",event=>{
+/*
+================================
+START
+================================
+*/
 
-if(event.key==="Enter"){
-login();
+async function start(){
+
+  const authenticated =
+    await checkAuth();
+
+  if(!authenticated){
+    return;
+  }
+
+  document.getElementById(
+    "loadingBox"
+  ).style.display =
+    "none";
+
+  document.getElementById(
+    "app"
+  ).style.display =
+    "block";
+
+
+  try{
+
+    await loadClients();
+
+  }catch(error){
+
+    showMessage(
+      error.message,
+      "error"
+    );
+  }
 }
 
-});
+
+start();
 
 </script>
 
