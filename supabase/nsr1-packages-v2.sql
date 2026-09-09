@@ -95,11 +95,11 @@ begin
 
   insert into public.nsr_usage_counters(client_id,cycle_start,ai_responses)
   values(p_client_id,v_sub.cycle_start,0)
-  on conflict(client_id,cycle_start) do nothing;
+  on conflict on constraint nsr_usage_counters_pkey do nothing;
 
-  select ai_responses into v_before
-  from public.nsr_usage_counters
-  where client_id=p_client_id and cycle_start=v_sub.cycle_start
+  select u.ai_responses into v_before
+  from public.nsr_usage_counters u
+  where u.client_id=p_client_id and u.cycle_start=v_sub.cycle_start
   for update;
 
   v_before := coalesce(v_before,0);
@@ -109,11 +109,11 @@ begin
     return;
   end if;
 
-  update public.nsr_usage_counters
-  set ai_responses=ai_responses+1,
+  update public.nsr_usage_counters u
+  set ai_responses=u.ai_responses+1,
       updated_at=now()
-  where client_id=p_client_id and cycle_start=v_sub.cycle_start
-  returning ai_responses into v_used;
+  where u.client_id=p_client_id and u.cycle_start=v_sub.cycle_start
+  returning u.ai_responses into v_used;
 
   v_pct := round((v_used::numeric/greatest(v_limit,1)::numeric)*100,1);
 
@@ -126,7 +126,7 @@ begin
   if v_threshold is not null then
     insert into public.nsr_usage_alerts(client_id,cycle_start,threshold)
     values(p_client_id,v_sub.cycle_start,v_threshold)
-    on conflict(client_id,cycle_start,threshold) do nothing;
+    on conflict on constraint nsr_usage_alerts_client_id_cycle_start_threshold_key do nothing;
   end if;
 
   return query select
@@ -157,16 +157,16 @@ as $$
 declare
   v_cycle date;
 begin
-  select cycle_start into v_cycle
-  from public.nsr_client_subscriptions
-  where client_id=p_client_id;
+  select s.cycle_start into v_cycle
+  from public.nsr_client_subscriptions s
+  where s.client_id=p_client_id;
 
   if v_cycle is null then return; end if;
 
-  update public.nsr_usage_counters
-  set ai_responses=greatest(ai_responses-1,0),
+  update public.nsr_usage_counters u
+  set ai_responses=greatest(u.ai_responses-1,0),
       updated_at=now()
-  where client_id=p_client_id and cycle_start=v_cycle;
+  where u.client_id=p_client_id and u.cycle_start=v_cycle;
 end;
 $$;
 
