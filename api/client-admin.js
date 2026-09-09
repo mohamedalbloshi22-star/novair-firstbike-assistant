@@ -45,6 +45,16 @@ async function plans(){
   }
 }
 
+async function usageOverview(){
+  try{
+    const rows=await sb('nsr_admin_usage_overview?select=*&order=usage_percent.desc');
+    return{ready:true,clients:Array.isArray(rows)?rows:[]};
+  }catch(e){
+    console.warn('PACKAGE OVERVIEW UNAVAILABLE:',e.message);
+    return{ready:false,clients:[]};
+  }
+}
+
 async function legacyCreate(body){
   const name=clean(body.name),slug=slugify(body.slug);
   if(!name)return{status:400,data:{error:'Client name is required'}};
@@ -110,6 +120,7 @@ module.exports=async function handler(req,res){
     const body=req.body||{},action=clean(body.action);
     if(action==='list')return res.status(200).json({success:true,clients:await listClients()});
     if(action==='plans'){const p=await plans();return res.status(200).json({success:true,package_system_ready:p.ready,plans:p.plans});}
+    if(action==='usage_overview'){const u=await usageOverview();return res.status(200).json({success:true,packages_ready:u.ready,clients:u.clients,usage:u.clients});}
     if(action==='get'){const c=await getClient(clean(body.client_id));return c?res.status(200).json({success:true,client:c}):res.status(404).json({error:'Client not found'});}
     let result;
     if(action==='create')result=await legacyCreate(body);
