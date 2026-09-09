@@ -1,0 +1,36 @@
+name: NSR Contact Debug One-Time
+on:
+  push:
+    branches: [ui-refresh-light-v1]
+jobs:
+  patch:
+    if: github.actor != 'actions'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-refresh-light-v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Expose contact error on test client
+        run: |
+          node <<'NODE'
+          const fs=require('fs');
+          const p='index-light.html';
+          let s=fs.readFileSync(p,'utf8');
+          const old="if(!response.ok)throw new Error();contactMessage.textContent=language==='en'?'Request sent ✓':'تم تسجيل طلبك ✓';setTimeout(closeContactForm,1000)}catch{contactMessage.textContent=language==='en'?'Could not send the request. Please try again.':'تعذر إرسال الطلب. حاول مرة أخرى.'}";
+          const neu="if(!response.ok){let detail='';try{const d=await response.json();detail=String(d?.error||d?.details||'').trim()}catch{}throw new Error(detail||('HTTP '+response.status))}contactMessage.textContent=language==='en'?'Request sent ✓':'تم تسجيل طلبك ✓';setTimeout(closeContactForm,1000)}catch(error){const detail=clientSlug==='nsr-test-20'?String(error?.message||'').trim():'';contactMessage.textContent=detail?(language==='en'?`Send failed: ${detail}`:`فشل الإرسال: ${detail}`):(language==='en'?'Could not send the request. Please try again.':'تعذر إرسال الطلب. حاول مرة أخرى.')}";
+          if(!s.includes(old)) throw new Error('target submitContact block not found');
+          s=s.replace(old,neu);
+          fs.writeFileSync(p,s);
+          NODE
+      - name: Commit patch
+        run: |
+          git config user.name 'NOVAIRE Automation'
+          git config user.email 'actions@users.noreply.github.com'
+          git add index-light.html
+          git commit -m 'Show contact API error on NSR test client'
+          git push origin ui-refresh-light-v1
