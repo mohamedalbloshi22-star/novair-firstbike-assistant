@@ -17,6 +17,17 @@ async function supabaseRequest(path){
   return text?JSON.parse(text):[];
 }
 
+async function supabaseRpc(name,body={}){
+  const response=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`,{
+    method:'POST',
+    headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},
+    body:JSON.stringify(body)
+  });
+  const text=await response.text();
+  if(!response.ok) throw new Error(`Supabase RPC ${response.status}: ${text}`);
+  return text?JSON.parse(text):[];
+}
+
 function safeSlug(value){
   const slug=String(value||'').trim().toLowerCase();
   return /^[a-z0-9_-]{2,80}$/.test(slug)?slug:null;
@@ -90,7 +101,17 @@ module.exports=async function handler(req,res){
       usage=(Array.isArray(packageClients)?packageClients:[]).find(x=>String(x.slug||'').toLowerCase()===clientSlug)||null;
       portfolio=buildPortfolio(packageClients);
     }catch(packageError){
-      console.warn('NSR PACKAGE DATA NOT READY:',packageError.message);
+      console.warn('NSR PACKAGE VIEW UNAVAILABLE:',packageError.message);
+      try{
+        const current=await supabaseRpc('nsr_current_usage',{p_client_id:clientId});
+        usage=first(current);
+        if(usage&&usage.plan_code){
+          usage={...usage,slug:clientSlug,client_name:summary.client_name};
+          packagesReady=true;
+        }
+      }catch(rpcError){
+        console.warn('NSR PACKAGE RPC UNAVAILABLE:',rpcError.message);
+      }
     }
 
     return res.status(200).json({
