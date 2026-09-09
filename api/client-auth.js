@@ -4,6 +4,7 @@ const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const COOKIE_NAME='novaire_client_session';
 const SESSION_HOURS=8;
 const {getClientSession}=require('./_client-session');
+const {currentUsage}=require('../lib/nsr-usage');
 const {getSubscription,createCheckoutSession,createPortalSession,syncCheckoutSession,processWebhook}=require('../lib/nsr-billing');
 
 module.exports.config={api:{bodyParser:false}};
@@ -15,6 +16,7 @@ async function readRaw(req){const chunks=[];for await(const chunk of req)chunks.
 async function getClient(slug){const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?slug=eq.${encodeURIComponent(slug)}&select=id,name,slug,config&limit=1`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!r.ok)throw new Error('Unable to load client');const rows=await r.json();return rows[0]||null;}
 async function getClientById(id){const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${encodeURIComponent(id)}&select=id,name,slug,config&limit=1`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!r.ok)throw new Error('Unable to load client');const rows=await r.json();return rows[0]||null;}
 function safeBillingStatus(sub){if(!sub)return null;const plan=Array.isArray(sub.nsr_plans)?sub.nsr_plans[0]:sub.nsr_plans;return{plan_code:sub.plan_code,plan_name:plan?.name||sub.plan_code,monthly_fee_aed:sub.monthly_fee_override_aed??plan?.monthly_fee_aed??null,status:sub.status,stripe_status:sub.stripe_status||null,auto_renew:!!sub.auto_renew,cancel_at_period_end:!!sub.cancel_at_period_end,current_period_end:sub.stripe_current_period_end||sub.cycle_end||null,stripe_customer_ready:!!sub.stripe_customer_id,stripe_subscription_ready:!!sub.stripe_subscription_id,payment_configured:!!plan?.stripe_monthly_price_id};}
+function safeUsage(u){if(!u)return null;return{plan_code:u.plan_code||null,plan_name:u.plan_name||null,monthly_limit:Number(u.monthly_limit||0),used:Number(u.used||0),remaining:Number(u.remaining||0),usage_percent:Number(u.usage_percent||0),cycle_start:u.cycle_start||null,cycle_end:u.cycle_end||null,subscription_status:u.subscription_status||null,warning_level:u.warning_level||'NORMAL'};}
 
 module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
@@ -45,10 +47,10 @@ module.exports=async function handler(req,res){
 
       if(action==='billing_status'){
         try{
-          const sub=await getSubscription(client.id);
-          return res.status(200).json({success:true,billing_ready:true,billing:safeBillingStatus(sub)});
+          const [sub,usage]=await Promise.all([getSubscription(client.id),currentUsage(client.id).catch(()=>null)]);
+          return res.status(200).json({success:true,billing_ready:true,billing:safeBillingStatus(sub),usage:safeUsage(usage)});
         }catch(error){
-          if(/column .* does not exist|relation .* does not exist|schema cache/i.test(error.message))return res.status(200).json({success:true,billing_ready:false,billing:null});
+          if(/column .* does not exist|relation .* does not exist|schema cache/i.test(error.message))return res.status(200).json({success:true,billing_ready:false,billing:null,usage:null});
           throw error;
         }
       }
