@@ -1,0 +1,1 @@
+This branch is a pre-production NSR-1 UI + package enforcement build. Do not merge to main until Supabase migrations and the test plan pass.
