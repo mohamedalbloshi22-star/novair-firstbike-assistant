@@ -4,7 +4,7 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const NOTIFICATION_EMAIL = process.env.NOVAIRE_NOTIFICATION_EMAIL;
 const NOTIFICATION_FROM = process.env.NOVAIRE_NOTIFICATION_FROM || "NOVAIRE <onboarding@resend.dev>";
 
-const MAX_SESSION_ID = 160;
+const MAX_SESSION_ID = 180;
 const MAX_NAME = 120;
 const MAX_PHONE = 40;
 const MAX_REASON = 600;
@@ -35,7 +35,7 @@ function normalizeSlug(value) {
 }
 function validSessionId(value) {
   const s = cleanText(value);
-  return s.length >= 8 && s.length <= MAX_SESSION_ID && /^[A-Za-z0-9:_-]+$/.test(s) ? s : "";
+  return s.length >= 8 && s.length <= MAX_SESSION_ID && /^[A-Za-z0-9._:-]+$/.test(s) ? s : "";
 }
 function validPhone(value) {
   const p = cleanText(value);
@@ -68,7 +68,7 @@ async function createConversation(clientId, sessionId, language) {
     body: {
       client_id: clientId,
       session_id: sessionId,
-      status: "active",
+      status: "open",
       resolved_by_ai: false,
       human_handoff: false,
       callback_requested: false,
