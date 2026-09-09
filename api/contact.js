@@ -56,38 +56,61 @@ async function getClient(slug) {
   return client;
 }
 
-async function getConversation(clientId, sessionId) {
-  const rows = await supabaseRequest(`conversations?client_id=eq.${encodeURIComponent(clientId)}&session_id=eq.${encodeURIComponent(sessionId)}&select=id,client_id,session_id,status&limit=1`);
-  return Array.isArray(rows) ? rows[0] || null : null;
-}
-
-async function createConversation(clientId, sessionId, language) {
-  const rows = await supabaseRequest("conversations", {
-    method: "POST",
-    prefer: "return=representation",
-    body: {
-      client_id: clientId,
-      session_id: sessionId,
-      status: "open",
-      resolved_by_ai: false,
-      human_handoff: false,
-      callback_requested: false,
-      language: language === "en" ? "en" : "ar"
-    }
-  });
-  if (!Array.isArray(rows) || !rows[0]?.id) throw new Error("Unable to create conversation");
-  return rows[0];
-}
-
 async function getOrCreateConversation(clientId, sessionId, language) {
-  const existing = await getConversation(clientId, sessionId);
-  if (existing) return existing;
-  try { return await createConversation(clientId, sessionId, language); }
-  catch (error) {
-    const retry = await getConversation(clientId, sessionId);
-    if (retry) return retry;
+  const safeLanguage = language === "en" ? "en" : "ar";
+  const existing = await supabaseRequest(`conversations?client_id=eq.${encodeURIComponent(clientId)}&session_id=eq.${encodeURIComponent(sessionId)}&select=id,client_id,session_id,resolved_by_ai,human_handoff,callback_requested,language&limit=1`);
+  if (Array.isArray(existing) && existing.length) {
+    const conversation = existing[0];
+    if (conversation.language !== safeLanguage) {
+      await supabaseRequest(`conversations?id=eq.${encodeURIComponent(conversation.id)}`, {
+        method:"PATCH",
+        prefer:"return=minimal",
+        body:{ language:safeLanguage }
+      });
+      conversation.language = safeLanguage;
+    }
+    return conversation;
+  }
+
+  try {
+    const created = await supabaseRequest("conversations", {
+      method:"POST",
+      prefer:"return=representation",
+      body:{
+        client_id:clientId,
+        session_id:sessionId,
+        status:"open",
+        resolved_by_ai:null,
+        human_handoff:false,
+        callback_requested:false,
+        language:safeLanguage
+      }
+    });
+    if (Array.isArray(created) && created[0]?.id) return created[0];
+  } catch (error) {
+    const retry = await supabaseRequest(`conversations?client_id=eq.${encodeURIComponent(clientId)}&session_id=eq.${encodeURIComponent(sessionId)}&select=id,client_id,session_id,resolved_by_ai,human_handoff,callback_requested,language&limit=1`);
+    if (Array.isArray(retry) && retry[0]?.id) return retry[0];
     throw error;
   }
+  throw new Error("Unable to create conversation");
+}
+
+async function createContactRequest(clientId, conversationId, requestType, customerName, phone, reason) {
+  const rows = await supabaseRequest("contact_requests", {
+    method:"POST",
+    prefer:"return=representation",
+    body:{
+      client_id:clientId,
+      conversation_id:conversationId,
+      request_type:requestType,
+      customer_name:customerName,
+      phone,
+      reason:reason || null,
+      status:"new"
+    }
+  });
+  if (!Array.isArray(rows) || !rows[0]?.id) throw new Error("Contact request was not saved");
+  return rows[0];
 }
 
 async function sendNotification({ client, requestType, customerName, phone, reason, conversationId }) {
@@ -130,11 +153,7 @@ module.exports = async function handler(req, res) {
     if (client.inactive) return res.status(403).json({ error:"Client is inactive" });
 
     const conversation = await getOrCreateConversation(client.id, sessionId, language);
-    await supabaseRequest("contact_requests", {
-      method:"POST",
-      prefer:"return=minimal",
-      body:{ client_id:client.id, conversation_id:conversation.id, request_type:requestType, customer_name:customerName, phone, reason:reason || null, status:"new" }
-    });
+    const contactRequest = await createContactRequest(client.id, conversation.id, requestType, customerName, phone, reason);
 
     const updateField = requestType === "human_handoff" ? "human_handoff" : "callback_requested";
     await supabaseRequest(`conversations?id=eq.${encodeURIComponent(conversation.id)}&client_id=eq.${encodeURIComponent(client.id)}`, {
@@ -147,9 +166,16 @@ module.exports = async function handler(req, res) {
     try { notification = await sendNotification({ client, requestType, customerName, phone, reason, conversationId:conversation.id }); }
     catch (error) { console.error("CONTACT NOTIFICATION ERROR:", error); }
 
-    return res.status(200).json({ success:true, client:{ id:client.id, name:client.name, slug:client.slug }, request_type:requestType, conversation_id:conversation.id, notification_sent:notification.sent === true });
+    return res.status(200).json({
+      success:true,
+      request_id:contactRequest.id,
+      client:{ id:client.id, name:client.name, slug:client.slug },
+      request_type:requestType,
+      conversation_id:conversation.id,
+      notification_sent:notification.sent === true
+    });
   } catch (error) {
     console.error("CONTACT API ERROR:", error);
-    return res.status(500).json({ error:"Internal server error" });
+    return res.status(500).json({ error:"Internal server error", code:"CONTACT_REQUEST_FAILED" });
   }
 };
