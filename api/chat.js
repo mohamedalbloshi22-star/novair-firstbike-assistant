@@ -1,6 +1,8 @@
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const NOTIFICATION_FROM = process.env.NOVAIRE_NOTIFICATION_FROM || "NOVAIRE <onboarding@resend.dev>";
 const { reserveAiResponse, releaseAiResponse } = require("../lib/nsr-usage");
 
 const UNANSWERED_MARKER = "[[UNANSWERED]]";
@@ -67,6 +69,108 @@ async function getClient(clientSlug) {
 
 function safeConfig(client) {
   return client && client.config && typeof client.config === "object" ? client.config : {};
+}
+
+function escapeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+async function logNotification(payload) {
+  return supabaseRequest("nsr_notification_log", {
+    method:"POST",
+    prefer:"return=minimal",
+    body:payload
+  });
+}
+
+async function updateNotificationStatus(clientId, cycleStart, notificationType, recipient, status, metadata = {}) {
+  const path = `nsr_notification_log?client_id=eq.${encodeURIComponent(clientId)}&cycle_start=eq.${encodeURIComponent(cycleStart)}&notification_type=eq.${encodeURIComponent(notificationType)}&recipient=eq.${encodeURIComponent(recipient)}`;
+  return supabaseRequest(path, {
+    method:"PATCH",
+    prefer:"return=minimal",
+    body:{ status, metadata }
+  });
+}
+
+async function sendUsageThresholdNotification(client, usage) {
+  const threshold = Number(usage?.newly_crossed_threshold || 0);
+  if (![50,75,90,100].includes(threshold)) return { sent:false, skipped:true };
+
+  const config = safeConfig(client);
+  const recipient = String(config.billing_email || config.contact_email || "").trim().toLowerCase();
+  const cycleStart = String(usage?.cycle_start || "").trim();
+  if (!recipient || !cycleStart || !RESEND_API_KEY) return { sent:false, skipped:true };
+
+  const notificationType = `usage_${threshold}`;
+  const existing = await supabaseRequest(
+    `nsr_notification_log?client_id=eq.${encodeURIComponent(client.id)}&cycle_start=eq.${encodeURIComponent(cycleStart)}&notification_type=eq.${encodeURIComponent(notificationType)}&recipient=eq.${encodeURIComponent(recipient)}&select=id,status&limit=1`
+  );
+  if (Array.isArray(existing) && existing.length) return { sent:false, duplicate:true };
+
+  const brandName = String(config.brand_name || client.name || client.slug || "Client").trim();
+  const subject = `NOVAIRE | تنبيه استخدام ${threshold}% — ${brandName}`;
+
+  try {
+    await logNotification({
+      client_id:client.id,
+      cycle_start:cycleStart,
+      notification_type:notificationType,
+      recipient,
+      subject,
+      status:"skipped",
+      metadata:{ threshold, used:Number(usage.used || 0), monthly_limit:Number(usage.monthly_limit || 0), remaining:Number(usage.remaining || 0) }
+    });
+  } catch (error) {
+    if (String(error?.message || error).includes("23505")) return { sent:false, duplicate:true };
+    throw error;
+  }
+
+  const html = `
+  <div dir="rtl" style="font-family:Arial,Tahoma,sans-serif;max-width:650px;margin:auto;color:#111827;line-height:1.8">
+    <h2 style="margin-bottom:8px">NOVAIRE Smart Response</h2>
+    <p>مرحبًا ${escapeHtml(config.contact_name || brandName)}،</p>
+    <p>وصل استخدام مساعد <strong>${escapeHtml(brandName)}</strong> إلى <strong>${threshold}%</strong> من الحد الشهري.</p>
+    <p>المستخدم: <strong>${Number(usage.used || 0).toLocaleString("en-US")}</strong><br>
+    الحد الشهري: <strong>${Number(usage.monthly_limit || 0).toLocaleString("en-US")}</strong><br>
+    المتبقي: <strong>${Number(usage.remaining || 0).toLocaleString("en-US")}</strong></p>
+    ${threshold === 100 ? "<p><strong>تم بلوغ الحد الشهري، ولن تُحتسب ردود AI إضافية حتى بدء الدورة الجديدة أو تعديل الباقة.</strong></p>" : "<p>هذا تنبيه تلقائي لمساعدتك على متابعة الاستهلاك قبل بلوغ الحد.</p>"}
+    <p style="font-size:12px;color:#6b7280">NOVAIRE Smart Response — إشعار آلي</p>
+  </div>`;
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method:"POST",
+      headers:{ Authorization:`Bearer ${RESEND_API_KEY}`, "Content-Type":"application/json" },
+      body:JSON.stringify({ from:NOTIFICATION_FROM, to:[recipient], subject, html })
+    });
+    const text = await response.text();
+    if (!response.ok) throw new Error(`Resend ${response.status}: ${text}`);
+    let providerId = null;
+    try { providerId = JSON.parse(text)?.id || null; } catch {}
+    await updateNotificationStatus(client.id, cycleStart, notificationType, recipient, "sent", {
+      threshold,
+      used:Number(usage.used || 0),
+      monthly_limit:Number(usage.monthly_limit || 0),
+      remaining:Number(usage.remaining || 0),
+      provider_message_id:providerId
+    });
+    return { sent:true };
+  } catch (error) {
+    try {
+      await updateNotificationStatus(client.id, cycleStart, notificationType, recipient, "failed", {
+        threshold,
+        error:String(error?.message || error).slice(0,500)
+      });
+    } catch (logError) {
+      console.error("USAGE NOTIFICATION LOG UPDATE ERROR:", logError);
+    }
+    throw error;
+  }
 }
 
 function getLocalizedConfig(config, key, language) {
@@ -314,7 +418,8 @@ ${knowledgeText}
     const results = await Promise.allSettled([
       saveMessage(conversation.id,"assistant",cleanAnswer,inputTokens,outputTokens),
       updateResolutionStatus(conversation,isUnanswered),
-      isUnanswered ? saveUnansweredQuestion(client.id,conversation.id,latestUserMessage).catch(error => { console.error("UNANSWERED QUESTION LOG ERROR:", error); return null; }) : Promise.resolve(null)
+      isUnanswered ? saveUnansweredQuestion(client.id,conversation.id,latestUserMessage).catch(error => { console.error("UNANSWERED QUESTION LOG ERROR:", error); return null; }) : Promise.resolve(null),
+      quotaSnapshot?.newly_crossed_threshold ? sendUsageThresholdNotification(client, quotaSnapshot).catch(error => { console.error("USAGE THRESHOLD EMAIL ERROR:", error); return null; }) : Promise.resolve(null)
     ]);
     let resolvedByAi = !isUnanswered;
     if (results[1].status === "fulfilled") resolvedByAi = results[1].value;
