@@ -236,13 +236,16 @@ function prepareMessagesForClaude(messages) {
   return messages.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&String(m.content||"").trim()).slice(-MAX_MESSAGES_SENT).map(m=>({role:m.role,content:String(m.content||"").trim()}));
 }
 function writeStreamEvent(res,data) { res.write(JSON.stringify(data)+"\n"); }
-function startStream(res,client,conversation,safeSessionId,safeLanguage,quotaSnapshot) {
+function setStreamHeaders(res) {
   res.statusCode=200;
   res.setHeader("Content-Type","application/x-ndjson; charset=utf-8");
   res.setHeader("Cache-Control","no-cache, no-transform");
   res.setHeader("Connection","keep-alive");
   res.setHeader("X-Accel-Buffering","no");
   if (typeof res.flushHeaders==="function") res.flushHeaders();
+}
+function startStream(res,client,conversation,safeSessionId,safeLanguage,quotaSnapshot) {
+  setStreamHeaders(res);
   writeStreamEvent(res,{type:"start",client_slug:client.slug,conversation_id:conversation.id,session_id:safeSessionId,language:safeLanguage,usage:{used:quotaSnapshot.used,monthly_limit:quotaSnapshot.monthly_limit,remaining:quotaSnapshot.remaining,usage_percent:quotaSnapshot.usage_percent,warning_level:quotaSnapshot.warning_level}});
 }
 
@@ -266,30 +269,24 @@ module.exports=async function handler(req,res) {
     const brandName=String(clientConfig.brand_name||client.name||"Client").trim();
     const assistantName=String(clientConfig[safeLanguage==="en"?"assistant_name_en":"assistant_name_ar"]||brandName).trim();
 
-    const knowledgePromise=getKnowledgeBase(client.id).catch(error=>{console.error("KNOWLEDGE BASE LOAD ERROR:",error);return [];});
-    quotaSnapshot=await reserveAiResponse(client.id);
-    if (!quotaSnapshot||quotaSnapshot.allowed!==true) return res.status(429).json({error:"AI response limit reached",code:"AI_RESPONSE_LIMIT_REACHED",usage:{used:Number(quotaSnapshot?.used||0),monthly_limit:Number(quotaSnapshot?.monthly_limit||0),remaining:Number(quotaSnapshot?.remaining||0),usage_percent:Number(quotaSnapshot?.usage_percent||100),warning_level:quotaSnapshot?.warning_level||"CAP_REACHED",cycle_end:quotaSnapshot?.cycle_end||null}});
-    reservedQuotaClientId=client.id;
-
-    const [conversation,knowledgeBase]=await Promise.all([getOrCreateConversation(client.id,safeSessionId,safeLanguage),knowledgePromise]);
-    const saveUserMessagePromise=saveMessage(conversation.id,"user",latestUserMessage);
-
     const fastAnswer=getFastBusinessAnswer(client,safeLanguage,latestUserMessage);
     if (fastAnswer) {
-      startStream(res,client,conversation,safeSessionId,safeLanguage,quotaSnapshot);
+      setStreamHeaders(res);
       writeStreamEvent(res,{type:"delta",text:fastAnswer});
-      quotaCommitted=true;
-      try { await saveUserMessagePromise; } catch (error) { console.error("USER MESSAGE SAVE ERROR:",error); }
-      const results=await Promise.allSettled([
-        saveMessage(conversation.id,"assistant",fastAnswer,null,null),
-        updateResolutionStatus(conversation,false),
-        quotaSnapshot?.newly_crossed_threshold?sendUsageThresholdNotification(client,quotaSnapshot).catch(error=>{console.error("USAGE THRESHOLD EMAIL ERROR:",error);return null;}):Promise.resolve(null)
-      ]);
-      let resolvedByAi=true; if (results[1].status==="fulfilled") resolvedByAi=results[1].value;
-      writeStreamEvent(res,{type:"done",novaire:{client_id:client.id,client_slug:client.slug,client_name:brandName,conversation_id:conversation.id,session_id:safeSessionId,language:safeLanguage,unanswered:false,resolved_by_ai:resolvedByAi,knowledge_items:knowledgeBase.length,knowledge_items_used:0,input_tokens:null,output_tokens:null,fast_answer:true,usage:{used:quotaSnapshot.used,monthly_limit:quotaSnapshot.monthly_limit,remaining:quotaSnapshot.remaining,usage_percent:quotaSnapshot.usage_percent,warning_level:quotaSnapshot.warning_level,newly_crossed_threshold:quotaSnapshot.newly_crossed_threshold??null}}});
+      writeStreamEvent(res,{type:"done",novaire:{client_id:client.id,client_slug:client.slug,client_name:brandName,session_id:safeSessionId,language:safeLanguage,fast_answer:true,ai_used:false}});
       return res.end();
     }
 
+    const conversationPromise=getOrCreateConversation(client.id,safeSessionId,safeLanguage);
+    const knowledgePromise=getKnowledgeBase(client.id).catch(error=>{console.error("KNOWLEDGE BASE LOAD ERROR:",error);return [];});
+    const quotaPromise=reserveAiResponse(client.id);
+
+    quotaSnapshot=await quotaPromise;
+    if (!quotaSnapshot||quotaSnapshot.allowed!==true) return res.status(429).json({error:"AI response limit reached",code:"AI_RESPONSE_LIMIT_REACHED",usage:{used:Number(quotaSnapshot?.used||0),monthly_limit:Number(quotaSnapshot?.monthly_limit||0),remaining:Number(quotaSnapshot?.remaining||0),usage_percent:Number(quotaSnapshot?.usage_percent||100),warning_level:quotaSnapshot?.warning_level||"CAP_REACHED",cycle_end:quotaSnapshot?.cycle_end||null}});
+    reservedQuotaClientId=client.id;
+
+    const [conversation,knowledgeBase]=await Promise.all([conversationPromise,knowledgePromise]);
+    const saveUserMessagePromise=saveMessage(conversation.id,"user",latestUserMessage);
     const relevantKnowledge=selectRelevantKnowledge(knowledgeBase,latestUserMessage);
     const knowledgeText=buildKnowledgeText(relevantKnowledge);
     const baseBusinessInfo=buildBaseBusinessInfo(client,safeLanguage);
