@@ -5,6 +5,7 @@
 
 ## الحالة الحالية
 - ✅ migrations الباقات V1–V4 نُفذت في Supabase.
+- ✅ Billing schema V5 نُفذ في Supabase.
 - ✅ عميل اختبار بحد 20 رد AI تم إنشاؤه.
 - ✅ 70% تم اختباره.
 - ✅ 85% تم اختباره.
@@ -21,8 +22,6 @@
 2. `supabase/nsr1-packages-v2.sql`
 3. `supabase/nsr1-packages-v3.sql`
 4. `supabase/nsr1-packages-v4-security.sql`
-
-قبل تفعيل الدفع لاحقًا:
 5. `supabase/nsr1-billing-v5.sql`
 
 تأكد من وجود:
@@ -32,7 +31,7 @@
 - `nsr_usage_alerts`
 - `nsr_subscription_events`
 - `nsr_admin_usage_overview`
-- `nsr_billing_events` بعد V5
+- `nsr_billing_events`
 
 ## 2. اختبار الباقات — مكتمل للحد الأساسي
 عميل الاختبار: حد مخصص مؤقت = 20 رد AI.
@@ -95,11 +94,17 @@
 - بعد الحفظ يظهر العميل مع الباقة والحد والاستخدام والمتبقي والنسبة وتاريخ التجديد والحالة
 - يمكن تعديل الباقة من إدارة NOVAIRE
 
-## 8. شرط مهم قبل الدمج — جميع العملاء الحاليين
+## 8. شرط مهم قبل الدمج — العملاء التجاريون فقط
 قبل دمج الفرع إلى `main`:
-- يجب التأكد أن كل عميل نشط في `public.clients` لديه سجل صالح في `public.nsr_client_subscriptions`.
-- أي عميل نشط بدون باقة سيُمنع من استخدام AI بعد تفعيل الكود الجديد.
-- لا يتم الدمج حتى معالجة هذه النقطة.
+- يجب التأكد أن كل عميل تجاري نشط لديه سجل صالح في `public.nsr_client_subscriptions`.
+- عملاء الاختبار/الديمو لا يُحسبون اشتراكات مدفوعة.
+- أي عميل تجاري نشط بدون باقة سيُمنع من استخدام AI بعد تفعيل الكود الجديد.
+
+عملاء الاختبار المستثنون حاليًا:
+- `demo-clinic`
+- `first-bike`
+- `novaire-test-center`
+- `nsr-test-20`
 
 ## 9. الواجهة العامة — مطلوب
 اختبر `index-light.html`:
@@ -112,18 +117,20 @@
 - Mobile layout
 - عند بلوغ الحد الشهري تظهر رسالة مناسبة ولا يحدث خطأ 500
 
-## 10. Billing / Stripe — مؤجل حتى صدور الرخصة
-الكود جاهز، لكن التفعيل الفعلي مؤجل.
+## 10. Billing / Stripe — البنية جاهزة، التفعيل مؤجل
+- ✅ قاعدة بيانات Billing V5 جاهزة.
+- ✅ صفحة `billing.html` جاهزة.
+- ✅ Checkout / Customer Portal / Webhooks جاهزة في الكود.
+- ⏸️ إنشاء حساب Stripe والأسعار والمفاتيح مؤجل حتى صدور الرخصة.
 
 بعد إصدار الرخصة:
 1. إنشاء حساب Stripe.
-2. تشغيل `supabase/nsr1-billing-v5.sql`.
-3. إنشاء أسعار Essential / Pro / Enterprise في Stripe.
-4. إضافة `STRIPE_SECRET_KEY` و`STRIPE_WEBHOOK_SECRET` و`APP_URL` في Vercel.
-5. ربط Price IDs مع `nsr_plans`.
-6. اختبار Checkout في Test Mode.
-7. اختبار Customer Portal وتغيير الباقة والتجديد التلقائي.
-8. التأكد من وصول Webhooks مرة واحدة فقط إلى `nsr_billing_events`.
+2. إنشاء أسعار Essential / Pro / Enterprise في Stripe.
+3. إضافة `STRIPE_SECRET_KEY` و`STRIPE_WEBHOOK_SECRET` و`APP_URL` في Vercel.
+4. ربط Price IDs مع `nsr_plans`.
+5. اختبار Checkout في Test Mode.
+6. اختبار Customer Portal وتغيير الباقة والتجديد التلقائي.
+7. التأكد من وصول Webhooks مرة واحدة فقط إلى `nsr_billing_events`.
 
 ## 11. التنظيف بعد الاختبارات
 بعد نجاح الاختبارات:
@@ -133,6 +140,6 @@
 ## 12. شرط الدمج إلى main
 لا يتم الدمج قبل:
 - نجاح اختبارات فشل AI والدورة الشهرية والواجهات.
-- التأكد من أن كل عميل نشط لديه باقة.
+- التأكد من أن كل عميل تجاري نشط لديه باقة.
 - عدم وجود أخطاء 500 أو أخطاء SQL أو فقدان بيانات.
 - تفعيل واختبار Stripe يمكن أن يبقى مؤجلًا فقط إذا بقيت خاصية الدفع غير مفعلة للإنتاج حتى إصدار الرخصة.
