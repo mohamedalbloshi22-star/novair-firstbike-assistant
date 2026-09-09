@@ -1,5 +1,5 @@
 const originalChat=require('./chat');
-const {getClientBySlug,checkQuota,recordAiResponse}=require('./_nsr-usage');
+const {getClientBySlug,reserveAiResponse,releaseAiResponse}=require('./_nsr-usage');
 
 function normalizeSlug(value){
   const slug=String(value||'').trim().toLowerCase();
@@ -9,37 +9,60 @@ function normalizeSlug(value){
 module.exports=async function handler(req,res){
   if(req.method!=='POST') return res.status(405).json({error:'Method not allowed'});
 
+  let client=null;
+  let reservation=null;
+  let completed=false;
+  let released=false;
+
+  async function releaseOnce(){
+    if(released||completed||!reservation?.allowed||!client?.id) return;
+    released=true;
+    try{await releaseAiResponse(client.id);}catch(e){console.error('NSR QUOTA RELEASE ERROR:',e);}
+  }
+
   try{
     const slug=normalizeSlug(req.body?.client_slug);
     if(!slug) return res.status(400).json({error:'Valid client_slug is required'});
 
-    const client=await getClientBySlug(slug);
+    client=await getClientBySlug(slug);
     if(!client) return res.status(404).json({error:'Client not found'});
 
-    const quota=await checkQuota(client.id);
-    if(!quota?.allowed){
+    reservation=await reserveAiResponse(client.id);
+
+    if(!reservation?.allowed){
       return res.status(429).json({
         error:'MONTHLY_AI_LIMIT_REACHED',
         message_ar:'تم الوصول إلى الحد الشهري للمساعد الذكي. يرجى التواصل مع الجهة أو ترقية الباقة.',
         message_en:'The monthly AI response limit has been reached. Please contact the organisation or upgrade the plan.',
-        usage:quota||null
+        usage:reservation||null
       });
     }
 
-    let recorded=false;
+    const originalWrite=res.write.bind(res);
     const originalEnd=res.end.bind(res);
-    res.end=async function(...args){
-      if(!recorded && res.statusCode>=200 && res.statusCode<300){
-        recorded=true;
-        try{ await recordAiResponse(client.id); }catch(e){ console.error('NSR USAGE RECORD ERROR:',e); }
+
+    res.write=function(chunk,...args){
+      try{
+        const text=Buffer.isBuffer(chunk)?chunk.toString('utf8'):String(chunk||'');
+        if(text.includes('"type":"done"')||text.includes('"type": "done"')) completed=true;
+      }catch{}
+      return originalWrite(chunk,...args);
+    };
+
+    res.end=function(...args){
+      if(!completed){
+        releaseOnce().finally(()=>originalEnd(...args));
+        return true;
       }
       return originalEnd(...args);
     };
 
     return originalChat(req,res);
+
   }catch(error){
     console.error('NSR CHAT V2 ERROR:',error);
-    if(res.headersSent){ try{return res.end();}catch{} }
+    await releaseOnce();
+    if(res.headersSent){try{return res.end();}catch{return;}}
     return res.status(500).json({error:'Unable to process chat request'});
   }
 };
