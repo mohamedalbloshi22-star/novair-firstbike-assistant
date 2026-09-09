@@ -77,6 +77,8 @@ from public.nsr_admin_usage_overview
 order by client_name;
 
 -- 5) Alert history for the quota test client.
+-- Historical V2 rows may include 70/85/95/100.
+-- New V7 alerts use 50/75/90/100.
 select
   threshold,
   created_at
@@ -87,9 +89,7 @@ where client_id = (
   where slug = 'nsr-test-20'
   limit 1
 )
-order by threshold;
-
--- Expected thresholds for completed cap test: 70, 85, 95, 100.
+order by created_at, threshold;
 
 -- 6) Current usage for the quota test client.
 select public.nsr_current_usage(
@@ -101,12 +101,40 @@ select public.nsr_current_usage(
   )
 );
 
--- 7) OPTIONAL: release one reserved response for the test client.
+-- 7) Notification log overview.
+-- Verifies V6 exists and shows usage/payment/customer-email events.
+select
+  c.name as client_name,
+  c.slug,
+  n.cycle_start,
+  n.notification_type,
+  n.recipient,
+  n.subject,
+  n.status,
+  n.created_at
+from public.nsr_notification_log n
+join public.clients c on c.id = n.client_id
+order by n.created_at desc
+limit 100;
+
+-- 8) Duplicate notification safety check.
+-- Expected result: NO ROWS.
+select
+  client_id,
+  coalesce(cycle_start,'1900-01-01'::date) as cycle_key,
+  notification_type,
+  recipient,
+  count(*) as duplicate_count
+from public.nsr_notification_log
+group by client_id, coalesce(cycle_start,'1900-01-01'::date), notification_type, recipient
+having count(*) > 1;
+
+-- 9) OPTIONAL: release one reserved response for the test client.
 -- Run only when intentionally testing release behavior.
 -- select public.nsr_release_ai_response(
 --   (select id from public.clients where slug = 'nsr-test-20' limit 1)
 -- );
 
--- 8) OPTIONAL cleanup after all tests are complete.
+-- 10) OPTIONAL cleanup after all tests are complete.
 -- Do not delete demo-clinic, first-bike, or novaire-test-center unless they are no longer needed.
 -- delete from public.clients where slug = 'nsr-test-20';
