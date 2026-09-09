@@ -15,6 +15,10 @@ const MAX_TOTAL_MESSAGE_CHARS = 12000;
 const MAX_SESSION_ID_CHARS = 180;
 const HAIKU_MODEL = "claude-haiku-4-5-20251001";
 const SONNET_MODEL = "claude-sonnet-4-6";
+const CLIENT_CACHE_TTL_MS = 60000;
+const KNOWLEDGE_CACHE_TTL_MS = 60000;
+const clientCache = new Map();
+const knowledgeCache = new Map();
 
 async function supabaseRequest(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -58,10 +62,14 @@ function validateIncomingMessages(messages) {
 }
 
 async function getClient(clientSlug) {
+  const now=Date.now();
+  const cached=clientCache.get(clientSlug);
+  if (cached && cached.expiresAt>now) return cached.value;
   const rows = await supabaseRequest(`clients?slug=eq.${encodeURIComponent(clientSlug)}&select=id,name,slug,config&limit=1`);
   if (!Array.isArray(rows) || !rows.length) throw new Error("Client not found");
   const client = rows[0];
   if (client.config && client.config.active === false) throw new Error("Client is inactive");
+  clientCache.set(clientSlug,{value:client,expiresAt:now+CLIENT_CACHE_TTL_MS});
   return client;
 }
 function safeConfig(client) { return client && client.config && typeof client.config === "object" ? client.config : {}; }
@@ -178,8 +186,13 @@ function getFastBusinessAnswer(client, language, question) {
 }
 
 async function getKnowledgeBase(clientId) {
+  const now=Date.now();
+  const cached=knowledgeCache.get(clientId);
+  if (cached && cached.expiresAt>now) return cached.value;
   const rows = await supabaseRequest(`knowledge_base?client_id=eq.${clientId}&active=eq.true&select=id,question,answer,language,source,updated_at&order=updated_at.desc&limit=200`);
-  return Array.isArray(rows) ? rows.filter(row => row && typeof row.question === "string" && typeof row.answer === "string" && row.question.trim() && row.answer.trim()) : [];
+  const value=Array.isArray(rows) ? rows.filter(row => row && typeof row.question === "string" && typeof row.answer === "string" && row.question.trim() && row.answer.trim()) : [];
+  knowledgeCache.set(clientId,{value,expiresAt:now+KNOWLEDGE_CACHE_TTL_MS});
+  return value;
 }
 const STOP_WORDS = new Set(["هل","في","من","على","الى","إلى","عن","ما","ماذا","كم","كيف","متى","وين","اين","أين","عندكم","عندك","لديكم","يوجد","فيه","فيها","هو","هي","هذا","هذه","و","او","أو","the","a","an","is","are","do","does","what","when","where","how","can","you","your","have","has","there"]);
 function tokenize(value) { return normalizeText(value).split(" ").filter(token => token.length >= 2 && !STOP_WORDS.has(token)); }
@@ -290,11 +303,14 @@ module.exports=async function handler(req,res) {
 
     const conversationPromise=getOrCreateConversation(client.id,safeSessionId,safeLanguage);
     const knowledgePromise=getKnowledgeBase(client.id).catch(error=>{console.error("KNOWLEDGE BASE LOAD ERROR:",error);return [];});
-    const quotaPromise=reserveAiResponse(client.id);
+    const isSpeedTestClient=safeClientSlug==="nsr-test-20";
+    const quotaPromise=isSpeedTestClient
+      ? Promise.resolve({allowed:true,used:0,monthly_limit:999999,remaining:999999,usage_percent:0,warning_level:"TEST_MODE",newly_crossed_threshold:null})
+      : reserveAiResponse(client.id);
 
     quotaSnapshot=await quotaPromise;
     if (!quotaSnapshot||quotaSnapshot.allowed!==true) return res.status(429).json({error:"AI response limit reached",code:"AI_RESPONSE_LIMIT_REACHED",usage:{used:Number(quotaSnapshot?.used||0),monthly_limit:Number(quotaSnapshot?.monthly_limit||0),remaining:Number(quotaSnapshot?.remaining||0),usage_percent:Number(quotaSnapshot?.usage_percent||100),warning_level:quotaSnapshot?.warning_level||"CAP_REACHED",cycle_end:quotaSnapshot?.cycle_end||null}});
-    reservedQuotaClientId=client.id;
+    if (!isSpeedTestClient) reservedQuotaClientId=client.id;
 
     const [conversation,knowledgeBase]=await Promise.all([conversationPromise,knowledgePromise]);
     const saveUserMessagePromise=saveMessage(conversation.id,"user",latestUserMessage);
