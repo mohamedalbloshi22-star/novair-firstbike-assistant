@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NOVAIRE | إدارة الباقة والدفع</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#eef6fb;color:#10233f}header{background:linear-gradient(135deg,#0f2747,#0f6fa6);color:#fff;padding:26px 6%}header h1{margin:0 0 6px;font-size:26px}header p{margin:0;color:#d9efff}main{width:min(980px,92%);margin:28px auto}.card{background:#fff;border:1px solid #d6e5ef;border-radius:18px;padding:22px;box-shadow:0 10px 28px rgba(16,35,63,.08);margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}.metric{background:#f7fbfe;border:1px solid #dcebf4;border-radius:14px;padding:16px}.label{font-size:13px;color:#5f7388}.value{font-size:24px;font-weight:700;margin-top:7px;color:#0f5f91}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;background:#0f6fa6;color:#fff}.btn.secondary{background:#e8f4fa;color:#0f5f91;border:1px solid #bcdceb}.btn:disabled{opacity:.55;cursor:not-allowed}.notice{padding:13px 15px;border-radius:10px;margin-bottom:16px;display:none}.notice.ok{background:#e8f8f3;color:#176c55}.notice.error{background:#fff0ef;color:#a43b34}.muted{color:#63788e;font-size:14px;line-height:1.7}.status{display:inline-block;padding:5px 10px;border-radius:999px;background:#e8f4fa;color:#0f5f91;font-size:12px;font-weight:700}@media(max-width:600px){header{padding:22px 5%}.actions .btn{width:100%}}
+</style>
+</head>
+<body>
+<header><h1>إدارة الباقة والدفع</h1><p>NOVAIRE Smart Response — NSR-1</p></header>
+<main>
+<div id="notice" class="notice"></div>
+<section class="card">
+  <div class="grid">
+    <div class="metric"><div class="label">الباقة الحالية</div><div id="plan" class="value">—</div></div>
+    <div class="metric"><div class="label">الاشتراك</div><div id="status" class="value" style="font-size:19px">—</div></div>
+    <div class="metric"><div class="label">التجديد التلقائي</div><div id="renew" class="value" style="font-size:19px">—</div></div>
+    <div class="metric"><div class="label">القيمة الشهرية</div><div id="fee" class="value">—</div></div>
+  </div>
+  <div class="actions">
+    <button id="startPayment" class="btn">بدء/تجديد الاشتراك</button>
+    <button id="managePayment" class="btn secondary">تغيير الباقة وإدارة الدفع</button>
+    <button id="back" class="btn secondary">العودة للوحة العميل</button>
+  </div>
+</section>
+<section class="card"><b>كيف تعمل؟</b><p class="muted">بعد تفعيل الدفع، يمكن للعميل دفع الاشتراك، تحديث البطاقة، إدارة التجديد التلقائي، وإدارة الاشتراك من صفحة دفع آمنة. لا يتم تخزين بيانات البطاقة داخل NOVAIRE.</p></section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+function notice(text,type='ok'){const n=$('notice');n.textContent=text;n.className=`notice ${type}`;n.style.display='block'}
+async function action(action,extra={}){const r=await fetch('/api/client-auth',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action,...extra})});const d=await r.json();if(r.status===401){location='/client-login.html';throw Error('Unauthorized')}if(!r.ok||!d.success)throw Error(d.error||'تعذر تنفيذ الطلب');return d}
+function render(b){if(!b){$('plan').textContent='—';$('status').textContent='غير مفعّل';$('renew').textContent='—';$('fee').textContent='—';return}$('plan').textContent=b.plan_name||b.plan_code||'—';$('status').textContent=b.stripe_status||b.status||'—';$('renew').textContent=b.auto_renew?'مفعّل':'غير مفعّل';$('fee').textContent=b.monthly_fee_aed!=null?`${Number(b.monthly_fee_aed).toLocaleString()} د.إ`:'—';$('managePayment').disabled=!b.stripe_customer_ready}
+async function load(){try{const q=new URLSearchParams(location.search);if(q.get('billing')==='success'&&q.get('session_id')){await action('billing_sync',{session_id:q.get('session_id')});history.replaceState({},'',location.pathname);notice('تم تأكيد الاشتراك وتحديث بيانات الباقة.')}else if(q.get('billing')==='cancel'){history.replaceState({},'',location.pathname);notice('تم إلغاء عملية الدفع ولم يتم خصم أي مبلغ.','error')}const d=await action('billing_status');if(!d.billing_ready){notice('نظام الدفع جاهز في الموقع ويحتاج تفعيل قاعدة بيانات الدفع أولاً.','error');$('startPayment').disabled=true;$('managePayment').disabled=true;return}render(d.billing)}catch(e){if(e.message!=='Unauthorized')notice(e.message,'error')}}
+$('startPayment').onclick=async()=>{try{$('startPayment').disabled=true;const d=await action('billing_checkout');location=d.url}catch(e){notice(e.message,'error');$('startPayment').disabled=false}}
+$('managePayment').onclick=async()=>{try{$('managePayment').disabled=true;const d=await action('billing_portal');location=d.url}catch(e){notice(e.message,'error');$('managePayment').disabled=false}}
+$('back').onclick=()=>location='/client-portal.html';
+load();
+</script>
+</body>
+</html>
