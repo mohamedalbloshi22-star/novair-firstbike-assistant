@@ -22,8 +22,8 @@ async function getClientBySlug(slug){
   return Array.isArray(data)?data[0]:null;
 }
 
-async function checkQuota(clientId){return rpc('nsr_check_quota',{p_client_id:clientId});}
-async function recordAiResponse(clientId){return rpc('nsr_record_ai_response',{p_client_id:clientId});}
+async function reserveAiResponse(clientId){return rpc('nsr_reserve_ai_response',{p_client_id:clientId});}
+async function releaseAiResponse(clientId){return rpc('nsr_release_ai_response',{p_client_id:clientId});}
 async function currentUsage(clientId){return rpc('nsr_current_usage',{p_client_id:clientId});}
 
-module.exports={getClientBySlug,checkQuota,recordAiResponse,currentUsage};
+module.exports={getClientBySlug,reserveAiResponse,releaseAiResponse,currentUsage};
