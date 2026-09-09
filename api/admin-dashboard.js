@@ -35,6 +35,16 @@ function safeSlug(value){
 
 function first(rows){return Array.isArray(rows)&&rows.length?rows[0]:{};}
 
+function daysUntil(value){
+  if(!value) return null;
+  const target=new Date(value);
+  if(Number.isNaN(target.getTime())) return null;
+  const now=new Date();
+  const a=Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate());
+  const b=Date.UTC(target.getUTCFullYear(),target.getUTCMonth(),target.getUTCDate());
+  return Math.round((b-a)/86400000);
+}
+
 function buildPortfolio(clients){
   const rows=Array.isArray(clients)?clients:[];
   const summary={
@@ -45,10 +55,17 @@ function buildPortfolio(clients){
     mrr_aed:Number(rows.reduce((s,x)=>s+Number(x.monthly_fee_aed||0),0).toFixed(2)),
     allocated_responses:rows.reduce((s,x)=>s+Number(x.monthly_limit||0),0),
     used_responses:rows.reduce((s,x)=>s+Number(x.used||0),0),
+    remaining_responses:rows.reduce((s,x)=>s+Number(x.remaining||0),0),
+    at_50:rows.filter(x=>Number(x.usage_percent||0)>=50).length,
+    at_75:rows.filter(x=>Number(x.usage_percent||0)>=75).length,
+    at_90:rows.filter(x=>Number(x.usage_percent||0)>=90).length,
+    at_100:rows.filter(x=>Number(x.usage_percent||0)>=100).length,
     at_70:rows.filter(x=>Number(x.usage_percent||0)>=70).length,
     at_85:rows.filter(x=>Number(x.usage_percent||0)>=85).length,
     at_95:rows.filter(x=>Number(x.usage_percent||0)>=95).length,
-    capped:rows.filter(x=>x.warning_level==='CAP_REACHED').length
+    capped:rows.filter(x=>x.warning_level==='CAP_REACHED').length,
+    due_within_7_days:rows.filter(x=>{const d=daysUntil(x.cycle_end);return d!==null&&d>=0&&d<=7;}).length,
+    overdue_payments:rows.filter(x=>{const d=daysUntil(x.cycle_end);return d!==null&&d<0&&['active','trial'].includes(x.subscription_status);}).length
   };
   summary.portfolio_utilization_percent=summary.allocated_responses?Number((summary.used_responses/summary.allocated_responses*100).toFixed(1)):0;
   return summary;
@@ -114,8 +131,16 @@ module.exports=async function handler(req,res){
       }
     }
 
+    const paymentDays=usage?daysUntil(usage.cycle_end):null;
+
     return res.status(200).json({
-      client:{client_id:summary.client_id,client_name:summary.client_name,slug:summary.slug},
+      client:{
+        client_id:summary.client_id,
+        client_name:summary.client_name,
+        slug:summary.slug,
+        next_payment_date:usage?.cycle_end||null,
+        days_to_payment:paymentDays
+      },
       operations:{
         total_conversations:Number(summary.total_conversations||0),
         total_messages:Number(summary.total_messages||0),
