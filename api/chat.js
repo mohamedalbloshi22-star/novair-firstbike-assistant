@@ -13,6 +13,8 @@ const MAX_MESSAGES_RECEIVED = 40;
 const MAX_MESSAGE_CHARS = 4000;
 const MAX_TOTAL_MESSAGE_CHARS = 12000;
 const MAX_SESSION_ID_CHARS = 180;
+const HAIKU_MODEL = "claude-haiku-4-5-20251001";
+const SONNET_MODEL = "claude-sonnet-4-6";
 
 async function supabaseRequest(path, options = {}) {
   const response = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
@@ -249,6 +251,15 @@ function startStream(res,client,conversation,safeSessionId,safeLanguage,quotaSna
   writeStreamEvent(res,{type:"start",client_slug:client.slug,conversation_id:conversation.id,session_id:safeSessionId,language:safeLanguage,usage:{used:quotaSnapshot.used,monthly_limit:quotaSnapshot.monthly_limit,remaining:quotaSnapshot.remaining,usage_percent:quotaSnapshot.usage_percent,warning_level:quotaSnapshot.warning_level}});
 }
 
+function selectModelForRequest(question,messages) {
+  const raw=String(question||"").trim();
+  const q=normalizeText(raw);
+  const complexTerms=["قارن","مقارنه","الفرق بين","حلل","تحليل","اشرح بالتفصيل","لماذا","سبب المشكله","افضل خيار","انصح","توصيه","استثناء","سياسه","شروط متعدده","compare","comparison","difference between","analyze","analysis","explain in detail","why","root cause","best option","recommend","recommendation","exception","policy"];
+  const longConversation=Array.isArray(messages)&&messages.length>=10;
+  const complex=raw.length>220||longConversation||complexTerms.some(term=>q.includes(normalizeText(term)));
+  return complex?SONNET_MODEL:HAIKU_MODEL;
+}
+
 module.exports=async function handler(req,res) {
   let reservedQuotaClientId=null, quotaCommitted=false, quotaSnapshot=null;
   if (req.method!=="POST") return res.status(405).json({error:"Method not allowed"});
@@ -313,7 +324,7 @@ ${knowledgeText}
 - لغة الرد الحالية: ${safeLanguage==="en"?"English":"العربية"}.
 `;
 
-    const anthropicResponse=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:"claude-sonnet-4-6",max_tokens:MAX_ANTHROPIC_TOKENS,stream:true,system:systemPrompt,messages:prepareMessagesForClaude(messages)})});
+    const anthropicResponse=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:selectModelForRequest(latestUserMessage,messages),max_tokens:MAX_ANTHROPIC_TOKENS,stream:true,system:systemPrompt,messages:prepareMessagesForClaude(messages)})});
     if (!anthropicResponse.ok) throw new Error(`Anthropic error ${anthropicResponse.status}: ${await anthropicResponse.text()}`);
     if (!anthropicResponse.body) throw new Error("Anthropic returned no stream");
 
