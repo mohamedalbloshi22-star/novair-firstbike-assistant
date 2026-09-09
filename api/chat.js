@@ -268,8 +268,7 @@ function selectModelForRequest(question,messages) {
   const raw=String(question||"").trim();
   const q=normalizeText(raw);
   const complexTerms=["قارن","مقارنه","الفرق بين","حلل","تحليل","اشرح بالتفصيل","لماذا","سبب المشكله","افضل خيار","انصح","توصيه","استثناء","سياسه","شروط متعدده","compare","comparison","difference between","analyze","analysis","explain in detail","why","root cause","best option","recommend","recommendation","exception","policy"];
-  const longConversation=Array.isArray(messages)&&messages.length>=10;
-  const complex=raw.length>220||longConversation||complexTerms.some(term=>q.includes(normalizeText(term)));
+  const complex=raw.length>220||complexTerms.some(term=>q.includes(normalizeText(term)));
   return complex?SONNET_MODEL:HAIKU_MODEL;
 }
 
