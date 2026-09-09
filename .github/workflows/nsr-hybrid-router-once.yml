@@ -1,0 +1,72 @@
+name: NSR Hybrid Router One-Time Patch
+
+on:
+  push:
+    branches:
+      - ui-refresh-light-v1
+    paths:
+      - .github/workflows/nsr-hybrid-router-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch-chat:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-refresh-light-v1
+          fetch-depth: 0
+
+      - name: Apply hybrid Claude router
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'api/chat.js';
+          let src = fs.readFileSync(path, 'utf8');
+
+          if (!src.includes('const HAIKU_MODEL = "claude-haiku-4-5-20251001";')) {
+            src = src.replace(
+              'const MAX_SESSION_ID_CHARS = 180;',
+              'const MAX_SESSION_ID_CHARS = 180;\nconst HAIKU_MODEL = "claude-haiku-4-5-20251001";\nconst SONNET_MODEL = "claude-sonnet-4-6";'
+            );
+          }
+
+          if (!src.includes('function selectModelForRequest(question,messages)')) {
+            const router = `function selectModelForRequest(question,messages) {
+  const raw=String(question||"").trim();
+  const q=normalizeText(raw);
+  const complexTerms=[
+    "قارن","مقارنه","الفرق بين","حلل","تحليل","اشرح بالتفصيل","لماذا","سبب المشكله","افضل خيار","انصح","توصيه","استثناء","سياسه","شروط متعدده",
+    "compare","comparison","difference between","analyze","analysis","explain in detail","why","root cause","best option","recommend","recommendation","exception","policy"
+  ];
+  const longConversation=Array.isArray(messages)&&messages.length>=10;
+  const complex=raw.length>220||longConversation||complexTerms.some(term=>q.includes(normalizeText(term)));
+  return complex?SONNET_MODEL:HAIKU_MODEL;
+}
+
+`;
+            src = src.replace('module.exports=async function handler(req,res) {', router + 'module.exports=async function handler(req,res) {');
+          }
+
+          src = src.replace('model:"claude-sonnet-4-6"', 'model:selectModelForRequest(latestUserMessage,messages)');
+
+          fs.writeFileSync(path, src);
+          NODE
+
+      - name: Commit patch and remove one-time workflow
+        shell: bash
+        run: |
+          git config user.name "NOVAIRE Automation"
+          git config user.email "actions@users.noreply.github.com"
+          git add api/chat.js
+          git rm .github/workflows/nsr-hybrid-router-once.yml
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No changes needed"
+            exit 0
+          fi
+          git commit -m "Route NSR-1 chats through Haiku with Sonnet fallback"
+          git push origin ui-refresh-light-v1
