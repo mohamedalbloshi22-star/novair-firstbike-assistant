@@ -314,7 +314,12 @@ module.exports=async function handler(req,res) {
 
     const [conversation,knowledgeBase]=await Promise.all([conversationPromise,knowledgePromise]);
     const saveUserMessagePromise=saveMessage(conversation.id,"user",latestUserMessage);
-    const relevantKnowledge=selectRelevantKnowledge(knowledgeBase,latestUserMessage);
+    const selectedModel=selectModelForRequest(latestUserMessage,messages);
+    const isFastModel=selectedModel===HAIKU_MODEL;
+    const selectedKnowledge=selectRelevantKnowledge(knowledgeBase,latestUserMessage);
+    const relevantKnowledge=isFastModel?selectedKnowledge.slice(0,4):selectedKnowledge;
+    const claudeMessages=prepareMessagesForClaude(messages);
+    const requestMessages=isFastModel?claudeMessages.slice(-4):claudeMessages;
     const knowledgeText=buildKnowledgeText(relevantKnowledge);
     const baseBusinessInfo=buildBaseBusinessInfo(client,safeLanguage);
     const systemPrompt=`
@@ -340,7 +345,7 @@ ${knowledgeText}
 - لغة الرد الحالية: ${safeLanguage==="en"?"English":"العربية"}.
 `;
 
-    const anthropicResponse=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:selectModelForRequest(latestUserMessage,messages),max_tokens:MAX_ANTHROPIC_TOKENS,stream:true,system:systemPrompt,messages:prepareMessagesForClaude(messages)})});
+    const anthropicResponse=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:selectedModel,max_tokens:MAX_ANTHROPIC_TOKENS,stream:true,system:systemPrompt,messages:requestMessages})});
     if (!anthropicResponse.ok) throw new Error(`Anthropic error ${anthropicResponse.status}: ${await anthropicResponse.text()}`);
     if (!anthropicResponse.body) throw new Error("Anthropic returned no stream");
 
