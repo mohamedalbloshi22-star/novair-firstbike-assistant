@@ -18,7 +18,7 @@ module.exports.config={api:{bodyParser:false}};
 function safeEqual(a,b){const aa=Buffer.from(String(a||''));const bb=Buffer.from(String(b||''));return aa.length===bb.length&&crypto.timingSafeEqual(aa,bb);}
 function hashPassword(password,salt){return crypto.scryptSync(String(password||''),salt,64).toString('hex');}
 function verifyPassword(password,config){const stored=String(config.portal_password_hash||'');const salt=String(config.portal_password_salt||'');if(stored&&salt){try{return safeEqual(hashPassword(password,salt),stored);}catch{return false;}}const legacy=String(config.portal_password||'');return !!legacy&&safeEqual(password,legacy);}
-function sign(value){const secret=process.env.NOVAIRE_ADMIN_PASSWORD;if(!secret)return'';return crypto.createHmac('sha256',secret).update(value).digest('hex');}
+function sign(value){const secret=process.env.NOVAIRE_CLIENT_SESSION_SECRET;if(!secret)return'';return crypto.createHmac('sha256',secret).update(value).digest('hex');}
 function clearClientCookie(res){res.setHeader('Set-Cookie',`${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);}
 function clientIp(req){const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();return forwarded||String(req.socket?.remoteAddress||'unknown');}
 function loginKey(req,slug){return `${clientIp(req)}:${slug}`;}
