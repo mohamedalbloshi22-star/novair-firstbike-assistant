@@ -1,5 +1,6 @@
 const { getClientSession } = require('./_client-session');
 const { currentUsage } = require('../lib/nsr-usage');
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -119,7 +120,7 @@ module.exports = async function handler(req, res) {
         { method: 'DELETE', prefer: 'return=minimal' }
       );
     } catch (error) {
-      console.warn('USAGE ALERT RESET WARNING:', error.message);
+      safeErrorLog('USAGE_ALERT_RESET_WARNING', error);
     }
 
     try {
@@ -143,7 +144,7 @@ module.exports = async function handler(req, res) {
         }
       });
     } catch (error) {
-      console.warn('SUBSCRIPTION EVENT LOG WARNING:', error.message);
+      safeErrorLog('SUBSCRIPTION_EVENT_LOG_WARNING', error);
     }
 
     return res.status(200).json({
@@ -153,7 +154,7 @@ module.exports = async function handler(req, res) {
       auto_renew: !stripeSub.cancel_at_period_end
     });
   } catch (error) {
-    console.error('BILLING RESTART ERROR:', error);
+    safeErrorLog('BILLING_RESTART_ERROR', error);
     return res.status(error.status === 402 ? 402 : 500).json({
       success: false,
       error: error.status === 402 ? 'تعذر تحصيل قيمة الدورة الجديدة من البطاقة.' : 'تعذر بدء دورة اشتراك جديدة.'
