@@ -5,7 +5,7 @@ const COOKIE_NAME =
 
 function sign(value) {
   const secret =
-    process.env.NOVAIRE_ADMIN_PASSWORD;
+    process.env.NOVAIRE_CLIENT_SESSION_SECRET;
 
   if (!secret) {
     return "";

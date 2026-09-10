@@ -3,184 +3,45 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NOVAIRE Client Portal</title>
-
+<title>NOVAIRE | دخول العميل</title>
 <style>
-body{
-  margin:0;
-  background:#171717;
-  color:#f5f1e8;
-  font-family:Arial,Tahoma,sans-serif;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  min-height:100vh;
-}
-.box{
-  width:min(400px,calc(100% - 32px));
-  background:#232323;
-  border:1px solid #3a3a3a;
-  border-radius:14px;
-  padding:28px;
-}
-h1{
-  margin:0 0 8px;
-  color:#f2a93b;
-}
-p{
-  color:#b9b2a7;
-  margin-bottom:24px;
-}
-input{
-  width:100%;
-  box-sizing:border-box;
-  margin-bottom:12px;
-  padding:13px;
-  border-radius:8px;
-  border:1px solid #3a3a3a;
-  background:#171717;
-  color:white;
-}
-button{
-  width:100%;
-  padding:13px;
-  border:0;
-  border-radius:8px;
-  background:#f2a93b;
-  color:#111;
-  font-weight:bold;
-  cursor:pointer;
-}
-#error{
-  color:#ff8170;
-  margin-top:14px;
-  font-size:13px;
-}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,Tahoma,sans-serif;background:linear-gradient(180deg,#eef6fb,#f8fbfd);color:#10233f;display:flex;align-items:center;justify-content:center;padding:24px}.wrap{width:min(460px,100%)}.brand{text-align:center;margin-bottom:20px}.brand h1{margin:0;color:#0f6fa6;font-size:34px}.brand p{margin:7px 0 0;color:#64798d}.card{background:#fff;border:1px solid #d7e6ef;border-radius:20px;padding:28px;box-shadow:0 14px 40px rgba(16,35,63,.10)}h2{margin:0 0 8px;font-size:24px}.sub{color:#6b8094;margin-bottom:22px;font-size:14px}.field{margin-bottom:14px}label{display:block;margin-bottom:7px;font-size:13px;font-weight:700;color:#496176}input{width:100%;padding:13px 14px;border:1px solid #cfdfe9;border-radius:11px;background:#fafdff;color:#10233f;font-size:15px;outline:none}input:focus{border-color:#18a6a6;box-shadow:0 0 0 3px rgba(24,166,166,.12)}button{width:100%;border:0;border-radius:11px;padding:13px 16px;background:linear-gradient(135deg,#0f6fa6,#18a6a6);color:#fff;font-weight:800;font-size:15px;cursor:pointer;margin-top:5px}button:disabled{opacity:.6;cursor:not-allowed}#error{min-height:20px;margin-top:13px;color:#a13a33;font-size:13px;text-align:center}.foot{text-align:center;color:#7b8fa1;font-size:12px;margin-top:18px}@media(max-width:520px){.card{padding:22px}.brand h1{font-size:29px}}
 </style>
 </head>
-
 <body>
-
-<div class="box">
-<h1>NOVAIRE</h1>
-<p>بوابة العميل</p>
-
-<input
-  id="clientSlug"
-  placeholder="رمز العميل"
-  autocomplete="username"
->
-
-<input
-  id="password"
-  type="password"
-  placeholder="كلمة المرور"
-  autocomplete="current-password"
->
-
-<button id="loginBtn">
-دخول
-</button>
-
-<div id="error"></div>
+<div class="wrap">
+  <div class="brand"><h1>NOVAIRE</h1><p>NSR-1 Smart Response</p></div>
+  <div class="card">
+    <h2>بوابة العميل</h2>
+    <div class="sub">سجّل الدخول لعرض مؤشرات الأداء والاستخدام.</div>
+    <div class="field"><label for="clientSlug">رمز العميل</label><input id="clientSlug" autocomplete="username" placeholder="مثال: nsr-test-20"></div>
+    <div class="field"><label for="password">كلمة المرور</label><input id="password" type="password" autocomplete="current-password" placeholder="كلمة المرور"></div>
+    <button id="loginBtn">دخول</button>
+    <div id="error"></div>
+  </div>
+  <div class="foot">NOVAIRE Digital — NSR-1</div>
 </div>
-
 <script>
-
-const slug =
-  new URLSearchParams(
-    location.search
-  ).get("client");
-
-if(slug){
-  document.getElementById(
-    "clientSlug"
-  ).value = slug;
-}
-
+const slug=new URLSearchParams(location.search).get('client');
+if(slug)document.getElementById('clientSlug').value=slug;
 async function login(){
-
-  const clientSlug =
-    document.getElementById(
-      "clientSlug"
-    ).value.trim().toLowerCase();
-
-  const password =
-    document.getElementById(
-      "password"
-    ).value;
-
-  const error =
-    document.getElementById(
-      "error"
-    );
-
-  error.textContent = "";
-
-  if(!clientSlug || !password){
-    error.textContent =
-      "أدخل رمز العميل وكلمة المرور.";
-    return;
-  }
-
-  try{
-
-    const response =
-      await fetch(
-        "/api/client-auth",
-        {
-          method:"POST",
-          headers:{
-            "Content-Type":
-              "application/json"
-          },
-          credentials:"same-origin",
-          body:JSON.stringify({
-            client_slug:clientSlug,
-            password
-          })
-        }
-      );
-
-    const data =
-      await response.json();
-
-    if(
-      !response.ok ||
-      !data.success
-    ){
-      error.textContent =
-        data.error ||
-        "بيانات الدخول غير صحيحة.";
-      return;
-    }
-
-    location.href =
-      "/client-portal.html";
-
-  }catch{
-
-    error.textContent =
-      "تعذر الاتصال بالنظام.";
-  }
+ const clientSlug=document.getElementById('clientSlug').value.trim().toLowerCase();
+ const password=document.getElementById('password').value;
+ const error=document.getElementById('error');
+ const btn=document.getElementById('loginBtn');
+ error.textContent='';
+ if(!clientSlug||!password){error.textContent='أدخل رمز العميل وكلمة المرور.';return}
+ btn.disabled=true;btn.textContent='جاري الدخول...';
+ try{
+  const response=await fetch('/api/client-auth',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify({client_slug:clientSlug,password})});
+  const data=await response.json();
+  if(!response.ok||!data.success){error.textContent=data.error||'بيانات الدخول غير صحيحة.';return}
+  location.href='/client-portal.html';
+ }catch{error.textContent='تعذر الاتصال بالنظام.'}
+ finally{btn.disabled=false;btn.textContent='دخول'}
 }
-
-document.getElementById(
-  "loginBtn"
-).onclick = login;
-
-document.getElementById(
-  "password"
-).addEventListener(
-  "keydown",
-  e=>{
-    if(e.key === "Enter"){
-      login();
-    }
-  }
-);
-
+document.getElementById('loginBtn').onclick=login;
+document.getElementById('password').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 </script>
-
 </body>
 </html>
