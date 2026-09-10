@@ -34,6 +34,11 @@ module.exports = async function handler(req, res) {
   if (String(req.body?.confirm || '') !== 'DELETE_ALL') return res.status(400).json({ success: false, error: 'Confirmation required' });
 
   try {
+    const clients = await sb(`clients?id=eq.${encodeURIComponent(session.client_id)}&select=id,config&limit=1`);
+    const client = Array.isArray(clients) ? clients[0] || null : null;
+    if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
+    if (client.config?.active === false) return res.status(403).json({ success: false, error: 'Client inactive' });
+
     const conversations = await sb(
       `conversations?client_id=eq.${encodeURIComponent(session.client_id)}&select=id`
     );
