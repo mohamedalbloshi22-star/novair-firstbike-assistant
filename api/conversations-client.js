@@ -1,4 +1,5 @@
 const { getClientSession } = require('./_client-session');
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -50,7 +51,7 @@ module.exports = async function handler(req, res) {
         body: { conversation_id: null }
       });
     } catch (error) {
-      console.warn('CONTACT REQUEST DETACH WARNING:', error.message);
+      safeErrorLog('CONTACT_REQUEST_DETACH_WARNING', error);
     }
 
     await sb(`messages?conversation_id=in.(${idList})`, {
@@ -65,7 +66,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({ success: true, deleted_conversations: ids.length });
   } catch (error) {
-    console.error('CONVERSATION PURGE ERROR:', error);
+    safeErrorLog('CONVERSATION_PURGE_ERROR', error);
     return res.status(500).json({ success: false, error: 'Unable to delete stored conversations' });
   }
 };
