@@ -8,6 +8,10 @@ const {
   isAdminSession
 } = require("./_admin-session");
 
+const {
+  safeErrorLog
+} = require("../lib/nsr-safe-log");
+
 
 /*
 ==================================================
@@ -468,9 +472,13 @@ async function handler(
 
   } catch (error) {
 
-    console.error(
-      "CONTACT ADMIN API ERROR:",
-      error
+    safeErrorLog(
+      "CONTACT_ADMIN_API_ERROR",
+      error,
+      {
+        client_slug:
+          normalizeSlug(body.client_slug)
+      }
     );
 
 
