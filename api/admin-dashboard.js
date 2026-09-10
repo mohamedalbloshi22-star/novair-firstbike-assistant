@@ -26,26 +26,27 @@ function daysUntil(value){if(!value)return null;const target=new Date(value);if(
 function tokenCostAed(input,output){const usd=(Number(input||0)/1000000)*INPUT_PRICE_PER_MILLION+(Number(output||0)/1000000)*OUTPUT_PRICE_PER_MILLION;return usd*AED_PER_USD;}
 function buildPortfolio(clients,allAiUsage=[]){
   const rows=Array.isArray(clients)?clients:[];
+  const activeRows=rows.filter(x=>['active','trial'].includes(x.subscription_status));
   const ai=Array.isArray(allAiUsage)?allAiUsage:[];
   const totalInput=ai.reduce((s,x)=>s+Number(x.total_input_tokens||0),0);
   const totalOutput=ai.reduce((s,x)=>s+Number(x.total_output_tokens||0),0);
   const totalAiCost=tokenCostAed(totalInput,totalOutput);
   const summary={
-    active_clients:rows.filter(x=>['active','trial'].includes(x.subscription_status)).length,
-    essential:rows.filter(x=>x.plan_code==='essential').length,
-    pro:rows.filter(x=>x.plan_code==='pro').length,
-    enterprise:rows.filter(x=>x.plan_code==='enterprise').length,
-    mrr_aed:Number(rows.reduce((s,x)=>s+Number(x.monthly_fee_aed||0),0).toFixed(2)),
-    allocated_responses:rows.reduce((s,x)=>s+Number(x.monthly_limit||0),0),
-    used_responses:rows.reduce((s,x)=>s+Number(x.used||0),0),
-    remaining_responses:rows.reduce((s,x)=>s+Number(x.remaining||0),0),
+    active_clients:activeRows.length,
+    essential:activeRows.filter(x=>x.plan_code==='essential').length,
+    pro:activeRows.filter(x=>x.plan_code==='pro').length,
+    enterprise:activeRows.filter(x=>x.plan_code==='enterprise').length,
+    mrr_aed:Number(activeRows.reduce((s,x)=>s+Number(x.monthly_fee_aed||0),0).toFixed(2)),
+    allocated_responses:activeRows.reduce((s,x)=>s+Number(x.monthly_limit||0),0),
+    used_responses:activeRows.reduce((s,x)=>s+Number(x.used||0),0),
+    remaining_responses:activeRows.reduce((s,x)=>s+Number(x.remaining||0),0),
     total_input_tokens:totalInput,total_output_tokens:totalOutput,total_ai_cost_aed:Number(totalAiCost.toFixed(2)),
-    at_70:rows.filter(x=>Number(x.usage_percent||0)>=70).length,
-    at_85:rows.filter(x=>Number(x.usage_percent||0)>=85).length,
-    at_95:rows.filter(x=>Number(x.usage_percent||0)>=95).length,
-    at_100:rows.filter(x=>Number(x.usage_percent||0)>=100).length,
-    due_within_7_days:rows.filter(x=>{const d=daysUntil(x.cycle_end);return d!==null&&d>=0&&d<=7;}).length,
-    overdue_payments:rows.filter(x=>{const d=daysUntil(x.cycle_end);return d!==null&&d<0&&['active','trial'].includes(x.subscription_status);}).length
+    at_70:activeRows.filter(x=>Number(x.usage_percent||0)>=70).length,
+    at_85:activeRows.filter(x=>Number(x.usage_percent||0)>=85).length,
+    at_95:activeRows.filter(x=>Number(x.usage_percent||0)>=95).length,
+    at_100:activeRows.filter(x=>Number(x.usage_percent||0)>=100).length,
+    due_within_7_days:activeRows.filter(x=>{const d=daysUntil(x.cycle_end);return d!==null&&d>=0&&d<=7;}).length,
+    overdue_payments:activeRows.filter(x=>{const d=daysUntil(x.cycle_end);return d!==null&&d<0;}).length
   };
   summary.portfolio_utilization_percent=summary.allocated_responses?Number((summary.used_responses/summary.allocated_responses*100).toFixed(1)):0;
   summary.estimated_contribution_aed=Number((summary.mrr_aed-summary.total_ai_cost_aed).toFixed(2));
