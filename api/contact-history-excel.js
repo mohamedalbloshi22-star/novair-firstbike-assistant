@@ -18,6 +18,11 @@ async function supabaseRequest(path) {
   return text ? JSON.parse(text) : [];
 }
 
+function excelSafe(value) {
+  const text = String(value ?? '');
+  return /^\s*[=+\-@]/.test(text) ? `'${text}` : text;
+}
+
 function statusLabel(status) {
   return ({ completed: 'مكتمل', closed: 'مغلق' })[status] || status || '';
 }
@@ -45,12 +50,12 @@ module.exports = async function handler(req, res) {
 
     const data = (Array.isArray(rows) ? rows : []).map((x, i) => ({
       '#': i + 1,
-      'الاسم': x.customer_name || '',
-      'الهاتف': x.phone || '',
-      'نوع الطلب': typeLabel(x.request_type),
-      'السبب': x.reason || '',
-      'الحالة': statusLabel(x.status),
-      'تاريخ الطلب': x.created_at ? new Date(x.created_at).toISOString() : ''
+      'الاسم': excelSafe(x.customer_name),
+      'الهاتف': excelSafe(x.phone),
+      'نوع الطلب': excelSafe(typeLabel(x.request_type)),
+      'السبب': excelSafe(x.reason),
+      'الحالة': excelSafe(statusLabel(x.status)),
+      'تاريخ الطلب': excelSafe(x.created_at ? new Date(x.created_at).toISOString() : '')
     }));
 
     const ws = XLSX.utils.json_to_sheet(data.length ? data : [{ 'السجل': 'لا توجد طلبات مكتملة أو مغلقة' }]);
