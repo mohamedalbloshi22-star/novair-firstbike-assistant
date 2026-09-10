@@ -1,0 +1,37 @@
+name: Patch client contact Excel archive
+on:
+  push:
+    branches: [ui-refresh-light-v1]
+    paths: ['.github/workflows/patch-client-contact-excel.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-refresh-light-v1
+      - name: Patch client portal
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('client-portal.html')
+          s=p.read_text()
+          old='<section><h3>طلبات التواصل الحالية</h3><div class="muted" style="margin-bottom:10px">تظهر هنا الطلبات الجديدة وقيد التنفيذ فقط.</div><div id="contactTable"></div></section><section><h3>سجل طلبات التواصل</h3><div class="muted" style="margin-bottom:10px">تُحفظ هنا الطلبات المكتملة والمغلقة للرجوع إليها لاحقًا.</div><div id="contactHistoryTable"></div></section>'
+          new='<section><h3>طلبات التواصل الحالية</h3><div class="muted" style="margin-bottom:10px">تظهر هنا الطلبات الجديدة وقيد التنفيذ فقط. عند اختيار مكتمل أو مغلق يختفي الطلب من اللوحة ويحفظ في سجل Excel.</div><button class="btn small" style="margin-bottom:12px" onclick="window.location.href=\'/api/contact-history-excel\'">تحميل سجل Excel</button><div id="contactTable"></div></section>'
+          if old in s:
+              s=s.replace(old,new)
+          s=s.replace("el('contactHistoryTable').innerHTML=table(['الاسم','الهاتف','النوع','الحالة'],renderContactRows(history,false));","")
+          s=s.replace("const history=contacts.filter(x=>x.status==='completed'||x.status==='closed');","")
+          p.write_text(s)
+          PY
+      - name: Remove workflow
+        run: rm .github/workflows/patch-client-contact-excel.yml
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add client-portal.html .github/workflows/patch-client-contact-excel.yml
+          git commit -m 'Move completed contact history to Excel export' || exit 0
+          git push origin ui-refresh-light-v1
