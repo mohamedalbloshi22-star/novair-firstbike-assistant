@@ -3,18 +3,21 @@ const crypto = require("crypto");
 const ADMIN_PASSWORD =
   process.env.NOVAIRE_ADMIN_PASSWORD;
 
+const ADMIN_SESSION_SECRET =
+  process.env.NOVAIRE_ADMIN_SESSION_SECRET || ADMIN_PASSWORD;
+
 const COOKIE_NAME =
   "novaire_admin_session";
 
 const SESSION_HOURS = 8;
 
 function sign(value) {
-  if (!ADMIN_PASSWORD) {
+  if (!ADMIN_SESSION_SECRET) {
     return "";
   }
 
   return crypto
-    .createHmac("sha256", ADMIN_PASSWORD)
+    .createHmac("sha256", ADMIN_SESSION_SECRET)
     .update(value)
     .digest("hex");
 }
@@ -43,7 +46,7 @@ function getCookie(req, name) {
 function verifySessionToken(token) {
   if (
     !token ||
-    !ADMIN_PASSWORD
+    !ADMIN_SESSION_SECRET
   ) {
     return false;
   }
