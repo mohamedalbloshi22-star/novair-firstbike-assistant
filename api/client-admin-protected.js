@@ -1,5 +1,6 @@
 const { isAdminSession } = require('./_admin-session');
 const clientAdminHandler = require('./client-admin');
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -57,7 +58,7 @@ module.exports = async function handler(req, res) {
 
     return clientAdminHandler(req, res);
   } catch (error) {
-    console.error('CLIENT DELETE PROTECTION ERROR:', error);
+    safeErrorLog('CLIENT_DELETE_PROTECTION_ERROR', error, { client_id: clean(req.body?.client_id) });
     return res.status(500).json({ error: 'Unable to verify client deletion request' });
   }
 };
