@@ -3,6 +3,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const NOTIFICATION_EMAIL = process.env.NOVAIRE_NOTIFICATION_EMAIL;
 const NOTIFICATION_FROM = process.env.NOVAIRE_NOTIFICATION_FROM || "NOVAIRE <onboarding@resend.dev>";
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 const MAX_SESSION_ID = 180;
 const MAX_NAME = 120;
@@ -164,7 +165,7 @@ module.exports = async function handler(req, res) {
 
     let notification = { sent:false };
     try { notification = await sendNotification({ client, requestType, customerName, phone, reason, conversationId:conversation.id }); }
-    catch (error) { console.error("CONTACT NOTIFICATION ERROR:", error); }
+    catch (error) { safeErrorLog("CONTACT_NOTIFICATION_ERROR", error, { client_slug: clientSlug, request_type: requestType }); }
 
     return res.status(200).json({
       success:true,
@@ -175,7 +176,7 @@ module.exports = async function handler(req, res) {
       notification_sent:notification.sent === true
     });
   } catch (error) {
-    console.error("CONTACT API ERROR:", error);
+    safeErrorLog("CONTACT_API_ERROR", error);
     return res.status(500).json({ error:"Internal server error", code:"CONTACT_REQUEST_FAILED" });
   }
 };
