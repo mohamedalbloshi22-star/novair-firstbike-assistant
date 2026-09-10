@@ -1,6 +1,7 @@
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const {isAdminSession}=require('./_admin-session');
+const {safeErrorLog}=require('../lib/nsr-safe-log');
 
 async function sb(path){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
@@ -39,7 +40,7 @@ module.exports=async function handler(req,res){
       const rows=await sb(`nsr_admin_usage_overview?client_id=eq.${encodeURIComponent(client.id)}&select=*&limit=1`);
       usage=Array.isArray(rows)?rows[0]||null:null;
     }catch(error){
-      console.warn('CONTRACT USAGE OVERVIEW UNAVAILABLE:',error.message);
+      safeErrorLog('CONTRACT_USAGE_OVERVIEW_UNAVAILABLE',error,{client_slug:slug});
     }
 
     const contract={
@@ -67,7 +68,7 @@ module.exports=async function handler(req,res){
 
     return res.status(200).json({success:true,contract});
   }catch(error){
-    console.error('CONTRACT DATA ERROR:',error);
+    safeErrorLog('CONTRACT_DATA_ERROR',error,{client_slug:slug});
     return res.status(500).json({error:'Unable to load contract data'});
   }
 };
