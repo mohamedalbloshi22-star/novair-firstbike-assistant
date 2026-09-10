@@ -302,14 +302,9 @@ module.exports=async function handler(req,res) {
 
     const conversationPromise=getOrCreateConversation(client.id,safeSessionId,safeLanguage);
     const knowledgePromise=getKnowledgeBase(client.id).catch(error=>{console.error("KNOWLEDGE BASE LOAD ERROR:",error);return [];});
-    const isSpeedTestClient=safeClientSlug==="nsr-test-20";
-    const quotaPromise=isSpeedTestClient
-      ? Promise.resolve({allowed:true,used:0,monthly_limit:999999,remaining:999999,usage_percent:0,warning_level:"TEST_MODE",newly_crossed_threshold:null})
-      : reserveAiResponse(client.id);
-
-    quotaSnapshot=await quotaPromise;
+    quotaSnapshot=await reserveAiResponse(client.id);
     if (!quotaSnapshot||quotaSnapshot.allowed!==true) return res.status(429).json({error:"AI response limit reached",code:"AI_RESPONSE_LIMIT_REACHED",usage:{used:Number(quotaSnapshot?.used||0),monthly_limit:Number(quotaSnapshot?.monthly_limit||0),remaining:Number(quotaSnapshot?.remaining||0),usage_percent:Number(quotaSnapshot?.usage_percent||100),warning_level:quotaSnapshot?.warning_level||"CAP_REACHED",cycle_end:quotaSnapshot?.cycle_end||null}});
-    if (!isSpeedTestClient) reservedQuotaClientId=client.id;
+    reservedQuotaClientId=client.id;
 
     const [conversation,knowledgeBase]=await Promise.all([conversationPromise,knowledgePromise]);
     const saveUserMessagePromise=saveMessage(conversation.id,"user",latestUserMessage);
