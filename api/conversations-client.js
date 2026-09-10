@@ -46,24 +46,8 @@ module.exports = async function handler(req, res) {
 
     if (!ids.length) return res.status(200).json({ success: true, deleted_conversations: 0 });
 
-    const idList = ids.join(',');
-
-    // Preserve contact-request history while removing its dependency on conversation rows.
-    try {
-      await sb(`contact_requests?client_id=eq.${encodeURIComponent(session.client_id)}`, {
-        method: 'PATCH',
-        prefer: 'return=minimal',
-        body: { conversation_id: null }
-      });
-    } catch (error) {
-      safeErrorLog('CONTACT_REQUEST_DETACH_WARNING', error);
-    }
-
-    await sb(`messages?conversation_id=in.(${idList})`, {
-      method: 'DELETE',
-      prefer: 'return=minimal'
-    });
-
+    // Database foreign keys handle dependent rows atomically per deleted conversation:
+    // messages are ON DELETE CASCADE and contact_requests.conversation_id is ON DELETE SET NULL.
     await sb(`conversations?client_id=eq.${encodeURIComponent(session.client_id)}`, {
       method: 'DELETE',
       prefer: 'return=minimal'
