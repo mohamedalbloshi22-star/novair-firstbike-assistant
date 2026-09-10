@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const { getClientSession } = require('./_client-session');
 const { currentUsage } = require('../lib/nsr-usage');
 const { safeErrorLog } = require('../lib/nsr-safe-log');
@@ -23,7 +24,17 @@ async function sb(path, options = {}) {
   try { return JSON.parse(text); } catch { return null; }
 }
 
-async function stripeUpdateSubscription(id) {
+function restartIdempotencyKey(clientId, subscription) {
+  const basis = [
+    String(clientId || ''),
+    String(subscription?.stripe_subscription_id || ''),
+    String(subscription?.cycle_start || ''),
+    String(subscription?.cycle_end || '')
+  ].join('|');
+  return `nsr1-restart-${crypto.createHash('sha256').update(basis).digest('hex')}`;
+}
+
+async function stripeUpdateSubscription(id, idempotencyKey) {
   const body = new URLSearchParams();
   body.append('billing_cycle_anchor', 'now');
   body.append('proration_behavior', 'none');
@@ -34,7 +45,8 @@ async function stripeUpdateSubscription(id) {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${STRIPE_SECRET_KEY}`,
-      'Content-Type': 'application/x-www-form-urlencoded'
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Idempotency-Key': idempotencyKey
     },
     body
   });
@@ -95,7 +107,10 @@ module.exports = async function handler(req, res) {
       });
     }
 
-    const stripeSub = await stripeUpdateSubscription(sub.stripe_subscription_id);
+    const stripeSub = await stripeUpdateSubscription(
+      sub.stripe_subscription_id,
+      restartIdempotencyKey(session.client_id, sub)
+    );
     const newStart = dateOnly(stripeSub.current_period_start) || new Date().toISOString().slice(0, 10);
     const newEnd = dateOnly(stripeSub.current_period_end);
     if (!newEnd) throw new Error('Stripe did not return a new billing period');
