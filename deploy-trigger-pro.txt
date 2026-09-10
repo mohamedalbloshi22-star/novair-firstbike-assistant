@@ -1,2 +1,0 @@
-NSR-1 Pro redeploy trigger after Vercel plan upgrade.
-Contact form fix commit included on ui-refresh-light-v1.
