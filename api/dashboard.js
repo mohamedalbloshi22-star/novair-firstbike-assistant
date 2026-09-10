@@ -12,6 +12,8 @@ const {
   getClientSession
 } = require("./_client-session");
 
+const { safeErrorLog } = require('../lib/nsr-safe-log');
+
 
 async function supabaseRequest(path) {
 
@@ -934,8 +936,8 @@ async function handler(
 
   } catch (error) {
 
-    console.error(
-      "DASHBOARD API ERROR:",
+    safeErrorLog(
+      "DASHBOARD_API_ERROR",
       error
     );
 
@@ -943,12 +945,8 @@ async function handler(
     return res
       .status(500)
       .json({
-
         error:
-          "Unable to load dashboard data",
-
-        details:
-          error.message
+          "Unable to load dashboard data"
       });
   }
 };
