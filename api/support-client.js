@@ -46,12 +46,13 @@ module.exports=async function handler(req,res){
   const session=getClientSession(req);
   if(!session)return res.status(401).json({success:false,error:'Unauthorized'});
   try{
-    if(req.method==='GET')return res.status(200).json({success:true,requests:await listRequests(session.client_id)});
+    const client=await getClient(session.client_id);
+    if(!client)return res.status(404).json({success:false,error:'Client not found'});
+    if(client.config?.active===false)return res.status(403).json({success:false,error:'Client inactive'});
+    if(req.method==='GET')return res.status(200).json({success:true,requests:await listRequests(client.id)});
     if(req.method!=='POST')return res.status(405).json({success:false,error:'Method not allowed'});
     const message=clean(req.body?.message);
     if(message.length<2||message.length>800)return res.status(400).json({success:false,error:'اكتب استفسارًا قصيرًا وواضحًا.'});
-    const client=await getClient(session.client_id);
-    if(!client)return res.status(404).json({success:false,error:'Client not found'});
     const answer=answerFor(message);
     const request=await saveRequest(client.id,message,answer);
     if(answer)return res.status(200).json({success:true,resolved:true,request_id:request.id,answer});
