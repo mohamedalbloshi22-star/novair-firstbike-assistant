@@ -26,9 +26,12 @@ function getCookie(req, name) {
       item.trim().split("=");
 
     if (key === name) {
-      return decodeURIComponent(
-        rest.join("=")
-      );
+      const value = rest.join("=");
+      try {
+        return decodeURIComponent(value);
+      } catch {
+        return "";
+      }
     }
   }
 
