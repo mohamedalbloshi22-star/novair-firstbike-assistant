@@ -1,6 +1,7 @@
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const {getClientSession}=require('./_client-session');
+const {safeErrorLog}=require('../lib/nsr-safe-log');
 
 async function db(path,options={}){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
@@ -53,7 +54,7 @@ module.exports=async function handler(req,res){
     await db(`unanswered_questions?id=eq.${encodeURIComponent(questionId)}&client_id=eq.${encodeURIComponent(client.id)}`,{method:'PATCH',body:{approved_answer:approvedAnswer,resolved:true,resolved_at:new Date().toISOString()},prefer:'return=minimal'});
     return res.status(200).json({success:true});
   }catch(error){
-    console.error('UNANSWERED CLIENT ERROR:',error);
+    safeErrorLog('UNANSWERED_CLIENT_ERROR',error);
     return res.status(500).json({success:false,error:'Unable to resolve question'});
   }
 };
