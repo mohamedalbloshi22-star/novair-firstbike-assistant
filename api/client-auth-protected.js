@@ -1,5 +1,6 @@
 const crypto=require('crypto');
 const originalHandler=require('./client-auth');
+const {safeErrorLog,sanitizeErrorMessage}=require('../lib/nsr-safe-log');
 
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -64,8 +65,8 @@ module.exports=async function handler(req,res){
     await rpc('nsr_finish_billing_event',{p_event_id:eventId,p_success:success,p_error:success?null:`HTTP ${res.statusCode}`});
     return;
   }catch(error){
-    console.error('STRIPE IDEMPOTENCY WRAPPER ERROR:',error);
-    if(eventId){try{await rpc('nsr_finish_billing_event',{p_event_id:eventId,p_success:false,p_error:String(error?.message||error)});}catch{}}
+    safeErrorLog('STRIPE_IDEMPOTENCY_WRAPPER_ERROR',error,eventId?{event_id:eventId}:{});
+    if(eventId){try{await rpc('nsr_finish_billing_event',{p_event_id:eventId,p_success:false,p_error:sanitizeErrorMessage(error)});}catch{}}
     const message=String(error?.message||'');
     if(['INVALID_STRIPE_SIGNATURE','STALE_STRIPE_SIGNATURE'].includes(message))return res.status(400).json({success:false,error:'Invalid Stripe signature'});
     if(message==='STRIPE_WEBHOOK_NOT_CONFIGURED')return res.status(503).json({success:false,error:'Stripe webhook is not configured yet'});
