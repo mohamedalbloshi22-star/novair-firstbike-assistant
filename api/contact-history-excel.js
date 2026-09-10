@@ -1,5 +1,6 @@
 const XLSX = require('xlsx');
 const { getClientSession } = require('./_client-session');
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -71,7 +72,7 @@ module.exports = async function handler(req, res) {
     res.setHeader('Content-Disposition', `attachment; filename="NSR1-contact-history-${date}.xlsx"`);
     return res.status(200).send(buffer);
   } catch (error) {
-    console.error('CONTACT HISTORY EXCEL ERROR:', error);
+    safeErrorLog('CONTACT_HISTORY_EXCEL_ERROR', error);
     return res.status(500).json({ error: 'Unable to export contact history' });
   }
 };
