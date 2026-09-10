@@ -61,14 +61,14 @@ begin
     return;
   end if;
 
-  update public.nsr_billing_event_claims
+  update public.nsr_billing_event_claims as c
   set status='processing',
-      attempts=attempts+1,
+      attempts=c.attempts+1,
       claimed_at=now(),
       updated_at=now(),
       last_error=null
-  where event_id=p_event_id
-  returning nsr_billing_event_claims.attempts into v_attempts;
+  where c.event_id=p_event_id
+  returning c.attempts into v_attempts;
 
   return query select true,'processing'::text,v_attempts;
 end;
