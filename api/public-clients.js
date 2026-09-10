@@ -1,5 +1,6 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const { isAdminSession } = require('./_admin-session');
 
 async function getClients() {
   const response = await fetch(
@@ -24,10 +25,18 @@ async function getClients() {
 }
 
 module.exports = async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store, max-age=0");
 
   if (req.method !== "GET") {
     return res.status(405).json({
       error: "Method not allowed"
+    });
+  }
+
+  if (!isAdminSession(req)) {
+    return res.status(401).json({
+      success: false,
+      error: "Unauthorized"
     });
   }
 
@@ -38,7 +47,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-
     const rows = await getClients();
 
     const clients = rows
@@ -55,18 +63,12 @@ module.exports = async function handler(req, res) {
       }))
       .filter(client => client.active);
 
-    res.setHeader(
-      "Cache-Control",
-      "no-store, max-age=0"
-    );
-
     return res.status(200).json({
       success: true,
       clients
     });
 
   } catch (error) {
-
     console.error(
       "public-clients error:",
       error
