@@ -1,6 +1,7 @@
 const crypto=require('crypto');
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const STRIPE_SECRET_KEY=process.env.STRIPE_SECRET_KEY;
 const COOKIE_NAME='novaire_client_session';
 const SESSION_HOURS=8;
 const LOGIN_MAX_ATTEMPTS=5;
@@ -36,6 +37,19 @@ async function clearLoginFailures(key){if(loginStoreUnavailable){localClearFailu
 async function readRaw(req){const chunks=[];for await(const chunk of req)chunks.push(Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
 async function getClient(slug){const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?slug=eq.${encodeURIComponent(slug)}&select=id,name,slug,config&limit=1`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!r.ok)throw new Error('Unable to load client');const rows=await r.json();return rows[0]||null;}
 async function getClientById(id){const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${encodeURIComponent(id)}&select=id,name,slug,config&limit=1`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!r.ok)throw new Error('Unable to load client');const rows=await r.json();return rows[0]||null;}
+async function validateBillingSyncSession(client,sessionId){
+  if(!STRIPE_SECRET_KEY)throw new Error('STRIPE_NOT_CONFIGURED');
+  if(!/^cs_[A-Za-z0-9_]+$/.test(sessionId))throw new Error('INVALID_CHECKOUT_SESSION');
+  const r=await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(sessionId)}`,{headers:{Authorization:`Bearer ${STRIPE_SECRET_KEY}`}});
+  const data=await r.json();
+  if(!r.ok)throw new Error('INVALID_CHECKOUT_SESSION');
+  if(data.mode!=='subscription'||data.status!=='complete'||!['paid','no_payment_required'].includes(String(data.payment_status||'')))throw new Error('CHECKOUT_NOT_COMPLETE');
+  if(String(data.metadata?.nsr_client_id||'')!==String(client.id))throw new Error('CHECKOUT_CLIENT_MISMATCH');
+  const sub=await getSubscription(client.id);
+  if(sub?.plan_code&&String(data.metadata?.plan_code||'')!==String(sub.plan_code))throw new Error('CHECKOUT_PLAN_MISMATCH');
+  const checkoutCustomer=typeof data.customer==='string'?data.customer:data.customer?.id;
+  if(sub?.stripe_customer_id&&checkoutCustomer&&String(checkoutCustomer)!==String(sub.stripe_customer_id))throw new Error('CHECKOUT_CUSTOMER_MISMATCH');
+}
 function safeBillingStatus(sub){if(!sub)return null;const plan=Array.isArray(sub.nsr_plans)?sub.nsr_plans[0]:sub.nsr_plans;return{plan_code:sub.plan_code,plan_name:plan?.name||sub.plan_code,monthly_fee_aed:sub.monthly_fee_override_aed??plan?.monthly_fee_aed??null,status:sub.status,stripe_status:sub.stripe_status||null,auto_renew:!!sub.auto_renew,cancel_at_period_end:!!sub.cancel_at_period_end,current_period_end:sub.stripe_current_period_end||sub.cycle_end||null,stripe_customer_ready:!!sub.stripe_customer_id,stripe_subscription_ready:!!sub.stripe_subscription_id,payment_configured:!!plan?.stripe_monthly_price_id};}
 function safeUsage(u){if(!u)return null;return{plan_code:u.plan_code||null,plan_name:u.plan_name||null,monthly_limit:Number(u.monthly_limit||0),used:Number(u.used||0),remaining:Number(u.remaining||0),usage_percent:Number(u.usage_percent||0),cycle_start:u.cycle_start||null,cycle_end:u.cycle_end||null,subscription_status:u.subscription_status||null,warning_level:u.warning_level||'NORMAL'};}
 
@@ -77,7 +91,11 @@ module.exports=async function handler(req,res){
       }
       if(action==='billing_checkout')return res.status(200).json({success:true,...await createCheckoutSession(req,client)});
       if(action==='billing_portal')return res.status(200).json({success:true,...await createPortalSession(req,client)});
-      if(action==='billing_sync')return res.status(200).json({success:true,billing:await syncCheckoutSession(client,String(body.session_id||''))});
+      if(action==='billing_sync'){
+        const sessionId=String(body.session_id||'').trim();
+        await validateBillingSyncSession(client,sessionId);
+        return res.status(200).json({success:true,billing:await syncCheckoutSession(client,sessionId)});
+      }
       return res.status(400).json({success:false,error:'Unknown billing action'});
     }
 
@@ -124,6 +142,7 @@ module.exports=async function handler(req,res){
     if(message==='NO_STRIPE_CUSTOMER')return res.status(409).json({success:false,error:'No payment profile yet'});
     if(message==='NO_ACTIVE_PLAN')return res.status(409).json({success:false,error:'No active plan'});
     if(message==='SUBSCRIPTION_ALREADY_EXISTS')return res.status(409).json({success:false,error:'Subscription already exists'});
+    if(['INVALID_CHECKOUT_SESSION','CHECKOUT_NOT_COMPLETE','CHECKOUT_CLIENT_MISMATCH','CHECKOUT_PLAN_MISMATCH','CHECKOUT_CUSTOMER_MISMATCH'].includes(message))return res.status(409).json({success:false,error:'تعذر التحقق من جلسة الدفع.'});
     return res.status(500).json({success:false,error:'Server error'});
   }
 };
