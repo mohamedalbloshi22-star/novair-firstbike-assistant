@@ -77,8 +77,7 @@ from public.nsr_admin_usage_overview
 order by client_name;
 
 -- 5) Alert history for the quota test client.
--- Historical V2 rows may include 70/85/95/100.
--- New V7 alerts use 50/75/90/100.
+-- Current usage alert thresholds are 70/85/95/100.
 select
   threshold,
   created_at
