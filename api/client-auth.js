@@ -3,6 +3,9 @@ const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const COOKIE_NAME='novaire_client_session';
 const SESSION_HOURS=8;
+const LOGIN_MAX_ATTEMPTS=5;
+const LOGIN_LOCK_MS=15*60*1000;
+const loginAttempts=new Map();
 const {getClientSession}=require('./_client-session');
 const {currentUsage}=require('../lib/nsr-usage');
 const {getSubscription,createCheckoutSession,createPortalSession,syncCheckoutSession,processWebhook}=require('../lib/nsr-billing');
@@ -14,6 +17,11 @@ function hashPassword(password,salt){return crypto.scryptSync(String(password||'
 function verifyPassword(password,config){const stored=String(config.portal_password_hash||'');const salt=String(config.portal_password_salt||'');if(stored&&salt){try{return safeEqual(hashPassword(password,salt),stored);}catch{return false;}}const legacy=String(config.portal_password||'');return !!legacy&&safeEqual(password,legacy);}
 function sign(value){const secret=process.env.NOVAIRE_ADMIN_PASSWORD;if(!secret)return'';return crypto.createHmac('sha256',secret).update(value).digest('hex');}
 function clearClientCookie(res){res.setHeader('Set-Cookie',`${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);}
+function clientIp(req){const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();return forwarded||String(req.socket?.remoteAddress||'unknown');}
+function loginKey(req,slug){return `${clientIp(req)}:${slug}`;}
+function getLoginState(key){const state=loginAttempts.get(key);if(!state)return null;if(state.lockUntil&&state.lockUntil<=Date.now()){loginAttempts.delete(key);return null;}return state;}
+function recordLoginFailure(key){const now=Date.now();const current=getLoginState(key)||{count:0,lockUntil:0};const count=current.count+1;const lockUntil=count>=LOGIN_MAX_ATTEMPTS?now+LOGIN_LOCK_MS:0;const next={count,lockUntil};loginAttempts.set(key,next);return next;}
+function clearLoginFailures(key){loginAttempts.delete(key);}
 async function readRaw(req){const chunks=[];for await(const chunk of req)chunks.push(Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
 async function getClient(slug){const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?slug=eq.${encodeURIComponent(slug)}&select=id,name,slug,config&limit=1`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!r.ok)throw new Error('Unable to load client');const rows=await r.json();return rows[0]||null;}
 async function getClientById(id){const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${encodeURIComponent(id)}&select=id,name,slug,config&limit=1`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!r.ok)throw new Error('Unable to load client');const rows=await r.json();return rows[0]||null;}
@@ -65,11 +73,27 @@ module.exports=async function handler(req,res){
     const slug=String(body.client_slug||'').trim().toLowerCase();
     const password=String(body.password||'');
     if(!/^[a-z0-9_-]{2,80}$/.test(slug)||!password)return res.status(400).json({success:false,error:'بيانات الدخول غير مكتملة.'});
+    const key=loginKey(req,slug);
+    const state=getLoginState(key);
+    if(state?.lockUntil>Date.now()){
+      const retryAfter=Math.max(1,Math.ceil((state.lockUntil-Date.now())/1000));
+      res.setHeader('Retry-After',String(retryAfter));
+      return res.status(429).json({success:false,error:'تم إيقاف محاولات الدخول مؤقتًا. حاول مرة أخرى لاحقًا.'});
+    }
     const client=await getClient(slug);
-    if(!client)return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
+    if(!client){
+      const failed=recordLoginFailure(key);
+      if(failed.lockUntil){res.setHeader('Retry-After',String(Math.ceil(LOGIN_LOCK_MS/1000)));return res.status(429).json({success:false,error:'تم إيقاف محاولات الدخول مؤقتًا. حاول مرة أخرى لاحقًا.'});}
+      return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
+    }
     const config=client.config&&typeof client.config==='object'?client.config:{};
     if(config.active===false)return res.status(403).json({success:false,error:'حساب العميل غير نشط.'});
-    if(!verifyPassword(password,config))return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
+    if(!verifyPassword(password,config)){
+      const failed=recordLoginFailure(key);
+      if(failed.lockUntil){res.setHeader('Retry-After',String(Math.ceil(LOGIN_LOCK_MS/1000)));return res.status(429).json({success:false,error:'تم إيقاف محاولات الدخول مؤقتًا. حاول مرة أخرى لاحقًا.'});}
+      return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
+    }
+    clearLoginFailures(key);
 
     const expires=Date.now()+SESSION_HOURS*60*60*1000;
     const payload=Buffer.from(JSON.stringify({client_id:client.id,client_slug:client.slug,expires})).toString('base64url');
