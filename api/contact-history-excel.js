@@ -42,6 +42,11 @@ module.exports = async function handler(req, res) {
   if (!session) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
+    const clients = await supabaseRequest(`clients?id=eq.${encodeURIComponent(session.client_id)}&select=id,config&limit=1`);
+    const client = Array.isArray(clients) ? clients[0] || null : null;
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+    if (client.config?.active === false) return res.status(403).json({ error: 'Client inactive' });
+
     const rows = await supabaseRequest(
       `contact_requests?client_id=eq.${encodeURIComponent(session.client_id)}` +
       `&status=in.(completed,closed)` +
