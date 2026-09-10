@@ -23,6 +23,7 @@ security definer
 set search_path = public
 as $$
 declare
+  v_inserted boolean := false;
   v_status text;
   v_attempts integer;
   v_updated_at timestamptz;
@@ -31,21 +32,24 @@ begin
     raise exception 'event id is required';
   end if;
 
-  insert into public.nsr_billing_event_claims(event_id,status,attempts,claimed_at,updated_at,last_error)
-  values (p_event_id,'processing',1,now(),now(),null)
-  on conflict (event_id) do nothing;
+  with ins as (
+    insert into public.nsr_billing_event_claims(event_id,status,attempts,claimed_at,updated_at,last_error)
+    values (p_event_id,'processing',1,now(),now(),null)
+    on conflict (event_id) do nothing
+    returning 1
+  )
+  select exists(select 1 from ins) into v_inserted;
+
+  if v_inserted then
+    return query select true,'processing'::text,1;
+    return;
+  end if;
 
   select c.status,c.attempts,c.updated_at
     into v_status,v_attempts,v_updated_at
   from public.nsr_billing_event_claims c
   where c.event_id=p_event_id
   for update;
-
-  if v_status='processing' and v_attempts=1 and v_updated_at >= now() - interval '5 minutes' then
-    -- Freshly inserted row: this caller owns the first claim.
-    return query select true,v_status,v_attempts;
-    return;
-  end if;
 
   if v_status='completed' then
     return query select false,v_status,v_attempts;
