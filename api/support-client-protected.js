@@ -1,6 +1,7 @@
 const { getClientSession } = require('./_client-session');
 const supportClientHandler = require('./support-client');
 const { safeErrorLog } = require('../lib/nsr-safe-log');
+const { checkSupportRateLimit } = require('../lib/nsr-support-rate-limit');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -26,9 +27,23 @@ module.exports = async function handler(req, res) {
     const client = await getClient(session.client_id);
     if (!client) return res.status(404).json({ success: false, error: 'Client not found' });
     if (client.config?.active === false) return res.status(403).json({ success: false, error: 'Client inactive' });
+
+    if (req.method === 'POST') {
+      const rate = await checkSupportRateLimit(client.id, req);
+      if (!rate.allowed) {
+        if (rate.retry_after_seconds > 0) res.setHeader('Retry-After', String(rate.retry_after_seconds));
+        return res.status(429).json({
+          success: false,
+          error: 'Too many support requests. Please try again later.',
+          code: 'SUPPORT_RATE_LIMITED',
+          retry_after_seconds: rate.retry_after_seconds
+        });
+      }
+    }
+
     return supportClientHandler(req, res);
   } catch (error) {
     safeErrorLog('SUPPORT_CLIENT_PROTECTION_ERROR', error, { client_id: session.client_id });
-    return res.status(500).json({ success: false, error: 'Unable to verify client access' });
+    return res.status(503).json({ success: false, error: 'Support protection is temporarily unavailable' });
   }
 };
