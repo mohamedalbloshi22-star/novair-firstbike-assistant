@@ -30,13 +30,13 @@ function answerFor(message){const q=norm(message);for(const item of FAQ){if(item
 async function getClient(id){const rows=await db(`clients?id=eq.${encodeURIComponent(id)}&select=id,name,slug,config&limit=1`);return Array.isArray(rows)?rows[0]||null:null;}
 async function saveRequest(clientId,message,autoAnswer=''){
   const resolved=!!autoAnswer;
-  const rows=await db('nsr_support_requests',{method:'POST',body:{client_id:clientId,message,auto_answer:autoAnswer||null,admin_reply:null,status:resolved?'resolved_auto':'pending',escalated:!resolved}});
+  const rows=await db('nsr_support_requests',{method:'POST',body:{client_id:clientId,message,auto_answer:autoAnswer||null,admin_reply:null,status:resolved?'resolved_auto':'pending'}});
   const row=Array.isArray(rows)?rows[0]:null;
   if(!row?.id)throw new Error('Unable to save support request');
   return row;
 }
 async function listRequests(clientId){
-  const rows=await db(`nsr_support_requests?client_id=eq.${encodeURIComponent(clientId)}&select=id,message,auto_answer,admin_reply,status,escalated,created_at,answered_at&order=created_at.desc&limit=50`);
+  const rows=await db(`nsr_support_requests?client_id=eq.${encodeURIComponent(clientId)}&select=id,message,auto_answer,admin_reply,status,created_at,replied_at&order=created_at.desc&limit=50`);
   return Array.isArray(rows)?rows:[];
 }
 module.exports=async function handler(req,res){
