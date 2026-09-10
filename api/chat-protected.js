@@ -8,6 +8,33 @@ function normalizeClientSlug(value) {
   return /^[a-z0-9_-]{2,80}$/.test(slug) ? slug : '';
 }
 
+function installPublicStreamFilter(res) {
+  const originalWrite = res.write.bind(res);
+  res.write = function filteredWrite(chunk, encoding, callback) {
+    const text = Buffer.isBuffer(chunk) ? chunk.toString('utf8') : String(chunk || '');
+    const trailingNewline = text.endsWith('\n');
+    const output = text
+      .split('\n')
+      .map((line) => {
+        if (!line.trim()) return '';
+        try {
+          const event = JSON.parse(line);
+          if (event?.type === 'delta') return JSON.stringify({ type: 'delta', text: String(event.text || '') });
+          if (event?.type === 'error') return JSON.stringify({ type: 'error', error: 'Unable to process chat request' });
+          if (event?.type === 'start' || event?.type === 'done') return JSON.stringify({ type: event.type });
+          return '';
+        } catch {
+          return '';
+        }
+      })
+      .filter(Boolean)
+      .join('\n');
+
+    const safeOutput = output ? output + (trailingNewline ? '\n' : '') : '';
+    return originalWrite(safeOutput, encoding, callback);
+  };
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
@@ -35,6 +62,7 @@ module.exports = async function handler(req, res) {
       });
     }
 
+    installPublicStreamFilter(res);
     return chatHandler(req, res);
   } catch (error) {
     safeErrorLog('CHAT_RATE_LIMIT_ERROR', error);
