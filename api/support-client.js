@@ -28,33 +28,32 @@ const FAQ=[
 ];
 function answerFor(message){const q=norm(message);for(const item of FAQ){if(item.k.some(k=>q.includes(norm(k))))return item.a;}return '';}
 async function getClient(id){const rows=await db(`clients?id=eq.${encodeURIComponent(id)}&select=id,name,slug,config&limit=1`);return Array.isArray(rows)?rows[0]||null:null;}
-async function escalate(client,message){
-  const sessionId=`support-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-  const conv=await db('conversations',{method:'POST',body:{client_id:client.id,session_id:sessionId,status:'open',resolved_by_ai:false,human_handoff:true,callback_requested:false,language:'ar'}});
-  const conversation=Array.isArray(conv)?conv[0]:null;
-  if(!conversation?.id)throw new Error('Unable to create support conversation');
-  const cfg=client.config&&typeof client.config==='object'?client.config:{};
-  const name=cfg.brand_name||client.name||client.slug||'Client';
-  const phone=clean(cfg.contact_phone)||'PORTAL';
-  const rows=await db('contact_requests',{method:'POST',body:{client_id:client.id,conversation_id:conversation.id,request_type:'human_handoff',customer_name:name,phone,reason:`[دعم NSR-1] ${message}`,status:'new'}});
-  const request=Array.isArray(rows)?rows[0]:null;
-  if(!request?.id)throw new Error('Unable to create support request');
-  return request.id;
+async function saveRequest(clientId,message,autoAnswer=''){
+  const resolved=!!autoAnswer;
+  const rows=await db('nsr_support_requests',{method:'POST',body:{client_id:clientId,message,auto_answer:autoAnswer||null,admin_reply:null,status:resolved?'resolved_auto':'pending',escalated:!resolved}});
+  const row=Array.isArray(rows)?rows[0]:null;
+  if(!row?.id)throw new Error('Unable to save support request');
+  return row;
+}
+async function listRequests(clientId){
+  const rows=await db(`nsr_support_requests?client_id=eq.${encodeURIComponent(clientId)}&select=id,message,auto_answer,admin_reply,status,escalated,created_at,answered_at&order=created_at.desc&limit=50`);
+  return Array.isArray(rows)?rows:[];
 }
 module.exports=async function handler(req,res){
   res.setHeader('Cache-Control','no-store');
-  if(req.method!=='POST')return res.status(405).json({success:false,error:'Method not allowed'});
   if(!SUPABASE_URL||!SUPABASE_KEY)return res.status(500).json({success:false,error:'Server configuration error'});
   const session=getClientSession(req);
   if(!session)return res.status(401).json({success:false,error:'Unauthorized'});
   try{
+    if(req.method==='GET')return res.status(200).json({success:true,requests:await listRequests(session.client_id)});
+    if(req.method!=='POST')return res.status(405).json({success:false,error:'Method not allowed'});
     const message=clean(req.body?.message);
     if(message.length<2||message.length>800)return res.status(400).json({success:false,error:'اكتب استفسارًا قصيرًا وواضحًا.'});
     const client=await getClient(session.client_id);
     if(!client)return res.status(404).json({success:false,error:'Client not found'});
     const answer=answerFor(message);
-    if(answer)return res.status(200).json({success:true,resolved:true,answer});
-    const requestId=await escalate(client,message);
-    return res.status(200).json({success:true,resolved:false,escalated:true,request_id:requestId,answer:'لم أجد إجابة موثوقة لهذا الاستفسار. تم تحويل رسالتك إلى إدارة NOVAIRE وسيتم التعامل معها من لوحة الإدارة.'});
-  }catch(error){console.error('SUPPORT CLIENT ERROR:',error);return res.status(500).json({success:false,error:'تعذر إرسال استفسار الدعم.'});}
+    const request=await saveRequest(client.id,message,answer);
+    if(answer)return res.status(200).json({success:true,resolved:true,request_id:request.id,answer});
+    return res.status(200).json({success:true,resolved:false,escalated:true,request_id:request.id,answer:'لم أجد إجابة موثوقة لهذا الاستفسار. تم تحويل رسالتك إلى إدارة NOVAIRE، وسيظهر الرد هنا عند اعتماده.'});
+  }catch(error){console.error('SUPPORT CLIENT ERROR:',error);return res.status(500).json({success:false,error:'تعذر تنفيذ طلب الدعم.'});}
 };
