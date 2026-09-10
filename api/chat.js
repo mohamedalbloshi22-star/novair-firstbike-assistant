@@ -86,7 +86,7 @@ async function updateNotificationStatus(clientId, cycleStart, notificationType, 
 }
 async function sendUsageThresholdNotification(client, usage) {
   const threshold = Number(usage?.newly_crossed_threshold || 0);
-  if (![50,75,90,100].includes(threshold)) return { sent:false, skipped:true };
+  if (![70,85,95,100].includes(threshold)) return { sent:false, skipped:true };
   const config = safeConfig(client);
   const recipient = String(config.billing_email || config.contact_email || "").trim().toLowerCase();
   const cycleStart = String(usage?.cycle_start || "").trim();
@@ -164,22 +164,11 @@ function getFastBusinessAnswer(client, language, question) {
   const prices = Array.isArray(config.rental_prices) ? config.rental_prices : [];
   const hasAny = words => words.some(w => q.includes(normalizeText(w)));
 
-  if (location && hasAny(language === "en" ? ["location","located","address","where are you"] : ["الموقع","موقعكم","العنوان","وين موقع","اين موقع"])) {
-    return language === "en" ? `Our location: ${location}` : `موقعنا: ${location}`;
-  }
-  if (hours && hasAny(language === "en" ? ["opening hours","working hours","hours","open","close"] : ["اوقات الدوام","وقت الدوام","الدوام","متى تفتح","متى تسكر","متى تغلق"])) {
-    return language === "en" ? `Opening hours: ${hours}` : `أوقات الدوام: ${hours}`;
-  }
-  if (services.length && hasAny(language === "en" ? ["services","service","what do you offer"] : ["الخدمات","خدماتكم","شو تقدمون","ماذا تقدمون"])) {
-    return language === "en" ? `Services: ${services.join(", ")}` : `الخدمات: ${services.join("، ")}`;
-  }
+  if (location && hasAny(language === "en" ? ["location","located","address","where are you"] : ["الموقع","موقعكم","العنوان","وين موقع","اين موقع"])) return language === "en" ? `Our location: ${location}` : `موقعنا: ${location}`;
+  if (hours && hasAny(language === "en" ? ["opening hours","working hours","hours","open","close"] : ["اوقات الدوام","وقت الدوام","الدوام","متى تفتح","متى تسكر","متى تغلق"])) return language === "en" ? `Opening hours: ${hours}` : `أوقات الدوام: ${hours}`;
+  if (services.length && hasAny(language === "en" ? ["services","service","what do you offer"] : ["الخدمات","خدماتكم","شو تقدمون","ماذا تقدمون"])) return language === "en" ? `Services: ${services.join(", ")}` : `الخدمات: ${services.join("، ")}`;
   if (prices.length && hasAny(language === "en" ? ["price","prices","cost","how much"] : ["السعر","الاسعار","كم السعر","التكلفه","بكم"])) {
-    const rows = prices.map(item => {
-      const label = String(item?.label || "").trim();
-      const price = item?.price ?? "";
-      const unit = language === "en" ? String(item?.unit_en || "").trim() : String(item?.unit_ar || "").trim();
-      return label && price !== "" ? `${label}: ${price}${unit ? ` ${unit}` : ""}` : "";
-    }).filter(Boolean);
+    const rows = prices.map(item => { const label=String(item?.label||"").trim(); const price=item?.price??""; const unit=language==="en"?String(item?.unit_en||"").trim():String(item?.unit_ar||"").trim(); return label&&price!==""?`${label}: ${price}${unit?` ${unit}`:""}`:""; }).filter(Boolean);
     if (rows.length) return (language === "en" ? "Prices:\n" : "الأسعار:\n") + rows.join("\n");
   }
   return "";
@@ -196,81 +185,27 @@ async function getKnowledgeBase(clientId) {
 }
 const STOP_WORDS = new Set(["هل","في","من","على","الى","إلى","عن","ما","ماذا","كم","كيف","متى","وين","اين","أين","عندكم","عندك","لديكم","يوجد","فيه","فيها","هو","هي","هذا","هذه","و","او","أو","the","a","an","is","are","do","does","what","when","where","how","can","you","your","have","has","there"]);
 function tokenize(value) { return normalizeText(value).split(" ").filter(token => token.length >= 2 && !STOP_WORDS.has(token)); }
-function scoreKnowledgeItem(item,userQuestion) {
-  const q=normalizeText(userQuestion), stored=normalizeText(item.question), answer=normalizeText(item.answer);
-  if (!q) return 0;
-  if (stored===q) return 1000;
-  let score=(stored.includes(q)||q.includes(stored))?300:0;
-  const storedTokens=new Set(tokenize(item.question)), answerTokens=new Set(tokenize(item.answer));
-  for (const token of tokenize(userQuestion)) { if (storedTokens.has(token)) score+=30; if (answerTokens.has(token)) score+=8; }
-  return score;
-}
-function selectRelevantKnowledge(rows,userQuestion) {
-  if (!Array.isArray(rows)||!rows.length) return [];
-  if (rows.length<=MAX_KNOWLEDGE_ITEMS_SENT) return rows;
-  const relevant=rows.map(item=>({item,score:scoreKnowledgeItem(item,userQuestion)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>0).slice(0,MAX_KNOWLEDGE_ITEMS_SENT).map(x=>x.item);
-  return relevant.length?relevant:rows.slice(0,Math.min(5,MAX_KNOWLEDGE_ITEMS_SENT));
-}
-function buildKnowledgeText(rows) {
-  if (!Array.isArray(rows)||!rows.length) return "لا توجد معلومات إضافية معتمدة ذات صلة حاليًا.";
-  return rows.map((row,index)=>`${index+1}. السؤال/الموضوع: ${row.question.trim()}\nالإجابة المعتمدة: ${row.answer.trim()}`).join("\n\n");
-}
+function scoreKnowledgeItem(item,userQuestion) { const q=normalizeText(userQuestion), stored=normalizeText(item.question), answer=normalizeText(item.answer); if (!q) return 0; if (stored===q) return 1000; let score=(stored.includes(q)||q.includes(stored))?300:0; const storedTokens=new Set(tokenize(item.question)), answerTokens=new Set(tokenize(item.answer)); for (const token of tokenize(userQuestion)) { if (storedTokens.has(token)) score+=30; if (answerTokens.has(token)) score+=8; } return score; }
+function selectRelevantKnowledge(rows,userQuestion) { if (!Array.isArray(rows)||!rows.length) return []; if (rows.length<=MAX_KNOWLEDGE_ITEMS_SENT) return rows; const relevant=rows.map(item=>({item,score:scoreKnowledgeItem(item,userQuestion)})).sort((a,b)=>b.score-a.score).filter(x=>x.score>0).slice(0,MAX_KNOWLEDGE_ITEMS_SENT).map(x=>x.item); return relevant.length?relevant:rows.slice(0,Math.min(5,MAX_KNOWLEDGE_ITEMS_SENT)); }
+function buildKnowledgeText(rows) { if (!Array.isArray(rows)||!rows.length) return "لا توجد معلومات إضافية معتمدة ذات صلة حاليًا."; return rows.map((row,index)=>`${index+1}. السؤال/الموضوع: ${row.question.trim()}\nالإجابة المعتمدة: ${row.answer.trim()}`).join("\n\n"); }
 
 async function getOrCreateConversation(clientId,sessionId,language) {
   const safeLanguage=language==="en"?"en":"ar";
   const existing=await supabaseRequest(`conversations?client_id=eq.${clientId}&session_id=eq.${encodeURIComponent(sessionId)}&select=id,client_id,session_id,resolved_by_ai,human_handoff,callback_requested,language&limit=1`);
-  if (Array.isArray(existing)&&existing.length) {
-    const conversation=existing[0];
-    if (conversation.language!==safeLanguage) {
-      await supabaseRequest(`conversations?id=eq.${conversation.id}`,{method:"PATCH",prefer:"return=minimal",body:{language:safeLanguage}});
-      conversation.language=safeLanguage;
-    }
-    return conversation;
-  }
+  if (Array.isArray(existing)&&existing.length) { const conversation=existing[0]; if (conversation.language!==safeLanguage) { await supabaseRequest(`conversations?id=eq.${conversation.id}`,{method:"PATCH",prefer:"return=minimal",body:{language:safeLanguage}}); conversation.language=safeLanguage; } return conversation; }
   const created=await supabaseRequest("conversations",{method:"POST",prefer:"return=representation",body:{client_id:clientId,session_id:sessionId,status:"open",resolved_by_ai:null,human_handoff:false,callback_requested:false,language:safeLanguage}});
   if (!Array.isArray(created)||!created.length) throw new Error("Unable to create conversation");
   return created[0];
 }
-async function saveMessage(conversationId,sender,content,inputTokens=null,outputTokens=null) {
-  await supabaseRequest("messages",{method:"POST",prefer:"return=minimal",body:{conversation_id:conversationId,sender,content,input_tokens:inputTokens,output_tokens:outputTokens}});
-}
-async function saveUnansweredQuestion(clientId,conversationId,question) {
-  await supabaseRequest("unanswered_questions",{method:"POST",prefer:"return=minimal",body:{client_id:clientId,conversation_id:conversationId,question,resolved:false}});
-}
-async function updateResolutionStatus(conversation,isUnanswered) {
-  const resolvedByAi=!(isUnanswered||conversation.resolved_by_ai===false||conversation.human_handoff===true||conversation.callback_requested===true);
-  await supabaseRequest(`conversations?id=eq.${conversation.id}`,{method:"PATCH",prefer:"return=minimal",body:{resolved_by_ai:resolvedByAi}});
-  return resolvedByAi;
-}
-function getLatestUserMessage(messages) {
-  for (let i=messages.length-1;i>=0;i--) if (messages[i]?.role==="user") return String(messages[i].content||"").trim();
-  return "";
-}
-function prepareMessagesForClaude(messages) {
-  if (!Array.isArray(messages)) return [];
-  return messages.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&String(m.content||"").trim()).slice(-MAX_MESSAGES_SENT).map(m=>({role:m.role,content:String(m.content||"").trim()}));
-}
+async function saveMessage(conversationId,sender,content,inputTokens=null,outputTokens=null) { await supabaseRequest("messages",{method:"POST",prefer:"return=minimal",body:{conversation_id:conversationId,sender,content,input_tokens:inputTokens,output_tokens:outputTokens}}); }
+async function saveUnansweredQuestion(clientId,conversationId,question) { await supabaseRequest("unanswered_questions",{method:"POST",prefer:"return=minimal",body:{client_id:clientId,conversation_id:conversationId,question,resolved:false}}); }
+async function updateResolutionStatus(conversation,isUnanswered) { const resolvedByAi=!(isUnanswered||conversation.resolved_by_ai===false||conversation.human_handoff===true||conversation.callback_requested===true); await supabaseRequest(`conversations?id=eq.${conversation.id}`,{method:"PATCH",prefer:"return=minimal",body:{resolved_by_ai:resolvedByAi}}); return resolvedByAi; }
+function getLatestUserMessage(messages) { for (let i=messages.length-1;i>=0;i--) if (messages[i]?.role==="user") return String(messages[i].content||"").trim(); return ""; }
+function prepareMessagesForClaude(messages) { if (!Array.isArray(messages)) return []; return messages.filter(m=>m&&(m.role==="user"||m.role==="assistant")&&String(m.content||"").trim()).slice(-MAX_MESSAGES_SENT).map(m=>({role:m.role,content:String(m.content||"").trim()})); }
 function writeStreamEvent(res,data) { res.write(JSON.stringify(data)+"\n"); }
-function setStreamHeaders(res) {
-  res.statusCode=200;
-  res.setHeader("Content-Type","application/x-ndjson; charset=utf-8");
-  res.setHeader("Cache-Control","no-cache, no-transform");
-  res.setHeader("Connection","keep-alive");
-  res.setHeader("X-Accel-Buffering","no");
-  if (typeof res.flushHeaders==="function") res.flushHeaders();
-}
-function startStream(res,client,conversation,safeSessionId,safeLanguage,quotaSnapshot) {
-  setStreamHeaders(res);
-  writeStreamEvent(res,{type:"start",client_slug:client.slug,conversation_id:conversation.id,session_id:safeSessionId,language:safeLanguage,usage:{used:quotaSnapshot.used,monthly_limit:quotaSnapshot.monthly_limit,remaining:quotaSnapshot.remaining,usage_percent:quotaSnapshot.usage_percent,warning_level:quotaSnapshot.warning_level}});
-}
-
-function selectModelForRequest(question,messages) {
-  const raw=String(question||"").trim();
-  const q=normalizeText(raw);
-  const complexTerms=["قارن","مقارنه","الفرق بين","حلل","تحليل","اشرح بالتفصيل","لماذا","سبب المشكله","افضل خيار","انصح","توصيه","استثناء","سياسه","شروط متعدده","compare","comparison","difference between","analyze","analysis","explain in detail","why","root cause","best option","recommend","recommendation","exception","policy"];
-  const complex=raw.length>220||complexTerms.some(term=>q.includes(normalizeText(term)));
-  return complex?SONNET_MODEL:HAIKU_MODEL;
-}
+function setStreamHeaders(res) { res.statusCode=200; res.setHeader("Content-Type","application/x-ndjson; charset=utf-8"); res.setHeader("Cache-Control","no-cache, no-transform"); res.setHeader("Connection","keep-alive"); res.setHeader("X-Accel-Buffering","no"); if (typeof res.flushHeaders==="function") res.flushHeaders(); }
+function startStream(res,client,conversation,safeSessionId,safeLanguage,quotaSnapshot) { setStreamHeaders(res); writeStreamEvent(res,{type:"start",client_slug:client.slug,conversation_id:conversation.id,session_id:safeSessionId,language:safeLanguage,usage:{used:quotaSnapshot.used,monthly_limit:quotaSnapshot.monthly_limit,remaining:quotaSnapshot.remaining,usage_percent:quotaSnapshot.usage_percent,warning_level:quotaSnapshot.warning_level}}); }
+function selectModelForRequest(question,messages) { const raw=String(question||"").trim(); const q=normalizeText(raw); const complexTerms=["قارن","مقارنه","الفرق بين","حلل","تحليل","اشرح بالتفصيل","لماذا","سبب المشكله","افضل خيار","انصح","توصيه","استثناء","سياسه","شروط متعدده","compare","comparison","difference between","analyze","analysis","explain in detail","why","root cause","best option","recommend","recommendation","exception","policy"]; const complex=raw.length>220||complexTerms.some(term=>q.includes(normalizeText(term))); return complex?SONNET_MODEL:HAIKU_MODEL; }
 
 module.exports=async function handler(req,res) {
   let reservedQuotaClientId=null, quotaCommitted=false, quotaSnapshot=null;
@@ -286,26 +221,17 @@ module.exports=async function handler(req,res) {
     if (!validation.ok) return res.status(413).json({error:validation.error});
     const latestUserMessage=getLatestUserMessage(messages);
     if (!latestUserMessage) return res.status(400).json({error:"User message is required"});
-
     const client=await getClient(safeClientSlug);
     const clientConfig=safeConfig(client);
     const brandName=String(clientConfig.brand_name||client.name||"Client").trim();
     const assistantName=String(clientConfig[safeLanguage==="en"?"assistant_name_en":"assistant_name_ar"]||brandName).trim();
-
     const fastAnswer=getFastBusinessAnswer(client,safeLanguage,latestUserMessage);
-    if (fastAnswer) {
-      setStreamHeaders(res);
-      writeStreamEvent(res,{type:"delta",text:fastAnswer});
-      writeStreamEvent(res,{type:"done",novaire:{client_id:client.id,client_slug:client.slug,client_name:brandName,session_id:safeSessionId,language:safeLanguage,fast_answer:true,ai_used:false}});
-      return res.end();
-    }
-
+    if (fastAnswer) { setStreamHeaders(res); writeStreamEvent(res,{type:"delta",text:fastAnswer}); writeStreamEvent(res,{type:"done",novaire:{client_id:client.id,client_slug:client.slug,client_name:brandName,session_id:safeSessionId,language:safeLanguage,fast_answer:true,ai_used:false}}); return res.end(); }
     const conversationPromise=getOrCreateConversation(client.id,safeSessionId,safeLanguage);
     const knowledgePromise=getKnowledgeBase(client.id).catch(error=>{console.error("KNOWLEDGE BASE LOAD ERROR:",error);return [];});
     quotaSnapshot=await reserveAiResponse(client.id);
     if (!quotaSnapshot||quotaSnapshot.allowed!==true) return res.status(429).json({error:"AI response limit reached",code:"AI_RESPONSE_LIMIT_REACHED",usage:{used:Number(quotaSnapshot?.used||0),monthly_limit:Number(quotaSnapshot?.monthly_limit||0),remaining:Number(quotaSnapshot?.remaining||0),usage_percent:Number(quotaSnapshot?.usage_percent||100),warning_level:quotaSnapshot?.warning_level||"CAP_REACHED",cycle_end:quotaSnapshot?.cycle_end||null}});
     reservedQuotaClientId=client.id;
-
     const [conversation,knowledgeBase]=await Promise.all([conversationPromise,knowledgePromise]);
     const saveUserMessagePromise=saveMessage(conversation.id,"user",latestUserMessage);
     const selectedModel=selectModelForRequest(latestUserMessage,messages);
@@ -338,63 +264,29 @@ ${knowledgeText}
 - اجعل الرد مختصرًا وطبيعيًا ومهنيًا.
 - لغة الرد الحالية: ${safeLanguage==="en"?"English":"العربية"}.
 `;
-
     const anthropicResponse=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":ANTHROPIC_API_KEY,"anthropic-version":"2023-06-01"},body:JSON.stringify({model:selectedModel,max_tokens:MAX_ANTHROPIC_TOKENS,stream:true,system:systemPrompt,messages:requestMessages})});
     if (!anthropicResponse.ok) throw new Error(`Anthropic error ${anthropicResponse.status}: ${await anthropicResponse.text()}`);
     if (!anthropicResponse.body) throw new Error("Anthropic returned no stream");
-
     startStream(res,client,conversation,safeSessionId,safeLanguage,quotaSnapshot);
     const reader=anthropicResponse.body.getReader(), decoder=new TextDecoder();
     let streamBuffer="",answerBuffer="",pendingOutput="",isUnanswered=false,inputTokens=null,outputTokens=null;
     const markerTailLength=UNANSWERED_MARKER.length-1;
-    function processVisibleText(text) {
-      if (!text) return;
-      answerBuffer+=text; pendingOutput+=text;
-      if (pendingOutput.includes(UNANSWERED_MARKER)) { isUnanswered=true; pendingOutput=pendingOutput.replaceAll(UNANSWERED_MARKER,""); }
-      if (pendingOutput.length>markerTailLength) {
-        const safeLength=pendingOutput.length-markerTailLength, safeText=pendingOutput.slice(0,safeLength);
-        pendingOutput=pendingOutput.slice(safeLength);
-        if (safeText) writeStreamEvent(res,{type:"delta",text:safeText});
-      }
-    }
-    while (true) {
-      const {done,value}=await reader.read(); if (done) break;
-      streamBuffer+=decoder.decode(value,{stream:true});
-      const lines=streamBuffer.split("\n"); streamBuffer=lines.pop()||"";
-      for (const rawLine of lines) {
-        const line=rawLine.trim(); if (!line.startsWith("data:")) continue;
-        const jsonText=line.slice(5).trim(); if (!jsonText||jsonText==="[DONE]") continue;
-        let event; try { event=JSON.parse(jsonText); } catch { continue; }
-        if (event.type==="message_start"&&event.message?.usage) inputTokens=event.message.usage.input_tokens??null;
-        if (event.type==="content_block_delta"&&event.delta?.type==="text_delta") processVisibleText(event.delta.text||"");
-        if (event.type==="message_delta"&&event.usage) outputTokens=event.usage.output_tokens??outputTokens;
-      }
-    }
+    function processVisibleText(text) { if (!text) return; answerBuffer+=text; pendingOutput+=text; if (pendingOutput.includes(UNANSWERED_MARKER)) { isUnanswered=true; pendingOutput=pendingOutput.replaceAll(UNANSWERED_MARKER,""); } if (pendingOutput.length>markerTailLength) { const safeLength=pendingOutput.length-markerTailLength, safeText=pendingOutput.slice(0,safeLength); pendingOutput=pendingOutput.slice(safeLength); if (safeText) writeStreamEvent(res,{type:"delta",text:safeText}); } }
+    while (true) { const {done,value}=await reader.read(); if (done) break; streamBuffer+=decoder.decode(value,{stream:true}); const lines=streamBuffer.split("\n"); streamBuffer=lines.pop()||""; for (const rawLine of lines) { const line=rawLine.trim(); if (!line.startsWith("data:")) continue; const jsonText=line.slice(5).trim(); if (!jsonText||jsonText==="[DONE]") continue; let event; try { event=JSON.parse(jsonText); } catch { continue; } if (event.type==="message_start"&&event.message?.usage) inputTokens=event.message.usage.input_tokens??null; if (event.type==="content_block_delta"&&event.delta?.type==="text_delta") processVisibleText(event.delta.text||""); if (event.type==="message_delta"&&event.usage) outputTokens=event.usage.output_tokens??outputTokens; } }
     if (pendingOutput.includes(UNANSWERED_MARKER)) { isUnanswered=true; pendingOutput=pendingOutput.replaceAll(UNANSWERED_MARKER,""); }
     const cleanAnswer=String(answerBuffer||"").replaceAll(UNANSWERED_MARKER,"").trim();
     const finalVisibleTail=String(pendingOutput||"").replaceAll(UNANSWERED_MARKER,"");
     if (finalVisibleTail) writeStreamEvent(res,{type:"delta",text:finalVisibleTail});
     quotaCommitted=true;
     try { await saveUserMessagePromise; } catch (error) { console.error("USER MESSAGE SAVE ERROR:",error); }
-    const results=await Promise.allSettled([
-      saveMessage(conversation.id,"assistant",cleanAnswer,inputTokens,outputTokens),
-      updateResolutionStatus(conversation,isUnanswered),
-      isUnanswered?saveUnansweredQuestion(client.id,conversation.id,latestUserMessage).catch(error=>{console.error("UNANSWERED QUESTION LOG ERROR:",error);return null;}):Promise.resolve(null),
-      quotaSnapshot?.newly_crossed_threshold?sendUsageThresholdNotification(client,quotaSnapshot).catch(error=>{console.error("USAGE THRESHOLD EMAIL ERROR:",error);return null;}):Promise.resolve(null)
-    ]);
+    const results=await Promise.allSettled([saveMessage(conversation.id,"assistant",cleanAnswer,inputTokens,outputTokens),updateResolutionStatus(conversation,isUnanswered),isUnanswered?saveUnansweredQuestion(client.id,conversation.id,latestUserMessage).catch(error=>{console.error("UNANSWERED QUESTION LOG ERROR:",error);return null;}):Promise.resolve(null),quotaSnapshot?.newly_crossed_threshold?sendUsageThresholdNotification(client,quotaSnapshot).catch(error=>{console.error("USAGE THRESHOLD EMAIL ERROR:",error);return null;}):Promise.resolve(null)]);
     let resolvedByAi=!isUnanswered; if (results[1].status==="fulfilled") resolvedByAi=results[1].value;
     writeStreamEvent(res,{type:"done",novaire:{client_id:client.id,client_slug:client.slug,client_name:brandName,conversation_id:conversation.id,session_id:safeSessionId,language:safeLanguage,unanswered:isUnanswered,resolved_by_ai:resolvedByAi,knowledge_items:knowledgeBase.length,knowledge_items_used:relevantKnowledge.length,input_tokens:inputTokens,output_tokens:outputTokens,usage:{used:quotaSnapshot.used,monthly_limit:quotaSnapshot.monthly_limit,remaining:quotaSnapshot.remaining,usage_percent:quotaSnapshot.usage_percent,warning_level:quotaSnapshot.warning_level,newly_crossed_threshold:quotaSnapshot.newly_crossed_threshold??null}}});
     res.end();
   } catch (error) {
     console.error("CHAT API ERROR:",error);
-    if (reservedQuotaClientId&&!quotaCommitted) {
-      try { await releaseAiResponse(reservedQuotaClientId); } catch (releaseError) { console.error("QUOTA RELEASE ERROR:",releaseError); }
-    }
-    if (res.headersSent) {
-      try { writeStreamEvent(res,{type:"error",error:"Unable to process chat request"}); res.end(); }
-      catch { try { res.end(); } catch {} }
-      return;
-    }
+    if (reservedQuotaClientId&&!quotaCommitted) { try { await releaseAiResponse(reservedQuotaClientId); } catch (releaseError) { console.error("QUOTA RELEASE ERROR:",releaseError); } }
+    if (res.headersSent) { try { writeStreamEvent(res,{type:"error",error:"Unable to process chat request"}); res.end(); } catch { try { res.end(); } catch {} } return; }
     return res.status(500).json({error:"Unable to process chat request"});
   }
 };
