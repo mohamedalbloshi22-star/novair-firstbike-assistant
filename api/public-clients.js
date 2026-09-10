@@ -1,6 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const { isAdminSession } = require('./_admin-session');
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 async function getClients() {
   const response = await fetch(
@@ -69,10 +70,7 @@ module.exports = async function handler(req, res) {
     });
 
   } catch (error) {
-    console.error(
-      "public-clients error:",
-      error
-    );
+    safeErrorLog('PUBLIC_CLIENTS_ERROR', error);
 
     return res.status(500).json({
       success: false,
