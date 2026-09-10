@@ -7,6 +7,10 @@
     {
       "source": "/api/client-admin",
       "destination": "/api/client-admin-protected"
+    },
+    {
+      "source": "/api/client-auth",
+      "destination": "/api/client-auth-protected"
     }
   ],
   "headers": [
