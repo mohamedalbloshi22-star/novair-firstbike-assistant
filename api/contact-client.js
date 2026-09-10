@@ -1,6 +1,7 @@
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const {getClientSession}=require('./_client-session');
+const {safeErrorLog}=require('../lib/nsr-safe-log');
 
 async function db(path,options={}){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
@@ -33,7 +34,7 @@ module.exports=async function handler(req,res){
     const updated=await db(`contact_requests?id=eq.${encodeURIComponent(requestId)}&client_id=eq.${encodeURIComponent(session.client_id)}`,{method:'PATCH',body:{status},prefer:'return=representation'});
     return res.status(200).json({success:true,request:Array.isArray(updated)?updated[0]||null:null});
   }catch(error){
-    console.error('CONTACT CLIENT ERROR:',error);
+    safeErrorLog('CONTACT_CLIENT_ERROR',error,{client_id:session.client_id});
     return res.status(500).json({success:false,error:'Unable to update contact request'});
   }
 };
