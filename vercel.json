@@ -1,4 +1,10 @@
 {
+  "rewrites": [
+    {
+      "source": "/api/chat",
+      "destination": "/api/chat-protected"
+    }
+  ],
   "headers": [
     {
       "source": "/(.*)",
