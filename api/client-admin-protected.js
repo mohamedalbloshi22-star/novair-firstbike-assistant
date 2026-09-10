@@ -21,10 +21,41 @@ function clean(value) {
   return String(value || '').trim();
 }
 
+function hasValue(value) {
+  return value !== undefined && value !== null && String(value).trim() !== '';
+}
+
+function validateCommercialInputs(body) {
+  if (hasValue(body.custom_ai_limit)) {
+    const limit = Number(body.custom_ai_limit);
+    if (!Number.isSafeInteger(limit) || limit <= 0) {
+      return 'custom_ai_limit must be a positive integer';
+    }
+  }
+
+  for (const key of ['setup_fee_override_aed', 'monthly_fee_override_aed']) {
+    if (!hasValue(body[key])) continue;
+    const amount = Number(body[key]);
+    if (!Number.isFinite(amount) || amount < 0) {
+      return `${key} must be a non-negative number`;
+    }
+  }
+
+  return '';
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   const action = clean(req.body?.action);
+
+  if (action === 'create_with_plan' || action === 'assign_plan') {
+    const validationError = validateCommercialInputs(req.body || {});
+    if (validationError) {
+      return res.status(400).json({ error: validationError });
+    }
+  }
+
   if (action !== 'delete') return clientAdminHandler(req, res);
 
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
