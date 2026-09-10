@@ -23,6 +23,11 @@ module.exports=async function handler(req,res){
   const session=getClientSession(req);
   if(!session)return res.status(401).json({success:false,error:'Unauthorized'});
   try{
+    const clients=await db(`clients?id=eq.${encodeURIComponent(session.client_id)}&select=id,config&limit=1`);
+    const client=Array.isArray(clients)?clients[0]||null:null;
+    if(!client)return res.status(404).json({success:false,error:'Client not found'});
+    if(client.config?.active===false)return res.status(403).json({success:false,error:'Client inactive'});
+
     const body=req.body||{};
     if(clean(body.action)!=='update_status')return res.status(400).json({success:false,error:'Invalid action'});
     const requestId=clean(body.request_id);
