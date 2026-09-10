@@ -17,6 +17,11 @@ async function sb(path) {
   return text ? JSON.parse(text) : [];
 }
 
+function excelSafe(value) {
+  const text = String(value ?? '');
+  return /^\s*[=+\-@]/.test(text) ? `'${text}` : text;
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
@@ -44,9 +49,9 @@ module.exports = async function handler(req, res) {
 
     const convRows = (Array.isArray(conversations) ? conversations : []).map((x, i) => ({
       '#': i + 1,
-      'معرف المحادثة': x.id || '',
-      'بداية المحادثة': x.started_at || x.created_at || '',
-      'اللغة': x.language || '',
+      'معرف المحادثة': excelSafe(x.id),
+      'بداية المحادثة': excelSafe(x.started_at || x.created_at || ''),
+      'اللغة': excelSafe(x.language),
       'تم الحل بالذكاء الاصطناعي': x.resolved_by_ai === true ? 'نعم' : 'لا',
       'تحويل لموظف': x.human_handoff === true ? 'نعم' : 'لا',
       'طلب اتصال': x.callback_requested === true ? 'نعم' : 'لا'
@@ -54,10 +59,10 @@ module.exports = async function handler(req, res) {
 
     const msgRows = (Array.isArray(messages) ? messages : []).map((x, i) => ({
       '#': i + 1,
-      'معرف المحادثة': x.conversation_id || '',
-      'المرسل': x.sender === 'user' ? 'العميل/الزائر' : x.sender === 'assistant' ? 'المساعد' : (x.sender || ''),
-      'الرسالة': x.content || '',
-      'التاريخ والوقت': x.created_at || ''
+      'معرف المحادثة': excelSafe(x.conversation_id),
+      'المرسل': excelSafe(x.sender === 'user' ? 'العميل/الزائر' : x.sender === 'assistant' ? 'المساعد' : (x.sender || '')),
+      'الرسالة': excelSafe(x.content),
+      'التاريخ والوقت': excelSafe(x.created_at)
     }));
 
     const wb = XLSX.utils.book_new();
