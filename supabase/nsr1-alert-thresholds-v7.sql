@@ -1,13 +1,15 @@
--- NSR-1 V7: customer-facing usage thresholds 50 / 75 / 90 / 100
+-- NSR-1 V7: customer-facing usage thresholds 70 / 85 / 95 / 100
 -- Run AFTER V1-V6.
--- Historical 70/85/95 alert rows remain valid for audit history, but new alerts use 50/75/90/100.
+-- Usage alerts are standardized on 70/85/95/100.
+
+delete from public.nsr_usage_alerts where threshold in (50,75,90);
 
 alter table public.nsr_usage_alerts
   drop constraint if exists nsr_usage_alerts_threshold_check;
 
 alter table public.nsr_usage_alerts
   add constraint nsr_usage_alerts_threshold_check
-  check (threshold in (50,70,75,85,90,95,100));
+  check (threshold in (70,85,95,100));
 
 create or replace function public.nsr_reserve_ai_response(p_client_id uuid)
 returns table(
@@ -81,9 +83,9 @@ begin
 
   v_pct := round((v_used::numeric/greatest(v_limit,1)::numeric)*100,1);
 
-  if v_before::numeric/greatest(v_limit,1) < .50 and v_used::numeric/greatest(v_limit,1) >= .50 then v_threshold := 50;
-  elsif v_before::numeric/greatest(v_limit,1) < .75 and v_used::numeric/greatest(v_limit,1) >= .75 then v_threshold := 75;
-  elsif v_before::numeric/greatest(v_limit,1) < .90 and v_used::numeric/greatest(v_limit,1) >= .90 then v_threshold := 90;
+  if v_before::numeric/greatest(v_limit,1) < .70 and v_used::numeric/greatest(v_limit,1) >= .70 then v_threshold := 70;
+  elsif v_before::numeric/greatest(v_limit,1) < .85 and v_used::numeric/greatest(v_limit,1) >= .85 then v_threshold := 85;
+  elsif v_before::numeric/greatest(v_limit,1) < .95 and v_used::numeric/greatest(v_limit,1) >= .95 then v_threshold := 95;
   elsif v_before < v_limit and v_used >= v_limit then v_threshold := 100;
   end if;
 
@@ -101,9 +103,9 @@ begin
     v_pct,
     case
       when v_used >= v_limit then 'CAP_REACHED'
-      when v_used::numeric/greatest(v_limit,1) >= .90 then '90'
-      when v_used::numeric/greatest(v_limit,1) >= .75 then '75'
-      when v_used::numeric/greatest(v_limit,1) >= .50 then '50'
+      when v_used::numeric/greatest(v_limit,1) >= .95 then '95'
+      when v_used::numeric/greatest(v_limit,1) >= .85 then '85'
+      when v_used::numeric/greatest(v_limit,1) >= .70 then '70'
       else 'NORMAL'
     end,
     v_sub.cycle_start,
@@ -149,9 +151,9 @@ begin
     s.status,
     case
       when coalesce(u.ai_responses,0) >= coalesce(s.custom_ai_limit,p.monthly_ai_responses) then 'CAP_REACHED'
-      when coalesce(u.ai_responses,0)::numeric/greatest(coalesce(s.custom_ai_limit,p.monthly_ai_responses),1) >= .90 then '90'
-      when coalesce(u.ai_responses,0)::numeric/greatest(coalesce(s.custom_ai_limit,p.monthly_ai_responses),1) >= .75 then '75'
-      when coalesce(u.ai_responses,0)::numeric/greatest(coalesce(s.custom_ai_limit,p.monthly_ai_responses),1) >= .50 then '50'
+      when coalesce(u.ai_responses,0)::numeric/greatest(coalesce(s.custom_ai_limit,p.monthly_ai_responses),1) >= .95 then '95'
+      when coalesce(u.ai_responses,0)::numeric/greatest(coalesce(s.custom_ai_limit,p.monthly_ai_responses),1) >= .85 then '85'
+      when coalesce(u.ai_responses,0)::numeric/greatest(coalesce(s.custom_ai_limit,p.monthly_ai_responses),1) >= .70 then '70'
       else 'NORMAL'
     end,
     coalesce(s.setup_fee_override_aed,p.setup_fee_aed),
