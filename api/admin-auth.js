@@ -2,6 +2,7 @@ const crypto = require("crypto");
 const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 const ADMIN_PASSWORD = process.env.NOVAIRE_ADMIN_PASSWORD;
+const ADMIN_SESSION_SECRET = process.env.NOVAIRE_ADMIN_SESSION_SECRET || ADMIN_PASSWORD;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const COOKIE_NAME = "novaire_admin_session";
@@ -11,7 +12,7 @@ const ATTEMPT_WINDOW_SECONDS = 15 * 60;
 const LOCKOUT_SECONDS = 15 * 60;
 
 function sign(value) {
-  return crypto.createHmac("sha256", ADMIN_PASSWORD).update(value).digest("hex");
+  return crypto.createHmac("sha256", ADMIN_SESSION_SECRET).update(value).digest("hex");
 }
 
 function createSession() {
@@ -21,7 +22,7 @@ function createSession() {
 }
 
 function verifySession(token) {
-  if (!token || !ADMIN_PASSWORD) return false;
+  if (!token || !ADMIN_SESSION_SECRET) return false;
   const parts = token.split(".");
   if (parts.length !== 2) return false;
   const [expires, signature] = parts;
@@ -108,7 +109,7 @@ function clearSessionCookie(res) {
 }
 
 module.exports = async function handler(req, res) {
-  if (!ADMIN_PASSWORD) return res.status(500).json({ success: false, error: "Missing admin configuration" });
+  if (!ADMIN_PASSWORD || !ADMIN_SESSION_SECRET) return res.status(500).json({ success: false, error: "Missing admin configuration" });
 
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
 
