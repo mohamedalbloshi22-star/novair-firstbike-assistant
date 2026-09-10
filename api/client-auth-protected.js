@@ -118,7 +118,11 @@ module.exports=async function handler(req,res){
 
     const claim=await rpc('nsr_claim_billing_event',{p_event_id:eventId});
     if(claim?.claimed!==true){
-      return res.status(200).json({received:true,duplicate:true,event_id:eventId});
+      if(claim?.status==='completed'){
+        return res.status(200).json({received:true,duplicate:true,event_id:eventId});
+      }
+      res.setHeader('Retry-After','30');
+      return res.status(503).json({received:false,retry:true,error:'Stripe event is already being processed'});
     }
 
     replayRawBody(req,raw);
