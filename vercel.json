@@ -1,6 +1,22 @@
 {
   "rewrites": [
     {
+      "source": "/",
+      "destination": "/index-light.html"
+    },
+    {
+      "source": "/index.html",
+      "destination": "/index-light.html"
+    },
+    {
+      "source": "/admin.html",
+      "destination": "/admin-light.html"
+    },
+    {
+      "source": "/clients.html",
+      "destination": "/clients-light.html"
+    },
+    {
       "source": "/api/chat",
       "destination": "/api/chat-protected"
     },
