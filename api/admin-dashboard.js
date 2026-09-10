@@ -1,6 +1,7 @@
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const {isAdminSession}=require('./_admin-session');
+const {safeErrorLog}=require('../lib/nsr-safe-log');
 
 const AI_MODEL_NAME='Claude Sonnet 4.6';
 const INPUT_PRICE_PER_MILLION=3;
@@ -78,8 +79,8 @@ module.exports=async function handler(req,res){
       packageClients=await supabaseRequest('nsr_admin_usage_overview?select=*&order=usage_percent.desc');
       packagesReady=true;usage=(Array.isArray(packageClients)?packageClients:[]).find(x=>String(x.slug||'').toLowerCase()===clientSlug)||null;portfolio=buildPortfolio(packageClients,allAiUsageRows);
     }catch(packageError){
-      console.warn('NSR PACKAGE VIEW UNAVAILABLE:',packageError.message);
-      try{const current=await supabaseRpc('nsr_current_usage',{p_client_id:clientId});usage=first(current);if(usage&&usage.plan_code){usage={...usage,slug:clientSlug,client_name:summary.client_name};packagesReady=true;}}catch(rpcError){console.warn('NSR PACKAGE RPC UNAVAILABLE:',rpcError.message);}
+      safeErrorLog('NSR_PACKAGE_VIEW_UNAVAILABLE',packageError,{client_slug:clientSlug});
+      try{const current=await supabaseRpc('nsr_current_usage',{p_client_id:clientId});usage=first(current);if(usage&&usage.plan_code){usage={...usage,slug:clientSlug,client_name:summary.client_name};packagesReady=true;}}catch(rpcError){safeErrorLog('NSR_PACKAGE_RPC_UNAVAILABLE',rpcError,{client_slug:clientSlug});}
     }
     const paymentDays=usage?daysUntil(usage.cycle_end):null;
     return res.status(200).json({
@@ -88,5 +89,5 @@ module.exports=async function handler(req,res){
       ai_usage:{model:AI_MODEL_NAME,total_input_tokens:totalInputTokens,total_output_tokens:totalOutputTokens,total_tokens:totalTokens,ai_usage_records:Number(aiUsage.ai_usage_records||0),input_price_per_million_usd:INPUT_PRICE_PER_MILLION,output_price_per_million_usd:OUTPUT_PRICE_PER_MILLION,input_cost_usd:Number(inputCostUsd.toFixed(6)),output_cost_usd:Number(outputCostUsd.toFixed(6)),total_cost_usd:Number(totalCostUsd.toFixed(6)),total_cost_aed:Number(totalCostAed.toFixed(4))},
       packages_ready:packagesReady,usage,portfolio,package_clients:packagesReady?packageClients:[]
     });
-  }catch(error){console.error('ADMIN DASHBOARD API ERROR:',error);return res.status(500).json({error:'Unable to load admin dashboard statistics'});}
+  }catch(error){safeErrorLog('ADMIN_DASHBOARD_API_ERROR',error,{client_slug:clientSlug});return res.status(500).json({error:'Unable to load admin dashboard statistics'});}
 };
