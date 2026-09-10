@@ -1,0 +1,78 @@
+name: NSR billing and contract refresh
+on:
+  workflow_dispatch:
+  push:
+    branches: [ui-refresh-light-v1]
+    paths: ['.github/workflows/nsr-billing-contract-refresh.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-refresh-light-v1
+      - name: Patch billing UI and agreement
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('billing.html')
+          s=p.read_text()
+          s=s.replace(
+            '<button id="startPayment" class="btn">بدء الاشتراك والدفع</button>\n    <button id="managePayment" class="btn secondary">تغيير الباقة وإدارة الدفع</button>',
+            '<button id="startPayment" class="btn">بدء الاشتراك والدفع</button>\n    <button id="restartNow" class="btn" style="background:#18a6a6">بدء دورة جديدة الآن</button>\n    <button id="managePayment" class="btn secondary">تغيير الباقة وإدارة الدفع</button>',
+            1
+          )
+          s=s.replace(
+            '<section class="card"><b>إدارة الاشتراك</b><p class="muted">بعد تفعيل الدفع يستطيع العميل دفع الاشتراك، تحديث البطاقة، تغيير الباقة، وإدارة التجديد التلقائي من صفحة دفع آمنة. بيانات البطاقة لا تُخزن داخل NOVAIRE.</p></section>',
+            '<section class="card"><b>إدارة الاشتراك</b><p class="muted">الاشتراك الشهري يتجدد تلقائيًا باستخدام وسيلة الدفع المحفوظة لدى مزود الدفع، ما لم يطلب العميل إيقاف التجديد. بيانات البطاقة لا تُخزن داخل NOVAIRE. إذا انتهى حد الردود قبل نهاية الدورة، يستطيع العميل بدء دورة جديدة فورًا؛ عند نجاح التحصيل تبدأ دورة شهرية جديدة من تاريخ الدفع الجديد ويصبح هذا هو موعد التجديد التالي.</p></section>',
+            1
+          )
+          s=s.replace('function render(b){', 'function render(b,u){', 1)
+          s=s.replace(
+            "if(!b){$('plan').textContent='—';$('status').textContent='غير مفعّل';$('renew').textContent='—';$('fee').textContent='—';$('startPayment').disabled=true;$('managePayment').disabled=true;return}",
+            "if(!b){$('plan').textContent='—';$('status').textContent='غير مفعّل';$('renew').textContent='—';$('fee').textContent='—';$('startPayment').disabled=true;$('restartNow').disabled=true;$('managePayment').disabled=true;return}",
+            1
+          )
+          s=s.replace(
+            "$('managePayment').disabled=!b.stripe_customer_ready;\n  if(activeStripe)$('startPayment').textContent='الاشتراك مفعّل';",
+            "$('managePayment').disabled=!b.stripe_customer_ready;\n  const capReached=!!u&&Number(u.remaining||0)<=0&&Number(u.monthly_limit||0)>0;\n  $('restartNow').disabled=!(activeStripe&&capReached);\n  $('restartNow').textContent=capReached?'بدء دورة جديدة الآن':'متاح عند انتهاء حد الردود';\n  if(activeStripe)$('startPayment').textContent='الاشتراك مفعّل';",
+            1
+          )
+          s=s.replace('render(d.billing)}catch(e)', 'render(d.billing,d.usage)}catch(e)', 1)
+          marker="$('managePayment').onclick=async()=>{try{$('managePayment').disabled=true;const d=await action('billing_portal');location=d.url}catch(e){notice(e.message,'error');await load()}}\n"
+          addition="$('restartNow').onclick=async()=>{if(!confirm('سيتم تحصيل قيمة دورة شهرية جديدة الآن، وستبدأ دورة الاشتراك الجديدة من تاريخ اليوم. هل تريد المتابعة؟'))return;try{$('restartNow').disabled=true;$('restartNow').textContent='جاري بدء الدورة...';const r=await fetch('/api/billing-restart',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({confirm:true})});const d=await r.json();if(r.status===401){location='/client-login.html';return}if(!r.ok||!d.success)throw Error(d.error||'تعذر بدء دورة جديدة');notice('تم بدء دورة اشتراك جديدة بنجاح، وسيكون التجديد القادم حسب التاريخ الجديد.');await load()}catch(e){notice(e.message,'error');await load()}}\n"
+          if marker not in s: raise SystemExit('billing marker not found')
+          s=s.replace(marker,marker+addition,1)
+          p.write_text(s)
+
+          p=Path('commercial/NSR1_CLIENT_AGREEMENT_TEMPLATE_AR.md')
+          s=p.read_text()
+          old="""## 4. الدفع والتجديد والتعليق
+يلتزم العميل بسداد المبالغ المستحقة في موعدها. يجوز لـ NOVAIRE تعليق الخدمة أو تقييدها عند عدم السداد أو فشل الدفع أو انتهاء الاشتراك أو تجاوز الحدود المتفق عليها، وفق سياسة التنبيه والتجديد المعتمدة.
+
+تُرسل إشعارات الاستهلاك والدفع إلى بريد العميل وبريد الفواتير المسجلين في النظام.
+"""
+          new="""## 4. الدفع والتجديد والتعليق
+يلتزم العميل بسداد المبالغ المستحقة في موعدها. عند تفعيل الدفع الإلكتروني، يفوض العميل مزود الدفع المعتمد بتحصيل رسوم الاشتراك الشهري بصورة دورية من وسيلة الدفع المسجلة، ويستمر التجديد التلقائي ما لم يطلب العميل إيقافه وفق سياسة الإلغاء المعتمدة وما يوجبه القانون. لا تحتفظ NOVAIRE ببيانات البطاقة الكاملة؛ وتتم معالجة بيانات الدفع لدى مزود الدفع المعتمد.
+
+تبدأ كل دورة اشتراك من تاريخ تفعيلها وتستمر لمدة شهر وفق التاريخ المسجل في النظام. إذا استهلك العميل كامل حد ردود الذكاء الاصطناعي قبل نهاية الدورة، يجوز تعليق الردود المدفوعة حتى موعد التجديد التالي، أو يحق للعميل اختيار بدء دورة شهرية جديدة فورًا. في حالة اختيار البدء الفوري ونجاح تحصيل الرسوم، تنتهي الدورة السابقة ويصبح تاريخ الدفع الجديد هو تاريخ بداية الدورة ومرجع التجديد الشهري التالي، ولا تُرحّل الردود غير المستخدمة من دورة سابقة ما لم ينص العرض التجاري على خلاف ذلك.
+
+إذا اختار العميل الانتظار، تبقى الخدمة المقيدة متوقفة حتى بداية الدورة التالية حسب التاريخ القائم. وفي حال فشل الدفع التلقائي أو رفض وسيلة الدفع، يجوز لـ NOVAIRE تقييد أو تعليق الخدمة إلى حين نجاح السداد، مع إرسال الإشعارات المناسبة.
+
+تُرسل إشعارات الاستهلاك والدفع والتجديد إلى بريد العميل وبريد الفواتير المسجلين في النظام.
+"""
+          if old not in s: raise SystemExit('agreement section marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Commit changes and remove workflow
+        run: |
+          rm -f .github/workflows/nsr-billing-contract-refresh.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add billing.html commercial/NSR1_CLIENT_AGREEMENT_TEMPLATE_AR.md .github/workflows/nsr-billing-contract-refresh.yml
+          git commit -m "Add early renewal and recurring billing terms" || exit 0
+          git push
