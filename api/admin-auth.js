@@ -1,4 +1,5 @@
 const crypto = require("crypto");
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 const ADMIN_PASSWORD = process.env.NOVAIRE_ADMIN_PASSWORD;
 const SUPABASE_URL = process.env.SUPABASE_URL;
@@ -159,7 +160,7 @@ module.exports = async function handler(req, res) {
     setSessionCookie(res, token);
     return res.status(200).json({ success: true, authenticated: true });
   } catch (error) {
-    console.error("ADMIN AUTH RATE LIMIT ERROR:", error);
+    safeErrorLog('ADMIN_AUTH_RATE_LIMIT_ERROR', error);
     return res.status(503).json({ success: false, error: "Login service temporarily unavailable" });
   }
 };
