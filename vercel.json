@@ -35,6 +35,10 @@
     {
       "source": "/api/dashboard",
       "destination": "/api/dashboard-protected"
+    },
+    {
+      "source": "/api/support-client",
+      "destination": "/api/support-client-protected"
     }
   ],
   "headers": [
