@@ -1,0 +1,32 @@
+name: Restore NSR test quota
+on:
+  push:
+    branches: [ui-refresh-light-v1]
+    paths: ['.github/workflows/restore-test-quota.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-refresh-light-v1
+      - name: Restore real quota and remove workflow
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p=Path('api/chat.js')
+          s=p.read_text()
+          old='''    const isSpeedTestClient=safeClientSlug==="nsr-test-20";\n    const quotaPromise=isSpeedTestClient\n      ? Promise.resolve({allowed:true,used:0,monthly_limit:999999,remaining:999999,usage_percent:0,warning_level:"TEST_MODE",newly_crossed_threshold:null})\n      : reserveAiResponse(client.id);\n\n    quotaSnapshot=await quotaPromise;\n    if (!quotaSnapshot||quotaSnapshot.allowed!==true) return res.status(429).json({error:"AI response limit reached",code:"AI_RESPONSE_LIMIT_REACHED",usage:{used:Number(quotaSnapshot?.used||0),monthly_limit:Number(quotaSnapshot?.monthly_limit||0),remaining:Number(quotaSnapshot?.remaining||0),usage_percent:Number(quotaSnapshot?.usage_percent||100),warning_level:quotaSnapshot?.warning_level||"CAP_REACHED",cycle_end:quotaSnapshot?.cycle_end||null}});\n    if (!isSpeedTestClient) reservedQuotaClientId=client.id;'''
+          new='''    quotaSnapshot=await reserveAiResponse(client.id);\n    if (!quotaSnapshot||quotaSnapshot.allowed!==true) return res.status(429).json({error:"AI response limit reached",code:"AI_RESPONSE_LIMIT_REACHED",usage:{used:Number(quotaSnapshot?.used||0),monthly_limit:Number(quotaSnapshot?.monthly_limit||0),remaining:Number(quotaSnapshot?.remaining||0),usage_percent:Number(quotaSnapshot?.usage_percent||100),warning_level:quotaSnapshot?.warning_level||"CAP_REACHED",cycle_end:quotaSnapshot?.cycle_end||null}});\n    reservedQuotaClientId=client.id;'''
+          if old not in s:
+              raise SystemExit('Target quota bypass block not found')
+          p.write_text(s.replace(old,new,1))
+          PY
+          rm .github/workflows/restore-test-quota.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add api/chat.js .github/workflows/restore-test-quota.yml
+          git commit -m "Restore real quota for NSR test client"
+          git push origin ui-refresh-light-v1
