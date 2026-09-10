@@ -1,5 +1,6 @@
 const { getClientBySlug } = require('../lib/nsr-usage');
 const { checkChatRateLimit } = require('../lib/nsr-chat-rate-limit');
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 const chatHandler = require('./chat');
 
 function normalizeClientSlug(value) {
@@ -35,7 +36,7 @@ module.exports = async function handler(req, res) {
 
     return chatHandler(req, res);
   } catch (error) {
-    console.error('CHAT RATE LIMIT ERROR:', error);
+    safeErrorLog('CHAT_RATE_LIMIT_ERROR', error);
     return res.status(503).json({
       error: 'Chat protection temporarily unavailable',
       code: 'CHAT_RATE_LIMIT_UNAVAILABLE'
