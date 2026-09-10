@@ -1,5 +1,6 @@
 const crypto=require('crypto');
 const originalHandler=require('./client-auth');
+const {getClientSession}=require('./_client-session');
 const {safeErrorLog,sanitizeErrorMessage}=require('../lib/nsr-safe-log');
 
 const SUPABASE_URL=process.env.SUPABASE_URL;
@@ -7,6 +8,7 @@ const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const STRIPE_WEBHOOK_SECRET=process.env.STRIPE_WEBHOOK_SECRET;
 const MAX_CLIENT_AUTH_BODY_BYTES=32*1024;
 const MAX_STRIPE_WEBHOOK_BODY_BYTES=1024*1024;
+const CHECKOUT_WINDOW_SECONDS=120;
 
 module.exports.config={api:{bodyParser:false}};
 
@@ -45,6 +47,19 @@ async function rpc(name,body){
   return Array.isArray(data)?data[0]||null:data;
 }
 
+function billingCheckoutKey(clientId){
+  return crypto.createHash('sha256').update(`billing_checkout:${String(clientId||'').trim()}`).digest('hex');
+}
+
+async function checkBillingCheckoutRateLimit(clientId){
+  return rpc('nsr_check_chat_rate_limit',{
+    p_key:billingCheckoutKey(clientId),
+    p_max_requests:1,
+    p_window_seconds:CHECKOUT_WINDOW_SECONDS,
+    p_block_seconds:CHECKOUT_WINDOW_SECONDS
+  });
+}
+
 function replayRawBody(req,raw){
   let sent=false;
   req[Symbol.asyncIterator]=async function*(){if(sent)return;sent=true;yield Buffer.from(raw);};
@@ -68,6 +83,19 @@ module.exports=async function handler(req,res){
     if(req.method!=='POST')return originalHandler(req,res);
     try{
       const raw=await readRaw(req,MAX_CLIENT_AUTH_BODY_BYTES);
+      let parsed=null;
+      try{parsed=raw?JSON.parse(raw):null;}catch{}
+      if(String(parsed?.action||'').trim().toLowerCase()==='billing_checkout'){
+        const session=getClientSession(req);
+        if(session){
+          const state=await checkBillingCheckoutRateLimit(session.client_id);
+          if(state?.allowed!==true){
+            const retryAfter=Math.max(1,Number(state?.retry_after_seconds||CHECKOUT_WINDOW_SECONDS));
+            res.setHeader('Retry-After',String(Math.ceil(retryAfter)));
+            return res.status(429).json({success:false,error:'A checkout request is already being processed. Please try again shortly.',code:'BILLING_CHECKOUT_RATE_LIMITED'});
+          }
+        }
+      }
       replayRawBody(req,raw);
       return originalHandler(req,res);
     }catch(error){
