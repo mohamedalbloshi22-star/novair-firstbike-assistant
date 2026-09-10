@@ -453,6 +453,16 @@ async function handler(
           });
       }
 
+      if (approvedAnswer.length > 6000) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              "approved_answer is too long"
+          });
+      }
+
 
       const existingRows =
         await supabaseRequest(
