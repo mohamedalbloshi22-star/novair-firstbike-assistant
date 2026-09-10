@@ -93,21 +93,31 @@ function getClientSession(req) {
         ).toString("utf8")
       );
 
+    const clientId =
+      String(data?.client_id || "");
+
+    const clientSlug =
+      String(data?.client_slug || "");
+
+    const expires =
+      Number(data?.expires);
+
     if (
-      !data.client_id ||
-      !data.client_slug ||
-      !data.expires ||
-      Date.now() > Number(data.expires)
+      !clientId ||
+      clientId.length > 128 ||
+      !/^[a-z0-9_-]{2,80}$/.test(clientSlug) ||
+      !Number.isFinite(expires) ||
+      expires <= Date.now()
     ) {
       return null;
     }
 
     return {
       client_id:
-        String(data.client_id),
+        clientId,
 
       client_slug:
-        String(data.client_slug)
+        clientSlug
     };
 
   } catch {
