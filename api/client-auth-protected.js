@@ -38,9 +38,23 @@ function replayRawBody(req,raw){
   req[Symbol.asyncIterator]=async function*(){if(sent)return;sent=true;yield Buffer.from(raw);};
 }
 
+function installClientLoginResponseFilter(res){
+  const originalJson=res.json.bind(res);
+  res.json=function filteredJson(payload){
+    if(res.statusCode===403&&payload?.error==='حساب العميل غير نشط.'){
+      res.statusCode=401;
+      return originalJson({success:false,error:'بيانات الدخول غير صحيحة.'});
+    }
+    return originalJson(payload);
+  };
+}
+
 module.exports=async function handler(req,res){
   const signature=req.headers['stripe-signature'];
-  if(!signature)return originalHandler(req,res);
+  if(!signature){
+    installClientLoginResponseFilter(res);
+    return originalHandler(req,res);
+  }
 
   res.setHeader('Cache-Control','no-store');
   if(req.method!=='POST')return res.status(405).json({success:false,error:'Method not allowed'});
