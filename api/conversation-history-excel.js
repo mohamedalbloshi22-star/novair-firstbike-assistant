@@ -32,6 +32,11 @@ module.exports = async function handler(req, res) {
   if (!session) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
+    const clients = await sb(`clients?id=eq.${encodeURIComponent(session.client_id)}&select=id,config&limit=1`);
+    const client = Array.isArray(clients) ? clients[0] || null : null;
+    if (!client) return res.status(404).json({ error: 'Client not found' });
+    if (client.config?.active === false) return res.status(403).json({ error: 'Client inactive' });
+
     const conversations = await sb(
       `conversations?client_id=eq.${encodeURIComponent(session.client_id)}` +
       `&select=id,started_at,created_at,language,resolved_by_ai,human_handoff,callback_requested` +
