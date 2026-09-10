@@ -1,0 +1,49 @@
+name: NSR client portal cleanup
+on:
+  workflow_dispatch:
+  push:
+    branches: [ui-refresh-light-v1]
+    paths: ['.github/workflows/nsr-client-portal-cleanup.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-refresh-light-v1
+      - name: Patch dashboard and portal
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('api/dashboard.js')
+          s=p.read_text()
+          s=s.replace('.slice(\n      0,\n      10\n    );','.slice(\n      0,\n      3\n    );',2)
+          p.write_text(s)
+
+          p=Path('client-portal.html')
+          s=p.read_text()
+          s=s.replace("function renderUnanswered(items){const rows=(items||[]).map(x=>{", "function renderUnanswered(items){const rows=(items||[]).filter(x=>x.resolved!==true).map(x=>{")
+
+          old="<section><h3>طلبات التواصل الحالية</h3><div class=\"muted\" style=\"margin-bottom:10px\">تظهر هنا الطلبات الجديدة وقيد التنفيذ فقط. عند اختيار مكتمل أو مغلق يختفي الطلب من اللوحة ويحفظ في سجل Excel.</div><button class=\"btn small\" style=\"margin-bottom:12px\" onclick=\"window.location.href='/api/contact-history-excel'\">تحميل سجل Excel</button><div id=\"contactTable\"></div></section><section><h3>الأسئلة غير المجابة</h3>"
+          new="<section><h3>طلبات التواصل الحالية</h3><div class=\"muted\" style=\"margin-bottom:10px\">تظهر هنا الطلبات الجديدة وقيد التنفيذ فقط. عند اختيار مكتمل أو مغلق يختفي الطلب من اللوحة ويحفظ في سجل Excel.</div><button class=\"btn small\" style=\"margin-bottom:12px\" onclick=\"window.location.href='/api/contact-history-excel'\">تحميل سجل طلبات التواصل Excel</button><div id=\"contactTable\"></div></section><section><h3>سجل المحادثات</h3><div class=\"muted\" style=\"margin-bottom:10px\">تُحفظ المحادثات كاملة تلقائيًا ويمكن تنزيلها في ملف Excel. حذف السجل نهائي ولا يمكن التراجع عنه.</div><div class=\"head-actions\"><button class=\"btn small\" onclick=\"window.location.href='/api/conversation-history-excel'\">تحميل سجل المحادثات Excel</button><button id=\"deleteConversations\" class=\"btn small\" style=\"background:#a13a33;color:#fff\" onclick=\"deleteAllConversations()\">حذف جميع المحادثات</button></div></section><section><h3>الأسئلة غير المجابة</h3>"
+          if old not in s:
+              raise SystemExit('portal section marker not found')
+          s=s.replace(old,new,1)
+
+          marker="async function logout(){const b=el('logoutButton');"
+          fn="async function deleteAllConversations(){const btn=el('deleteConversations');if(!confirm('سيتم حذف جميع المحادثات المخزنة نهائيًا. هل تريد المتابعة؟'))return;btn.disabled=true;btn.textContent='جاري الحذف...';try{const r=await fetch('/api/conversations-client',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'delete_all',confirm:'DELETE_ALL'})});const d=await r.json();if(r.status===401){location='/client-login.html';return}if(!r.ok||!d.success)throw Error(d.error||'تعذر حذف المحادثات');btn.textContent='تم الحذف ✓';setTimeout(loadPortal,500)}catch(e){btn.disabled=false;btn.textContent='حذف جميع المحادثات';alert(e.message||'تعذر حذف المحادثات')}}\n"
+          if marker not in s:
+              raise SystemExit('logout marker not found')
+          s=s.replace(marker,fn+marker,1)
+          p.write_text(s)
+          PY
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add api/dashboard.js client-portal.html
+          git commit -m "Simplify client portal and add conversation records" || exit 0
+          git push
