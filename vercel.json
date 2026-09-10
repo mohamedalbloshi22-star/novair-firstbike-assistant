@@ -39,6 +39,10 @@
     {
       "source": "/api/support-client",
       "destination": "/api/support-client-protected"
+    },
+    {
+      "source": "/api/knowledge-admin",
+      "destination": "/api/knowledge-admin-protected"
     }
   ],
   "headers": [
