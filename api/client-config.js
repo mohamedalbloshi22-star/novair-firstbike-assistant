@@ -1,6 +1,7 @@
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const NOVAIRE_PUBLIC_EMAIL = process.env.NOVAIRE_PUBLIC_EMAIL || process.env.NOVAIRE_NOTIFICATION_EMAIL || "";
+const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 function safeSlug(value) {
   return /^[a-z0-9_-]{2,80}$/.test(String(value || "").trim().toLowerCase());
@@ -87,7 +88,7 @@ module.exports = async function handler(req, res) {
     return res.status(200).json({ success: true, client: publicConfig });
 
   } catch (error) {
-    console.error("client-config error:", error);
+    safeErrorLog('CLIENT_CONFIG_ERROR', error, { client_slug: slug });
     return res.status(500).json({ success: false, error: "Unable to load client configuration" });
   }
 };
