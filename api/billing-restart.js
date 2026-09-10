@@ -1,4 +1,5 @@
 const { getClientSession } = require('./_client-session');
+const { currentUsage } = require('../lib/nsr-usage');
 
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -68,6 +69,24 @@ module.exports = async function handler(req, res) {
     if (!sub?.stripe_subscription_id) return res.status(409).json({ success: false, error: 'No active automatic subscription' });
     if (!['active', 'trialing'].includes(String(sub.stripe_status || ''))) {
       return res.status(409).json({ success: false, error: 'Subscription is not active' });
+    }
+
+    const usage = await currentUsage(session.client_id);
+    const monthlyLimit = Number(usage?.monthly_limit || 0);
+    const remaining = Number(usage?.remaining || 0);
+    if (monthlyLimit <= 0 || remaining > 0) {
+      return res.status(409).json({
+        success: false,
+        error: 'Early cycle restart is available only after the monthly AI response limit is reached',
+        code: 'USAGE_CAP_NOT_REACHED',
+        usage: {
+          used: Number(usage?.used || 0),
+          monthly_limit: monthlyLimit,
+          remaining,
+          usage_percent: Number(usage?.usage_percent || 0),
+          warning_level: usage?.warning_level || 'NORMAL'
+        }
+      });
     }
 
     const stripeSub = await stripeUpdateSubscription(sub.stripe_subscription_id);
