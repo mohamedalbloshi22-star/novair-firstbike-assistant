@@ -5,6 +5,10 @@
       "destination": "/api/chat-protected"
     },
     {
+      "source": "/api/contact",
+      "destination": "/api/contact-protected"
+    },
+    {
       "source": "/api/client-admin",
       "destination": "/api/client-admin-protected"
     },
