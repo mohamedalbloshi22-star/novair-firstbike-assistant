@@ -21,6 +21,7 @@ module.exports = async function handler(req, res) {
 
     const client = await getClientBySlug(slug);
     if (!client?.id) return res.status(404).json({ error: 'Client not found' });
+    if (client.config?.active === false) return res.status(403).json({ error: 'Client inactive' });
 
     const rate = await checkChatRateLimit(client.id, req);
     if (!rate.allowed) {
