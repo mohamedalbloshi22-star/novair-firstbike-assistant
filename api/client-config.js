@@ -83,7 +83,7 @@ module.exports = async function handler(req, res) {
       active: config.active !== false
     };
 
-    res.setHeader("Cache-Control", "public, max-age=60, s-maxage=60");
+    res.setHeader("Cache-Control", "no-store");
     return res.status(200).json({ success: true, client: publicConfig });
 
   } catch (error) {
