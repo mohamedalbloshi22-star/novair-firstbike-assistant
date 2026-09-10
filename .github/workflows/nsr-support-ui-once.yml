@@ -1,0 +1,43 @@
+name: NSR support UI once
+on:
+  push:
+    branches: [ui-refresh-light-v1]
+    paths: ['.github/workflows/nsr-support-ui-once.yml']
+permissions:
+  contents: write
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui-refresh-light-v1
+      - name: Patch portal and admin support UI
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          p=Path('client-portal.html')
+          s=p.read_text()
+          old='<div class="head-actions"><button id="billingButton" class="btn primary" onclick="location=\'/billing.html\'">إدارة الباقة والدفع</button><button id="logoutButton" class="btn" onclick="logout()">تسجيل الخروج</button></div>'
+          new='<div class="head-actions"><button class="btn" onclick="location=\'/support.html\'">الدعم والاستفسارات</button><button id="billingButton" class="btn primary" onclick="location=\'/billing.html\'">إدارة الباقة والدفع</button><button id="logoutButton" class="btn" onclick="logout()">تسجيل الخروج</button></div>'
+          if old not in s: raise SystemExit('portal header marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+
+          p=Path('admin-light.html')
+          s=p.read_text()
+          old="${esc(x.request_type==='callback'?'طلب اتصال':'التحدث مع مسؤول')}"
+          new="${esc(String(x.reason||'').startsWith('[دعم NSR-1]')?'دعم NSR-1':(x.request_type==='callback'?'طلب اتصال':'التحدث مع مسؤول'))}"
+          if old not in s: raise SystemExit('admin contact type marker not found')
+          s=s.replace(old,new,1)
+          p.write_text(s)
+          PY
+      - name: Commit and remove workflow
+        run: |
+          rm -f .github/workflows/nsr-support-ui-once.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add client-portal.html admin-light.html .github/workflows/nsr-support-ui-once.yml
+          git commit -m "Add client support assistant entry and admin support label" || exit 0
+          git push
