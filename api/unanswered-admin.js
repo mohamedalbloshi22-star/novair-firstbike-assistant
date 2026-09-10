@@ -8,6 +8,8 @@ const {
   isAdminSession
 } = require("./_admin-session");
 
+const { safeErrorLog } = require('../lib/nsr-safe-log');
+
 
 /*
 ==================================================
@@ -577,8 +579,8 @@ async function handler(
 
   } catch (error) {
 
-    console.error(
-      "UNANSWERED ADMIN API ERROR:",
+    safeErrorLog(
+      "UNANSWERED_ADMIN_API_ERROR",
       error
     );
 
@@ -588,10 +590,7 @@ async function handler(
       .json({
 
         error:
-          "Unable to manage unanswered questions",
-
-        details:
-          error.message
+          "Unable to manage unanswered questions"
       });
   }
 };
