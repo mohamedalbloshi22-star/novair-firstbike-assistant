@@ -477,12 +477,8 @@ async function handler(
     return res
       .status(500)
       .json({
-
         error:
-          "Unable to manage contact requests",
-
-        details:
-          error.message
+          "Unable to manage contact requests"
       });
   }
 };

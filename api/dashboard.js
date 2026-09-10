@@ -370,7 +370,7 @@ async function loadDashboardData(client) {
     )
     .slice(
       0,
-      10
+      3
     );
 
 
@@ -424,7 +424,7 @@ async function loadDashboardData(client) {
     )
     .slice(
       0,
-      10
+      3
     );
 
 
