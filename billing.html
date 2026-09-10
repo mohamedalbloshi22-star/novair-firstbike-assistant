@@ -35,13 +35,14 @@ async function action(action,extra={}){const r=await fetch('/api/client-auth',{m
 function render(b,u){
   if(!b){$('plan').textContent='—';$('status').textContent='غير مفعّل';$('renew').textContent='—';$('fee').textContent='—';$('startPayment').disabled=true;$('restartNow').disabled=true;$('managePayment').disabled=true;return}
   $('plan').textContent=b.plan_name||b.plan_code||'—';$('status').textContent=b.stripe_status||b.status||'—';$('renew').textContent=b.auto_renew?'مفعّل':'غير مفعّل';$('fee').textContent=b.monthly_fee_aed!=null?`${Number(b.monthly_fee_aed).toLocaleString()} د.إ`:'—';
-  const activeStripe=b.stripe_subscription_ready&&['active','trialing','past_due'].includes(String(b.stripe_status||''));
+  const hasStripeSubscription=b.stripe_subscription_ready&&['active','trialing','past_due'].includes(String(b.stripe_status||''));
+  const restartEligible=b.stripe_subscription_ready&&['active','trialing'].includes(String(b.stripe_status||''));
   const capReached=!!u&&Number(u.remaining||0)<=0&&Number(u.monthly_limit||0)>0;
-  $('startPayment').disabled=activeStripe||!b.payment_configured;
+  $('startPayment').disabled=hasStripeSubscription||!b.payment_configured;
   $('managePayment').disabled=!b.stripe_customer_ready;
-  $('restartNow').disabled=!(activeStripe&&capReached);
+  $('restartNow').disabled=!(restartEligible&&capReached);
   $('restartNow').textContent=capReached?'بدء دورة جديدة الآن':'متاح عند انتهاء حد الردود';
-  if(activeStripe)$('startPayment').textContent='الاشتراك مفعّل';
+  if(hasStripeSubscription)$('startPayment').textContent='الاشتراك مفعّل';
   else if(!b.payment_configured)$('startPayment').textContent='الدفع غير مفعّل لهذه الباقة';
   else $('startPayment').textContent='بدء الاشتراك والدفع';
 }
