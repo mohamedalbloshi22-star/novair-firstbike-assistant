@@ -5,10 +5,22 @@ const {safeErrorLog,sanitizeErrorMessage}=require('../lib/nsr-safe-log');
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const STRIPE_WEBHOOK_SECRET=process.env.STRIPE_WEBHOOK_SECRET;
+const MAX_CLIENT_AUTH_BODY_BYTES=32*1024;
+const MAX_STRIPE_WEBHOOK_BODY_BYTES=1024*1024;
 
 module.exports.config={api:{bodyParser:false}};
 
-async function readRaw(req){const chunks=[];for await(const chunk of req)chunks.push(Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
+async function readRaw(req,maxBytes){
+  const chunks=[];
+  let total=0;
+  for await(const chunk of req){
+    const buffer=Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk);
+    total+=buffer.length;
+    if(total>maxBytes)throw new Error('REQUEST_BODY_TOO_LARGE');
+    chunks.push(buffer);
+  }
+  return Buffer.concat(chunks).toString('utf8');
+}
 
 function verifyWebhook(rawBody,signatureHeader){
   if(!STRIPE_WEBHOOK_SECRET)throw new Error('STRIPE_WEBHOOK_NOT_CONFIGURED');
@@ -53,7 +65,16 @@ module.exports=async function handler(req,res){
   const signature=req.headers['stripe-signature'];
   if(!signature){
     installClientLoginResponseFilter(res);
-    return originalHandler(req,res);
+    if(req.method!=='POST')return originalHandler(req,res);
+    try{
+      const raw=await readRaw(req,MAX_CLIENT_AUTH_BODY_BYTES);
+      replayRawBody(req,raw);
+      return originalHandler(req,res);
+    }catch(error){
+      if(String(error?.message||'')==='REQUEST_BODY_TOO_LARGE')return res.status(413).json({success:false,error:'Request body is too large'});
+      safeErrorLog('CLIENT_AUTH_PROTECTION_ERROR',error);
+      return res.status(503).json({success:false,error:'Client authentication protection temporarily unavailable'});
+    }
   }
 
   res.setHeader('Cache-Control','no-store');
@@ -61,7 +82,7 @@ module.exports=async function handler(req,res){
 
   let eventId=null;
   try{
-    const raw=await readRaw(req);
+    const raw=await readRaw(req,MAX_STRIPE_WEBHOOK_BODY_BYTES);
     verifyWebhook(raw,String(signature));
     const event=JSON.parse(raw);
     eventId=String(event?.id||'').trim();
@@ -82,6 +103,7 @@ module.exports=async function handler(req,res){
     safeErrorLog('STRIPE_IDEMPOTENCY_WRAPPER_ERROR',error,eventId?{event_id:eventId}:{});
     if(eventId){try{await rpc('nsr_finish_billing_event',{p_event_id:eventId,p_success:false,p_error:sanitizeErrorMessage(error)});}catch{}}
     const message=String(error?.message||'');
+    if(message==='REQUEST_BODY_TOO_LARGE')return res.status(413).json({success:false,error:'Stripe webhook body is too large'});
     if(['INVALID_STRIPE_SIGNATURE','STALE_STRIPE_SIGNATURE'].includes(message))return res.status(400).json({success:false,error:'Invalid Stripe signature'});
     if(message==='STRIPE_WEBHOOK_NOT_CONFIGURED')return res.status(503).json({success:false,error:'Stripe webhook is not configured yet'});
     return res.status(503).json({success:false,error:'Billing webhook protection temporarily unavailable'});
