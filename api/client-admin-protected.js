@@ -47,6 +47,10 @@ function validateCommercialInputs(body) {
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (!SUPABASE_URL || !SUPABASE_KEY) return res.status(500).json({ error: 'Server configuration error' });
+  if (!isAdminSession(req)) return res.status(401).json({ error: 'Unauthorized' });
+
   const action = clean(req.body?.action);
 
   if (action === 'create_with_plan' || action === 'assign_plan') {
@@ -57,10 +61,6 @@ module.exports = async function handler(req, res) {
   }
 
   if (action !== 'delete') return clientAdminHandler(req, res);
-
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  if (!SUPABASE_URL || !SUPABASE_KEY) return res.status(500).json({ error: 'Server configuration error' });
-  if (!isAdminSession(req)) return res.status(401).json({ error: 'Unauthorized' });
 
   try {
     const clientId = clean(req.body?.client_id);
