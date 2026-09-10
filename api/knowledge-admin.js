@@ -8,6 +8,8 @@ const {
   isAdminSession
 } = require("./_admin-session");
 
+const { safeErrorLog } = require('../lib/nsr-safe-log');
+
 
 /*
 ==================================================
@@ -778,8 +780,8 @@ async function handler(
 
   } catch (error) {
 
-    console.error(
-      "KNOWLEDGE ADMIN ERROR:",
+    safeErrorLog(
+      "KNOWLEDGE_ADMIN_ERROR",
       error
     );
 
