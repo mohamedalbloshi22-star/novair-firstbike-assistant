@@ -3,6 +3,10 @@
     {
       "source": "/api/chat",
       "destination": "/api/chat-protected"
+    },
+    {
+      "source": "/api/client-admin",
+      "destination": "/api/client-admin-protected"
     }
   ],
   "headers": [
