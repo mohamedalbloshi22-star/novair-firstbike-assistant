@@ -1,6 +1,7 @@
 const SUPABASE_URL=process.env.SUPABASE_URL;
 const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const {getClientSession}=require('./_client-session');
+const {safeErrorLog}=require('../lib/nsr-safe-log');
 
 async function db(path,options={}){
   const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
@@ -55,5 +56,5 @@ module.exports=async function handler(req,res){
     const request=await saveRequest(client.id,message,answer);
     if(answer)return res.status(200).json({success:true,resolved:true,request_id:request.id,answer});
     return res.status(200).json({success:true,resolved:false,escalated:true,request_id:request.id,answer:'لم أجد إجابة موثوقة لهذا الاستفسار. تم تحويل رسالتك إلى إدارة NOVAIRE، وسيظهر الرد هنا عند اعتماده.'});
-  }catch(error){console.error('SUPPORT CLIENT ERROR:',error);return res.status(500).json({success:false,error:'تعذر تنفيذ طلب الدعم.'});}
+  }catch(error){safeErrorLog('SUPPORT_CLIENT_ERROR',error);return res.status(500).json({success:false,error:'تعذر تنفيذ طلب الدعم.'});}
 };
