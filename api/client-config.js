@@ -60,7 +60,6 @@ module.exports = async function handler(req, res) {
     }
 
     const publicConfig = {
-      id: client.id,
       slug: client.slug,
       name: client.name,
       brand_name: config.brand_name || client.name || client.slug,
