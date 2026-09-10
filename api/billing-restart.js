@@ -85,6 +85,9 @@ module.exports = async function handler(req, res) {
     );
     const sub = Array.isArray(rows) ? rows[0] : null;
     if (!sub?.stripe_subscription_id) return res.status(409).json({ success: false, error: 'No active automatic subscription' });
+    if (!['active', 'trial'].includes(String(sub.status || ''))) {
+      return res.status(409).json({ success: false, error: 'Local subscription is not active' });
+    }
     if (!['active', 'trialing'].includes(String(sub.stripe_status || ''))) {
       return res.status(409).json({ success: false, error: 'Subscription is not active' });
     }
@@ -129,7 +132,6 @@ module.exports = async function handler(req, res) {
       }
     });
 
-    // If a cycle is restarted on the same calendar date, reset the existing counter and alerts.
     await sb(
       `nsr_usage_counters?client_id=eq.${encodeURIComponent(session.client_id)}&cycle_start=eq.${encodeURIComponent(newStart)}`,
       { method: 'PATCH', prefer: 'return=minimal', body: { ai_responses: 0, updated_at: new Date().toISOString() } }
