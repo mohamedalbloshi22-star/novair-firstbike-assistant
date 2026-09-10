@@ -4,6 +4,7 @@ const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const NOTIFICATION_FROM = process.env.NOVAIRE_NOTIFICATION_FROM || "NOVAIRE <onboarding@resend.dev>";
 const { reserveAiResponse, releaseAiResponse } = require("../lib/nsr-usage");
+const { safeErrorLog, sanitizeErrorMessage } = require("../lib/nsr-safe-log");
 
 const UNANSWERED_MARKER = "[[UNANSWERED]]";
 const MAX_KNOWLEDGE_ITEMS_SENT = 10;
@@ -74,7 +75,7 @@ async function getClient(clientSlug) {
 }
 function safeConfig(client) { return client && client.config && typeof client.config === "object" ? client.config : {}; }
 function escapeHtml(value) {
-  return String(value || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+  return String(value || "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/\"/g,"&quot;").replace(/'/g,"&#039;");
 }
 
 async function logNotification(payload) {
@@ -114,8 +115,8 @@ async function sendUsageThresholdNotification(client, usage) {
     await updateNotificationStatus(client.id, cycleStart, notificationType, recipient, "sent", { threshold, used:Number(usage.used || 0), monthly_limit:Number(usage.monthly_limit || 0), remaining:Number(usage.remaining || 0), provider_message_id:providerId });
     return { sent:true };
   } catch (error) {
-    try { await updateNotificationStatus(client.id, cycleStart, notificationType, recipient, "failed", { threshold, error:String(error?.message || error).slice(0,500) }); }
-    catch (logError) { console.error("USAGE NOTIFICATION LOG UPDATE ERROR:", logError); }
+    try { await updateNotificationStatus(client.id, cycleStart, notificationType, recipient, "failed", { threshold, error:sanitizeErrorMessage(error) }); }
+    catch (logError) { safeErrorLog("USAGE_NOTIFICATION_LOG_UPDATE_ERROR", logError, { client_id:client.id, threshold }); }
     throw error;
   }
 }
@@ -228,7 +229,7 @@ module.exports=async function handler(req,res) {
     const fastAnswer=getFastBusinessAnswer(client,safeLanguage,latestUserMessage);
     if (fastAnswer) { setStreamHeaders(res); writeStreamEvent(res,{type:"delta",text:fastAnswer}); writeStreamEvent(res,{type:"done",novaire:{client_id:client.id,client_slug:client.slug,client_name:brandName,session_id:safeSessionId,language:safeLanguage,fast_answer:true,ai_used:false}}); return res.end(); }
     const conversationPromise=getOrCreateConversation(client.id,safeSessionId,safeLanguage);
-    const knowledgePromise=getKnowledgeBase(client.id).catch(error=>{console.error("KNOWLEDGE BASE LOAD ERROR:",error);return [];});
+    const knowledgePromise=getKnowledgeBase(client.id).catch(error=>{safeErrorLog("KNOWLEDGE_BASE_LOAD_ERROR",error,{client_id:client.id});return [];});
     quotaSnapshot=await reserveAiResponse(client.id);
     if (!quotaSnapshot||quotaSnapshot.allowed!==true) return res.status(429).json({error:"AI response limit reached",code:"AI_RESPONSE_LIMIT_REACHED",usage:{used:Number(quotaSnapshot?.used||0),monthly_limit:Number(quotaSnapshot?.monthly_limit||0),remaining:Number(quotaSnapshot?.remaining||0),usage_percent:Number(quotaSnapshot?.usage_percent||100),warning_level:quotaSnapshot?.warning_level||"CAP_REACHED",cycle_end:quotaSnapshot?.cycle_end||null}});
     reservedQuotaClientId=client.id;
@@ -278,14 +279,14 @@ ${knowledgeText}
     const finalVisibleTail=String(pendingOutput||"").replaceAll(UNANSWERED_MARKER,"");
     if (finalVisibleTail) writeStreamEvent(res,{type:"delta",text:finalVisibleTail});
     quotaCommitted=true;
-    try { await saveUserMessagePromise; } catch (error) { console.error("USER MESSAGE SAVE ERROR:",error); }
-    const results=await Promise.allSettled([saveMessage(conversation.id,"assistant",cleanAnswer,inputTokens,outputTokens),updateResolutionStatus(conversation,isUnanswered),isUnanswered?saveUnansweredQuestion(client.id,conversation.id,latestUserMessage).catch(error=>{console.error("UNANSWERED QUESTION LOG ERROR:",error);return null;}):Promise.resolve(null),quotaSnapshot?.newly_crossed_threshold?sendUsageThresholdNotification(client,quotaSnapshot).catch(error=>{console.error("USAGE THRESHOLD EMAIL ERROR:",error);return null;}):Promise.resolve(null)]);
+    try { await saveUserMessagePromise; } catch (error) { safeErrorLog("USER_MESSAGE_SAVE_ERROR",error,{client_id:client.id,conversation_id:conversation.id}); }
+    const results=await Promise.allSettled([saveMessage(conversation.id,"assistant",cleanAnswer,inputTokens,outputTokens),updateResolutionStatus(conversation,isUnanswered),isUnanswered?saveUnansweredQuestion(client.id,conversation.id,latestUserMessage).catch(error=>{safeErrorLog("UNANSWERED_QUESTION_LOG_ERROR",error,{client_id:client.id,conversation_id:conversation.id});return null;}):Promise.resolve(null),quotaSnapshot?.newly_crossed_threshold?sendUsageThresholdNotification(client,quotaSnapshot).catch(error=>{safeErrorLog("USAGE_THRESHOLD_EMAIL_ERROR",error,{client_id:client.id,threshold:quotaSnapshot.newly_crossed_threshold});return null;}):Promise.resolve(null)]);
     let resolvedByAi=!isUnanswered; if (results[1].status==="fulfilled") resolvedByAi=results[1].value;
     writeStreamEvent(res,{type:"done",novaire:{client_id:client.id,client_slug:client.slug,client_name:brandName,conversation_id:conversation.id,session_id:safeSessionId,language:safeLanguage,unanswered:isUnanswered,resolved_by_ai:resolvedByAi,knowledge_items:knowledgeBase.length,knowledge_items_used:relevantKnowledge.length,input_tokens:inputTokens,output_tokens:outputTokens,usage:{used:quotaSnapshot.used,monthly_limit:quotaSnapshot.monthly_limit,remaining:quotaSnapshot.remaining,usage_percent:quotaSnapshot.usage_percent,warning_level:quotaSnapshot.warning_level,newly_crossed_threshold:quotaSnapshot.newly_crossed_threshold??null}}});
     res.end();
   } catch (error) {
-    console.error("CHAT API ERROR:",error);
-    if (reservedQuotaClientId&&!quotaCommitted) { try { await releaseAiResponse(reservedQuotaClientId); } catch (releaseError) { console.error("QUOTA RELEASE ERROR:",releaseError); } }
+    safeErrorLog("CHAT_API_ERROR",error,reservedQuotaClientId?{client_id:reservedQuotaClientId}:{});
+    if (reservedQuotaClientId&&!quotaCommitted) { try { await releaseAiResponse(reservedQuotaClientId); } catch (releaseError) { safeErrorLog("QUOTA_RELEASE_ERROR",releaseError,{client_id:reservedQuotaClientId}); } }
     if (res.headersSent) { try { writeStreamEvent(res,{type:"error",error:"Unable to process chat request"}); res.end(); } catch { try { res.end(); } catch {} } return; }
     return res.status(500).json({error:"Unable to process chat request"});
   }
