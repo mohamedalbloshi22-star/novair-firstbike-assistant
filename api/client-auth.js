@@ -4,8 +4,11 @@ const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const COOKIE_NAME='novaire_client_session';
 const SESSION_HOURS=8;
 const LOGIN_MAX_ATTEMPTS=5;
-const LOGIN_LOCK_MS=15*60*1000;
-const loginAttempts=new Map();
+const LOGIN_WINDOW_SECONDS=15*60;
+const LOGIN_LOCK_SECONDS=15*60;
+const LOGIN_LOCK_MS=LOGIN_LOCK_SECONDS*1000;
+const fallbackLoginAttempts=new Map();
+let loginStoreUnavailable=false;
 const {getClientSession}=require('./_client-session');
 const {currentUsage}=require('../lib/nsr-usage');
 const {getSubscription,createCheckoutSession,createPortalSession,syncCheckoutSession,processWebhook}=require('../lib/nsr-billing');
@@ -19,9 +22,15 @@ function sign(value){const secret=process.env.NOVAIRE_ADMIN_PASSWORD;if(!secret)
 function clearClientCookie(res){res.setHeader('Set-Cookie',`${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);}
 function clientIp(req){const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();return forwarded||String(req.socket?.remoteAddress||'unknown');}
 function loginKey(req,slug){return `${clientIp(req)}:${slug}`;}
-function getLoginState(key){const state=loginAttempts.get(key);if(!state)return null;if(state.lockUntil&&state.lockUntil<=Date.now()){loginAttempts.delete(key);return null;}return state;}
-function recordLoginFailure(key){const now=Date.now();const current=getLoginState(key)||{count:0,lockUntil:0};const count=current.count+1;const lockUntil=count>=LOGIN_MAX_ATTEMPTS?now+LOGIN_LOCK_MS:0;const next={count,lockUntil};loginAttempts.set(key,next);return next;}
-function clearLoginFailures(key){loginAttempts.delete(key);}
+function localLoginState(key){const state=fallbackLoginAttempts.get(key);if(!state)return null;if(state.lockUntil&&state.lockUntil<=Date.now()){fallbackLoginAttempts.delete(key);return null;}if(!state.lockUntil&&state.windowStartedAt&&state.windowStartedAt+LOGIN_LOCK_MS<=Date.now()){fallbackLoginAttempts.delete(key);return null;}return state;}
+function localRecordFailure(key){const now=Date.now();const current=localLoginState(key)||{count:0,lockUntil:0,windowStartedAt:now};const count=current.count+1;const lockUntil=count>=LOGIN_MAX_ATTEMPTS?now+LOGIN_LOCK_MS:0;const next={count,lockUntil,windowStartedAt:current.windowStartedAt||now};fallbackLoginAttempts.set(key,next);return next;}
+function localClearFailures(key){fallbackLoginAttempts.delete(key);}
+function normalizeLoginState(rows){const row=Array.isArray(rows)?rows[0]:rows;if(!row)return null;const lockUntil=row.lock_until?Date.parse(row.lock_until):0;return{count:Number(row.failure_count||0),lockUntil:Number.isFinite(lockUntil)?lockUntil:0};}
+function loginStoreMissing(error){return /Could not find the function|PGRST202|nsr_login_attempts.*does not exist|schema cache|Supabase login RPC 404/i.test(String(error?.message||''));}
+async function loginRpc(name,body={}){const r=await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},body:JSON.stringify(body)});const text=await r.text();if(!r.ok)throw new Error(`Supabase login RPC ${r.status}: ${text}`);return text?JSON.parse(text):null;}
+async function getLoginState(key){if(loginStoreUnavailable)return localLoginState(key);try{return normalizeLoginState(await loginRpc('nsr_get_login_state',{p_key:key,p_window_seconds:LOGIN_WINDOW_SECONDS}));}catch(error){if(!loginStoreMissing(error))throw error;loginStoreUnavailable=true;console.warn('PERSISTENT LOGIN RATE LIMIT UNAVAILABLE; USING LOCAL FALLBACK');return localLoginState(key);}}
+async function recordLoginFailure(key){if(loginStoreUnavailable)return localRecordFailure(key);try{return normalizeLoginState(await loginRpc('nsr_record_login_failure',{p_key:key,p_max_attempts:LOGIN_MAX_ATTEMPTS,p_window_seconds:LOGIN_WINDOW_SECONDS,p_lock_seconds:LOGIN_LOCK_SECONDS}));}catch(error){if(!loginStoreMissing(error))throw error;loginStoreUnavailable=true;console.warn('PERSISTENT LOGIN RATE LIMIT UNAVAILABLE; USING LOCAL FALLBACK');return localRecordFailure(key);}}
+async function clearLoginFailures(key){if(loginStoreUnavailable){localClearFailures(key);return;}try{await loginRpc('nsr_clear_login_failures',{p_key:key});}catch(error){if(!loginStoreMissing(error))throw error;loginStoreUnavailable=true;console.warn('PERSISTENT LOGIN RATE LIMIT UNAVAILABLE; USING LOCAL FALLBACK');localClearFailures(key);}}
 async function readRaw(req){const chunks=[];for await(const chunk of req)chunks.push(Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
 async function getClient(slug){const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?slug=eq.${encodeURIComponent(slug)}&select=id,name,slug,config&limit=1`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!r.ok)throw new Error('Unable to load client');const rows=await r.json();return rows[0]||null;}
 async function getClientById(id){const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${encodeURIComponent(id)}&select=id,name,slug,config&limit=1`,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`}});if(!r.ok)throw new Error('Unable to load client');const rows=await r.json();return rows[0]||null;}
@@ -74,7 +83,7 @@ module.exports=async function handler(req,res){
     const password=String(body.password||'');
     if(!/^[a-z0-9_-]{2,80}$/.test(slug)||!password)return res.status(400).json({success:false,error:'بيانات الدخول غير مكتملة.'});
     const key=loginKey(req,slug);
-    const state=getLoginState(key);
+    const state=await getLoginState(key);
     if(state?.lockUntil>Date.now()){
       const retryAfter=Math.max(1,Math.ceil((state.lockUntil-Date.now())/1000));
       res.setHeader('Retry-After',String(retryAfter));
@@ -82,18 +91,18 @@ module.exports=async function handler(req,res){
     }
     const client=await getClient(slug);
     if(!client){
-      const failed=recordLoginFailure(key);
-      if(failed.lockUntil){res.setHeader('Retry-After',String(Math.ceil(LOGIN_LOCK_MS/1000)));return res.status(429).json({success:false,error:'تم إيقاف محاولات الدخول مؤقتًا. حاول مرة أخرى لاحقًا.'});}
+      const failed=await recordLoginFailure(key);
+      if(failed?.lockUntil){const retryAfter=Math.max(1,Math.ceil((failed.lockUntil-Date.now())/1000));res.setHeader('Retry-After',String(retryAfter));return res.status(429).json({success:false,error:'تم إيقاف محاولات الدخول مؤقتًا. حاول مرة أخرى لاحقًا.'});}
       return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
     }
     const config=client.config&&typeof client.config==='object'?client.config:{};
     if(config.active===false)return res.status(403).json({success:false,error:'حساب العميل غير نشط.'});
     if(!verifyPassword(password,config)){
-      const failed=recordLoginFailure(key);
-      if(failed.lockUntil){res.setHeader('Retry-After',String(Math.ceil(LOGIN_LOCK_MS/1000)));return res.status(429).json({success:false,error:'تم إيقاف محاولات الدخول مؤقتًا. حاول مرة أخرى لاحقًا.'});}
+      const failed=await recordLoginFailure(key);
+      if(failed?.lockUntil){const retryAfter=Math.max(1,Math.ceil((failed.lockUntil-Date.now())/1000));res.setHeader('Retry-After',String(retryAfter));return res.status(429).json({success:false,error:'تم إيقاف محاولات الدخول مؤقتًا. حاول مرة أخرى لاحقًا.'});}
       return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
     }
-    clearLoginFailures(key);
+    await clearLoginFailures(key);
 
     const expires=Date.now()+SESSION_HOURS*60*60*1000;
     const payload=Buffer.from(JSON.stringify({client_id:client.id,client_slug:client.slug,expires})).toString('base64url');
