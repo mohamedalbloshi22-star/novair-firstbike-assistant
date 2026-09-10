@@ -47,6 +47,7 @@ module.exports=async function handler(req,res){
     const approvedAnswer=clean(body.approved_answer);
     const language=lang(body.language);
     if(!questionId||!approvedAnswer)return res.status(400).json({success:false,error:'Question and approved answer are required'});
+    if(approvedAnswer.length>6000)return res.status(400).json({success:false,error:'Approved answer is too long'});
     const rows=await db(`unanswered_questions?id=eq.${encodeURIComponent(questionId)}&client_id=eq.${encodeURIComponent(client.id)}&select=id,question,resolved&limit=1`);
     if(!Array.isArray(rows)||!rows.length)return res.status(404).json({success:false,error:'Question not found'});
     if(rows[0].resolved===true)return res.status(409).json({success:false,error:'Question already resolved'});
