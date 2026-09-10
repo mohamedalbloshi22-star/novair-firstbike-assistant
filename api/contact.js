@@ -154,7 +154,7 @@ module.exports = async function handler(req, res) {
     if (client.inactive) return res.status(403).json({ error:"Client is inactive" });
 
     const conversation = await getOrCreateConversation(client.id, sessionId, language);
-    const contactRequest = await createContactRequest(client.id, conversation.id, requestType, customerName, phone, reason);
+    await createContactRequest(client.id, conversation.id, requestType, customerName, phone, reason);
 
     const updateField = requestType === "human_handoff" ? "human_handoff" : "callback_requested";
     await supabaseRequest(`conversations?id=eq.${encodeURIComponent(conversation.id)}&client_id=eq.${encodeURIComponent(client.id)}`, {
@@ -169,10 +169,7 @@ module.exports = async function handler(req, res) {
 
     return res.status(200).json({
       success:true,
-      request_id:contactRequest.id,
-      client:{ id:client.id, name:client.name, slug:client.slug },
       request_type:requestType,
-      conversation_id:conversation.id,
       notification_sent:notification.sent === true
     });
   } catch (error) {
