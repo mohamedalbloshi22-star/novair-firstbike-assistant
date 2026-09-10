@@ -10,6 +10,8 @@ const {getSubscription,createCheckoutSession,createPortalSession,syncCheckoutSes
 module.exports.config={api:{bodyParser:false}};
 
 function safeEqual(a,b){const aa=Buffer.from(String(a||''));const bb=Buffer.from(String(b||''));return aa.length===bb.length&&crypto.timingSafeEqual(aa,bb);}
+function hashPassword(password,salt){return crypto.scryptSync(String(password||''),salt,64).toString('hex');}
+function verifyPassword(password,config){const stored=String(config.portal_password_hash||'');const salt=String(config.portal_password_salt||'');if(stored&&salt){try{return safeEqual(hashPassword(password,salt),stored);}catch{return false;}}const legacy=String(config.portal_password||'');return !!legacy&&safeEqual(password,legacy);}
 function sign(value){const secret=process.env.NOVAIRE_ADMIN_PASSWORD;if(!secret)return'';return crypto.createHmac('sha256',secret).update(value).digest('hex');}
 function clearClientCookie(res){res.setHeader('Set-Cookie',`${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);}
 async function readRaw(req){const chunks=[];for await(const chunk of req)chunks.push(Buffer.isBuffer(chunk)?chunk:Buffer.from(chunk));return Buffer.concat(chunks).toString('utf8');}
@@ -67,8 +69,7 @@ module.exports=async function handler(req,res){
     if(!client)return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
     const config=client.config&&typeof client.config==='object'?client.config:{};
     if(config.active===false)return res.status(403).json({success:false,error:'حساب العميل غير نشط.'});
-    const clientPassword=String(config.portal_password||'');
-    if(!clientPassword||!safeEqual(password,clientPassword))return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
+    if(!verifyPassword(password,config))return res.status(401).json({success:false,error:'بيانات الدخول غير صحيحة.'});
 
     const expires=Date.now()+SESSION_HOURS*60*60*1000;
     const payload=Buffer.from(JSON.stringify({client_id:client.id,client_slug:client.slug,expires})).toString('base64url');
