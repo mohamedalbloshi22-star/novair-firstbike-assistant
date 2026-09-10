@@ -1,4 +1,5 @@
 const {checkContactRateLimit}=require('../lib/nsr-contact-rate-limit');
+const {safeErrorLog}=require('../lib/nsr-safe-log');
 const contactHandler=require('./contact');
 
 const SUPABASE_URL=process.env.SUPABASE_URL;
@@ -38,7 +39,7 @@ module.exports=async function handler(req,res){
 
     return contactHandler(req,res);
   }catch(error){
-    console.error('CONTACT RATE LIMIT ERROR:',error);
+    safeErrorLog('CONTACT_RATE_LIMIT_ERROR',error,{client_slug:slug});
     return res.status(503).json({
       error:'Contact request protection is temporarily unavailable.',
       code:'CONTACT_RATE_LIMIT_UNAVAILABLE'
