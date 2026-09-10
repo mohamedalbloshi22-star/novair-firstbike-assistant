@@ -39,9 +39,9 @@ function buildPortfolio(clients,allAiUsage=[]){
     used_responses:rows.reduce((s,x)=>s+Number(x.used||0),0),
     remaining_responses:rows.reduce((s,x)=>s+Number(x.remaining||0),0),
     total_input_tokens:totalInput,total_output_tokens:totalOutput,total_ai_cost_aed:Number(totalAiCost.toFixed(2)),
-    at_50:rows.filter(x=>Number(x.usage_percent||0)>=50).length,
-    at_75:rows.filter(x=>Number(x.usage_percent||0)>=75).length,
-    at_90:rows.filter(x=>Number(x.usage_percent||0)>=90).length,
+    at_70:rows.filter(x=>Number(x.usage_percent||0)>=70).length,
+    at_85:rows.filter(x=>Number(x.usage_percent||0)>=85).length,
+    at_95:rows.filter(x=>Number(x.usage_percent||0)>=95).length,
     at_100:rows.filter(x=>Number(x.usage_percent||0)>=100).length,
     due_within_7_days:rows.filter(x=>{const d=daysUntil(x.cycle_end);return d!==null&&d>=0&&d<=7;}).length,
     overdue_payments:rows.filter(x=>{const d=daysUntil(x.cycle_end);return d!==null&&d<0&&['active','trial'].includes(x.subscription_status);}).length
