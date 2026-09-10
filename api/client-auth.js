@@ -12,13 +12,14 @@ let loginStoreUnavailable=false;
 const {getClientSession}=require('./_client-session');
 const {currentUsage}=require('../lib/nsr-usage');
 const {getSubscription,createCheckoutSession,createPortalSession,syncCheckoutSession,processWebhook}=require('../lib/nsr-billing');
+const {safeErrorLog}=require('../lib/nsr-safe-log');
 
 module.exports.config={api:{bodyParser:false}};
 
 function safeEqual(a,b){const aa=Buffer.from(String(a||''));const bb=Buffer.from(String(b||''));return aa.length===bb.length&&crypto.timingSafeEqual(aa,bb);}
 function hashPassword(password,salt){return crypto.scryptSync(String(password||''),salt,64).toString('hex');}
 function verifyPassword(password,config){const stored=String(config.portal_password_hash||'');const salt=String(config.portal_password_salt||'');if(stored&&salt){try{return safeEqual(hashPassword(password,salt),stored);}catch{return false;}}const legacy=String(config.portal_password||'');return !!legacy&&safeEqual(password,legacy);}
-async function upgradeLegacyPassword(client,password){const config=client?.config&&typeof client.config==='object'?client.config:{};const stored=String(config.portal_password_hash||''),salt=String(config.portal_password_salt||''),legacy=String(config.portal_password||'');if((stored&&salt)||!legacy)return false;const next={...config,portal_password_hash:hashPassword(password,crypto.randomBytes(16).toString('hex'))};next.portal_password_salt='';const newSalt=crypto.randomBytes(16).toString('hex');next.portal_password_salt=newSalt;next.portal_password_hash=hashPassword(password,newSalt);delete next.portal_password;const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${encodeURIComponent(client.id)}`,{method:'PATCH',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({config:next})});if(!r.ok){const text=await r.text();throw new Error(`Unable to upgrade legacy client password: ${r.status} ${text}`);}client.config=next;return true;}
+async function upgradeLegacyPassword(client,password){const config=client?.config&&typeof client.config==='object'?client.config:{};const stored=String(config.portal_password_hash||''),salt=String(config.portal_password_salt||''),legacy=String(config.portal_password||'');if((stored&&salt)||!legacy)return false;const newSalt=crypto.randomBytes(16).toString('hex');const next={...config,portal_password_salt:newSalt,portal_password_hash:hashPassword(password,newSalt)};delete next.portal_password;const r=await fetch(`${SUPABASE_URL}/rest/v1/clients?id=eq.${encodeURIComponent(client.id)}`,{method:'PATCH',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify({config:next})});if(!r.ok){const text=await r.text();throw new Error(`Unable to upgrade legacy client password: ${r.status} ${text}`);}client.config=next;return true;}
 function sign(value){const secret=process.env.NOVAIRE_CLIENT_SESSION_SECRET;if(!secret)return'';return crypto.createHmac('sha256',secret).update(value).digest('hex');}
 function clearClientCookie(res){res.setHeader('Set-Cookie',`${COOKIE_NAME}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`);}
 function clientIp(req){const forwarded=String(req.headers['x-forwarded-for']||'').split(',')[0].trim();return forwarded||String(req.socket?.remoteAddress||'unknown');}
@@ -114,7 +115,7 @@ module.exports=async function handler(req,res){
     res.setHeader('Set-Cookie',`${COOKIE_NAME}=${encodeURIComponent(token)}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_HOURS*60*60}`);
     return res.status(200).json({success:true,authenticated:true,client:{name:client.name,slug:client.slug}});
   }catch(error){
-    console.error('CLIENT AUTH ERROR:',error);
+    safeErrorLog('CLIENT_AUTH_ERROR',error);
     const message=String(error?.message||'');
     if(['INVALID_STRIPE_SIGNATURE','STALE_STRIPE_SIGNATURE'].includes(message))return res.status(400).json({success:false,error:'Invalid Stripe signature'});
     if(message==='STRIPE_WEBHOOK_NOT_CONFIGURED')return res.status(503).json({success:false,error:'Stripe webhook is not configured yet'});
