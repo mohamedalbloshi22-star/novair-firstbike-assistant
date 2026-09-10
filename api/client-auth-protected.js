@@ -61,7 +61,7 @@ module.exports=async function handler(req,res){
     replayRawBody(req,raw);
     await originalHandler(req,res);
 
-    const success=res.statusCode>=200&&res.statusCode<500;
+    const success=res.statusCode>=200&&res.statusCode<300;
     await rpc('nsr_finish_billing_event',{p_event_id:eventId,p_success:success,p_error:success?null:`HTTP ${res.statusCode}`});
     return;
   }catch(error){
