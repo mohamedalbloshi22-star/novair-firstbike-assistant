@@ -3,7 +3,7 @@ const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const {isAdminSession}=require('./_admin-session');
 const {safeErrorLog}=require('../lib/nsr-safe-log');
 
-const AI_MODEL_NAME='Claude Sonnet 4.6';
+const AI_MODEL_NAME='Claude (dynamic model selection)';
 const INPUT_PRICE_PER_MILLION=3;
 const OUTPUT_PRICE_PER_MILLION=15;
 const AED_PER_USD=3.6725;
@@ -86,7 +86,7 @@ module.exports=async function handler(req,res){
     return res.status(200).json({
       client:{client_id:summary.client_id,client_name:summary.client_name,slug:summary.slug,next_payment_date:usage?.cycle_end||null,days_to_payment:paymentDays},
       operations:{total_conversations:Number(summary.total_conversations||0),total_messages:Number(summary.total_messages||0),total_contact_requests:Number(summary.total_contact_requests||0),callback_requests:Number(summary.callback_requests||0),human_handoff_requests:Number(summary.human_handoff_requests||0),total_unanswered_questions:Number(unanswered.total_unanswered_questions||0),unresolved_unanswered_questions:Number(unanswered.unresolved_unanswered_questions||0),ai_resolution_rate_percent:Number(aiResolution.ai_resolution_rate_percent||0),arabic_conversations:Number(languageStats.arabic_conversations||0),english_conversations:Number(languageStats.english_conversations||0)},
-      ai_usage:{model:AI_MODEL_NAME,total_input_tokens:totalInputTokens,total_output_tokens:totalOutputTokens,total_tokens:totalTokens,ai_usage_records:Number(aiUsage.ai_usage_records||0),input_price_per_million_usd:INPUT_PRICE_PER_MILLION,output_price_per_million_usd:OUTPUT_PRICE_PER_MILLION,input_cost_usd:Number(inputCostUsd.toFixed(6)),output_cost_usd:Number(outputCostUsd.toFixed(6)),total_cost_usd:Number(totalCostUsd.toFixed(6)),total_cost_aed:Number(totalCostAed.toFixed(4))},
+      ai_usage:{model:AI_MODEL_NAME,cost_estimate:true,cost_estimate_basis:'configured Sonnet-rate ceiling',total_input_tokens:totalInputTokens,total_output_tokens:totalOutputTokens,total_tokens:totalTokens,ai_usage_records:Number(aiUsage.ai_usage_records||0),input_price_per_million_usd:INPUT_PRICE_PER_MILLION,output_price_per_million_usd:OUTPUT_PRICE_PER_MILLION,input_cost_usd:Number(inputCostUsd.toFixed(6)),output_cost_usd:Number(outputCostUsd.toFixed(6)),total_cost_usd:Number(totalCostUsd.toFixed(6)),total_cost_aed:Number(totalCostAed.toFixed(4))},
       packages_ready:packagesReady,usage,portfolio,package_clients:packagesReady?packageClients:[]
     });
   }catch(error){safeErrorLog('ADMIN_DASHBOARD_API_ERROR',error,{client_slug:clientSlug});return res.status(500).json({error:'Unable to load admin dashboard statistics'});}
