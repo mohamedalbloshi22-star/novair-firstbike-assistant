@@ -36,8 +36,8 @@ module.exports=async function handler(req,res){
     if(!requestId||!allowed.includes(status))return res.status(400).json({success:false,error:'Invalid request'});
     const rows=await db(`contact_requests?id=eq.${encodeURIComponent(requestId)}&client_id=eq.${encodeURIComponent(session.client_id)}&select=id&limit=1`);
     if(!Array.isArray(rows)||!rows.length)return res.status(404).json({success:false,error:'Contact request not found'});
-    const updated=await db(`contact_requests?id=eq.${encodeURIComponent(requestId)}&client_id=eq.${encodeURIComponent(session.client_id)}`,{method:'PATCH',body:{status},prefer:'return=representation'});
-    return res.status(200).json({success:true,request:Array.isArray(updated)?updated[0]||null:null});
+    await db(`contact_requests?id=eq.${encodeURIComponent(requestId)}&client_id=eq.${encodeURIComponent(session.client_id)}`,{method:'PATCH',body:{status},prefer:'return=minimal'});
+    return res.status(200).json({success:true});
   }catch(error){
     safeErrorLog('CONTACT_CLIENT_ERROR',error,{client_id:session.client_id});
     return res.status(500).json({success:false,error:'Unable to update contact request'});
