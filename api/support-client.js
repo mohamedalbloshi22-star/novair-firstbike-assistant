@@ -1,0 +1,60 @@
+const SUPABASE_URL=process.env.SUPABASE_URL;
+const SUPABASE_KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const {getClientSession}=require('./_client-session');
+
+async function db(path,options={}){
+  const r=await fetch(`${SUPABASE_URL}/rest/v1/${path}`,{
+    method:options.method||'GET',
+    headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json',Prefer:options.prefer||'return=representation'},
+    body:options.body?JSON.stringify(options.body):undefined
+  });
+  const text=await r.text();
+  if(!r.ok)throw new Error(`Supabase ${r.status}: ${text}`);
+  return text?JSON.parse(text):[];
+}
+function clean(v){return String(v||'').trim();}
+function norm(v){return clean(v).toLowerCase().replace(/[أإآ]/g,'ا').replace(/ى/g,'ي').replace(/ة/g,'ه').replace(/[^\p{L}\p{N}\s]/gu,' ').replace(/\s+/g,' ').trim();}
+const FAQ=[
+  {k:['الحد الشهري','نفدت الباقة','انتهت الباقة','الردود'],a:'حد الباقة هو عدد ردود الذكاء الاصطناعي المتاحة خلال دورة الاشتراك. عند بلوغ الحد يمكنك الانتظار حتى التجديد أو بدء دورة جديدة فورًا من صفحة إدارة الباقة.'},
+  {k:['التجديد التلقائي','تجديد الاشتراك','خصم تلقائي'],a:'عند تفعيل الدفع الإلكتروني يتجدد الاشتراك شهريًا تلقائيًا من وسيلة الدفع المسجلة لدى مزود الدفع، ويمكنك إدارة التجديد من صفحة إدارة الباقة.'},
+  {k:['الغاء الاشتراك','إلغاء الاشتراك','الغاء التجديد','إلغاء التجديد'],a:'إلغاء التجديد لا يوقف الخدمة فورًا. تستمر الخدمة حتى نهاية الدورة المدفوعة أو نفاد حد الباقة، ثم يتوقف المساعد وتبقى لوحة العميل متاحة لإعادة الاشتراك لاحقًا.'},
+  {k:['بداية دورة جديدة','باقة جديدة','دورة جديدة'],a:'إذا انتهى حد الردود قبل نهاية الدورة يمكنك بدء دورة شهرية جديدة فورًا. عند نجاح الدفع يصبح تاريخ الدفع الجديد بداية الدورة وموعد التجديد التالي.'},
+  {k:['لوحة العميل','لوحة التحكم','البوابة'],a:'لوحة العميل تعرض حالة الباقة والاستخدام والإحصائيات وطلبات التواصل وسجل المحادثات وإدارة الاشتراك.'},
+  {k:['حذف المحادثات','المحادثات المخزنة'],a:'يمكنك تنزيل سجل المحادثات بصيغة Excel، ويوجد خيار لحذف جميع المحادثات المخزنة بعد تأكيد العملية.'},
+  {k:['اسئلة غير مجابة','الأسئلة غير المجابة'],a:'تظهر الأسئلة التي لم يجد المساعد لها إجابة موثوقة في لوحة العميل. بعد اعتماد الإجابة الصحيحة تختفي من القائمة وتضاف إلى معرفة المساعد.'},
+  {k:['طلب اتصال','التواصل','التحدث مع مسؤول'],a:'يمكنك تسجيل طلب تواصل من المساعد أو من لوحة العميل. الطلبات الجديدة وقيد التنفيذ تظهر في اللوحة حتى يتم إكمالها أو إغلاقها.'},
+  {k:['الدفع','البطاقة','الفاتورة'],a:'بيانات البطاقة لا تُخزن داخل NOVAIRE، بل يعالجها مزود الدفع المعتمد. عند تفعيل الدفع يمكن إدارة البطاقة والفواتير والتجديد من صفحة إدارة الباقة.'},
+  {k:['اللغة','العربي','الانجليزي','الإنجليزي'],a:'يدعم NSR-1 العربية والإنجليزية وفق إعدادات العميل والمعرفة المضافة للمساعد.'}
+];
+function answerFor(message){const q=norm(message);for(const item of FAQ){if(item.k.some(k=>q.includes(norm(k))))return item.a;}return '';}
+async function getClient(id){const rows=await db(`clients?id=eq.${encodeURIComponent(id)}&select=id,name,slug,config&limit=1`);return Array.isArray(rows)?rows[0]||null:null;}
+async function escalate(client,message){
+  const sessionId=`support-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+  const conv=await db('conversations',{method:'POST',body:{client_id:client.id,session_id:sessionId,status:'open',resolved_by_ai:false,human_handoff:true,callback_requested:false,language:'ar'}});
+  const conversation=Array.isArray(conv)?conv[0]:null;
+  if(!conversation?.id)throw new Error('Unable to create support conversation');
+  const cfg=client.config&&typeof client.config==='object'?client.config:{};
+  const name=cfg.brand_name||client.name||client.slug||'Client';
+  const phone=clean(cfg.contact_phone)||'PORTAL';
+  const rows=await db('contact_requests',{method:'POST',body:{client_id:client.id,conversation_id:conversation.id,request_type:'human_handoff',customer_name:name,phone,reason:`[دعم NSR-1] ${message}`,status:'new'}});
+  const request=Array.isArray(rows)?rows[0]:null;
+  if(!request?.id)throw new Error('Unable to create support request');
+  return request.id;
+}
+module.exports=async function handler(req,res){
+  res.setHeader('Cache-Control','no-store');
+  if(req.method!=='POST')return res.status(405).json({success:false,error:'Method not allowed'});
+  if(!SUPABASE_URL||!SUPABASE_KEY)return res.status(500).json({success:false,error:'Server configuration error'});
+  const session=getClientSession(req);
+  if(!session)return res.status(401).json({success:false,error:'Unauthorized'});
+  try{
+    const message=clean(req.body?.message);
+    if(message.length<2||message.length>800)return res.status(400).json({success:false,error:'اكتب استفسارًا قصيرًا وواضحًا.'});
+    const client=await getClient(session.client_id);
+    if(!client)return res.status(404).json({success:false,error:'Client not found'});
+    const answer=answerFor(message);
+    if(answer)return res.status(200).json({success:true,resolved:true,answer});
+    const requestId=await escalate(client,message);
+    return res.status(200).json({success:true,resolved:false,escalated:true,request_id:requestId,answer:'لم أجد إجابة موثوقة لهذا الاستفسار. تم تحويل رسالتك إلى إدارة NOVAIRE وسيتم التعامل معها من لوحة الإدارة.'});
+  }catch(error){console.error('SUPPORT CLIENT ERROR:',error);return res.status(500).json({success:false,error:'تعذر إرسال استفسار الدعم.'});}
+};
