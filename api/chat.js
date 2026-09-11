@@ -2,7 +2,7 @@ const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
-const NOTIFICATION_FROM = process.env.NOVAIRE_NOTIFICATION_FROM || "NOVAIRE <onboarding@resend.dev>";
+const NOTIFICATION_FROM = process.env.NOVAIRE_NOTIFICATION_FROM || "BASEERA <onboarding@resend.dev>";
 const { reserveAiResponse, releaseAiResponse } = require("../lib/nsr-usage");
 const { safeErrorLog, sanitizeErrorMessage } = require("../lib/nsr-safe-log");
 
@@ -96,7 +96,7 @@ async function sendUsageThresholdNotification(client, usage) {
   const existing = await supabaseRequest(`nsr_notification_log?client_id=eq.${encodeURIComponent(client.id)}&cycle_start=eq.${encodeURIComponent(cycleStart)}&notification_type=eq.${encodeURIComponent(notificationType)}&recipient=eq.${encodeURIComponent(recipient)}&select=id,status&limit=1`);
   if (Array.isArray(existing) && existing.length) return { sent:false, duplicate:true };
   const brandName = String(config.brand_name || client.name || client.slug || "Client").trim();
-  const subject = `NOVAIRE | تنبيه استخدام ${threshold}% — ${brandName}`;
+  const subject = `BASEERA | تنبيه استخدام ${threshold}% — ${brandName}`;
   try {
     await logNotification({
       client_id:client.id, cycle_start:cycleStart, notification_type:notificationType, recipient, subject,
@@ -106,7 +106,7 @@ async function sendUsageThresholdNotification(client, usage) {
     if (String(error?.message || error).includes("23505")) return { sent:false, duplicate:true };
     throw error;
   }
-  const html = `<div dir="rtl" style="font-family:Arial,Tahoma,sans-serif;max-width:650px;margin:auto;color:#111827;line-height:1.8"><h2>NOVAIRE Smart Response</h2><p>مرحبًا ${escapeHtml(config.contact_name || brandName)}،</p><p>وصل استخدام مساعد <strong>${escapeHtml(brandName)}</strong> إلى <strong>${threshold}%</strong> من الحد الشهري.</p><p>المستخدم: <strong>${Number(usage.used || 0).toLocaleString("en-US")}</strong><br>الحد الشهري: <strong>${Number(usage.monthly_limit || 0).toLocaleString("en-US")}</strong><br>المتبقي: <strong>${Number(usage.remaining || 0).toLocaleString("en-US")}</strong></p>${threshold === 100 ? "<p><strong>تم بلوغ الحد الشهري، ولن تُحتسب ردود AI إضافية حتى بدء الدورة الجديدة أو تعديل الباقة.</strong></p>" : "<p>هذا تنبيه تلقائي لمساعدتك على متابعة الاستهلاك قبل بلوغ الحد.</p>"}<p style="font-size:12px;color:#6b7280">NOVAIRE Smart Response — إشعار آلي</p></div>`;
+  const html = `<div dir="rtl" style="font-family:Arial,Tahoma,sans-serif;max-width:650px;margin:auto;color:#111827;line-height:1.8"><h2>BASEERA Smart Response</h2><p>مرحبًا ${escapeHtml(config.contact_name || brandName)}،</p><p>وصل استخدام مساعد <strong>${escapeHtml(brandName)}</strong> إلى <strong>${threshold}%</strong> من الحد الشهري.</p><p>المستخدم: <strong>${Number(usage.used || 0).toLocaleString("en-US")}</strong><br>الحد الشهري: <strong>${Number(usage.monthly_limit || 0).toLocaleString("en-US")}</strong><br>المتبقي: <strong>${Number(usage.remaining || 0).toLocaleString("en-US")}</strong></p>${threshold === 100 ? "<p><strong>تم بلوغ الحد الشهري، ولن تُحتسب ردود AI إضافية حتى بدء الدورة الجديدة أو تعديل الباقة.</strong></p>" : "<p>هذا تنبيه تلقائي لمساعدتك على متابعة الاستهلاك قبل بلوغ الحد.</p>"}<p style="font-size:12px;color:#6b7280">BASEERA Smart Response — إشعار آلي</p></div>`;
   try {
     const response = await fetch("https://api.resend.com/emails", { method:"POST", headers:{ Authorization:`Bearer ${RESEND_API_KEY}`, "Content-Type":"application/json" }, body:JSON.stringify({ from:NOTIFICATION_FROM, to:[recipient], subject, html }) });
     const text = await response.text();
