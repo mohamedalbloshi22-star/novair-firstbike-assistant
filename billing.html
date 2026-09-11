@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NOVAIRE | إدارة الباقة والدفع</title>
+<title>BASEERA | إدارة الباقة والدفع</title>
 <style>
-*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#eef6fb;color:#10233f}header{background:linear-gradient(135deg,#0f2747,#0f6fa6);color:#fff;padding:26px 6%}header h1{margin:0 0 6px;font-size:26px}header p{margin:0;color:#d9efff}main{width:min(980px,92%);margin:28px auto}.card{background:#fff;border:1px solid #d6e5ef;border-radius:18px;padding:22px;box-shadow:0 10px 28px rgba(16,35,63,.08);margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}.metric{background:#f7fbfe;border:1px solid #dcebf4;border-radius:14px;padding:16px}.label{font-size:13px;color:#5f7388}.value{font-size:24px;font-weight:700;margin-top:7px;color:#0f5f91}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;background:#0f6fa6;color:#fff}.btn.secondary{background:#e8f4fa;color:#0f5f91;border:1px solid #bcdceb}.btn.accent{background:#18a6a6}.btn:disabled{opacity:.55;cursor:not-allowed}.notice{padding:13px 15px;border-radius:10px;margin-bottom:16px;display:none}.notice.ok{background:#e8f8f3;color:#176c55}.notice.error{background:#fff0ef;color:#a43b34}.muted{color:#63788e;font-size:14px;line-height:1.7}@media(max-width:600px){header{padding:22px 5%}.actions .btn{width:100%}}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,Tahoma,sans-serif;background:#eef6fb;color:#10233f}header{background:linear-gradient(135deg,#0f2747,#0f6fa6);color:#fff;padding:22px 6%;display:flex;align-items:center;justify-content:space-between;gap:16px}.brand{display:flex;align-items:center;gap:14px}.brand img{width:220px;max-width:44vw;height:auto;background:#fff;border-radius:14px;padding:6px}.brand p{margin:6px 0 0;color:#d9efff}main{width:min(980px,92%);margin:28px auto}.card{background:#fff;border:1px solid #d6e5ef;border-radius:18px;padding:22px;box-shadow:0 10px 28px rgba(16,35,63,.08);margin-bottom:18px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}.metric{background:#f7fbfe;border:1px solid #dcebf4;border-radius:14px;padding:16px}.label{font-size:13px;color:#5f7388}.value{font-size:24px;font-weight:700;margin-top:7px;color:#0f5f91}.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}.btn{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;background:#0f6fa6;color:#fff}.btn.secondary{background:#e8f4fa;color:#0f5f91;border:1px solid #bcdceb}.btn.accent{background:#18a6a6}.btn:disabled{opacity:.55;cursor:not-allowed}.notice{padding:13px 15px;border-radius:10px;margin-bottom:16px;display:none}.notice.ok{background:#e8f8f3;color:#176c55}.notice.error{background:#fff0ef;color:#a43b34}.muted{color:#63788e;font-size:14px;line-height:1.7}@media(max-width:600px){header{padding:20px 5%;align-items:flex-start;flex-direction:column}.brand img{width:190px;max-width:80vw}.actions .btn{width:100%}}
 </style>
 </head>
 <body>
-<header><h1>إدارة الباقة والدفع</h1><p>NOVAIRE Smart Response — NSR-1</p></header>
+<header><div class="brand"><img src="/baseera-logo.svg" alt="BASEERA Digital Solutions"><p>إدارة الباقة والدفع — NSR-1</p></div></header>
 <main>
 <div id="notice" class="notice"></div>
 <section class="card">
@@ -26,7 +26,7 @@
     <button id="back" class="btn secondary">العودة للوحة العميل</button>
   </div>
 </section>
-<section class="card"><b>إدارة الاشتراك</b><p class="muted">الاشتراك الشهري يتجدد تلقائيًا باستخدام وسيلة الدفع المحفوظة لدى مزود الدفع، ما لم يطلب العميل إيقاف التجديد. بيانات البطاقة لا تُخزن داخل NOVAIRE. إذا انتهى حد الردود قبل نهاية الدورة، يستطيع العميل بدء دورة جديدة فورًا؛ عند نجاح التحصيل تبدأ دورة شهرية جديدة من تاريخ الدفع الجديد ويصبح هذا هو موعد التجديد التالي.</p></section>
+<section class="card"><b>إدارة الاشتراك</b><p class="muted">الاشتراك الشهري يتجدد تلقائيًا باستخدام وسيلة الدفع المحفوظة لدى مزود الدفع، ما لم يطلب العميل إيقاف التجديد. بيانات البطاقة لا تُخزن داخل BASEERA. إذا انتهى حد الردود قبل نهاية الدورة، يستطيع العميل بدء دورة جديدة فورًا؛ عند نجاح التحصيل تبدأ دورة شهرية جديدة من تاريخ الدفع الجديد ويصبح هذا هو موعد التجديد التالي.</p></section>
 </main>
 <script>
 const $=id=>document.getElementById(id);
