@@ -118,8 +118,8 @@ async function sendNotification({ client, requestType, customerName, phone, reas
   if (!RESEND_API_KEY || !NOTIFICATION_EMAIL) return { sent:false, skipped:true };
   const typeText = formatRequestType(requestType);
   const clientName = client?.config?.brand_name || client?.name || client?.slug || "Client";
-  const subject = `BASEERA | ${typeText} جديد — ${clientName}`;
-  const html = `<div dir="rtl" style="font-family:Arial,Tahoma,sans-serif;max-width:650px;margin:auto;color:#111827;line-height:1.8"><h2>BASEERA Smart Response</h2><p>تم تسجيل طلب جديد من مساعد <strong>${escapeHtml(clientName)}</strong>.</p><table style="width:100%;border-collapse:collapse"><tr><td><b>نوع الطلب</b></td><td>${escapeHtml(typeText)}</td></tr><tr><td><b>الاسم</b></td><td>${escapeHtml(customerName)}</td></tr><tr><td><b>الهاتف</b></td><td>${escapeHtml(phone)}</td></tr><tr><td><b>السبب</b></td><td>${escapeHtml(reason || "غير محدد")}</td></tr><tr><td><b>Conversation ID</b></td><td>${escapeHtml(conversationId)}</td></tr></table><p style="font-size:12px;color:#6b7280">إشعار تلقائي من BASEERA Smart Response.</p></div>`;
+  const subject = `BASEERA | BSR-1 | ${typeText} جديد — ${clientName}`;
+  const html = `<div dir="rtl" style="font-family:Arial,Tahoma,sans-serif;max-width:650px;margin:auto;color:#111827;line-height:1.8"><h2>BSR-1 | BASEERA Smart Response</h2><p>تم تسجيل طلب جديد من مساعد <strong>${escapeHtml(clientName)}</strong>.</p><table style="width:100%;border-collapse:collapse"><tr><td><b>نوع الطلب</b></td><td>${escapeHtml(typeText)}</td></tr><tr><td><b>الاسم</b></td><td>${escapeHtml(customerName)}</td></tr><tr><td><b>الهاتف</b></td><td>${escapeHtml(phone)}</td></tr><tr><td><b>السبب</b></td><td>${escapeHtml(reason || "غير محدد")}</td></tr><tr><td><b>Conversation ID</b></td><td>${escapeHtml(conversationId)}</td></tr></table><p style="font-size:12px;color:#6b7280">إشعار تلقائي من BSR-1 — BASEERA Digital Solutions.</p></div>`;
   const response = await fetch("https://api.resend.com/emails", {
     method:"POST",
     headers:{ Authorization:`Bearer ${RESEND_API_KEY}`, "Content-Type":"application/json" },
