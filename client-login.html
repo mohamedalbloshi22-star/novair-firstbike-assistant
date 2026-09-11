@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NOVAIRE | دخول العميل</title>
+<title>BASEERA | دخول العميل</title>
 <style>
-*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,Tahoma,sans-serif;background:linear-gradient(180deg,#eef6fb,#f8fbfd);color:#10233f;display:flex;align-items:center;justify-content:center;padding:24px}.wrap{width:min(460px,100%)}.brand{text-align:center;margin-bottom:20px}.brand h1{margin:0;color:#0f6fa6;font-size:34px}.brand p{margin:7px 0 0;color:#64798d}.card{background:#fff;border:1px solid #d7e6ef;border-radius:20px;padding:28px;box-shadow:0 14px 40px rgba(16,35,63,.10)}h2{margin:0 0 8px;font-size:24px}.sub{color:#6b8094;margin-bottom:22px;font-size:14px}.field{margin-bottom:14px}label{display:block;margin-bottom:7px;font-size:13px;font-weight:700;color:#496176}input{width:100%;padding:13px 14px;border:1px solid #cfdfe9;border-radius:11px;background:#fafdff;color:#10233f;font-size:15px;outline:none}input:focus{border-color:#18a6a6;box-shadow:0 0 0 3px rgba(24,166,166,.12)}button{width:100%;border:0;border-radius:11px;padding:13px 16px;background:linear-gradient(135deg,#0f6fa6,#18a6a6);color:#fff;font-weight:800;font-size:15px;cursor:pointer;margin-top:5px}button:disabled{opacity:.6;cursor:not-allowed}#error{min-height:20px;margin-top:13px;color:#a13a33;font-size:13px;text-align:center}.foot{text-align:center;color:#7b8fa1;font-size:12px;margin-top:18px}@media(max-width:520px){.card{padding:22px}.brand h1{font-size:29px}}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,Tahoma,sans-serif;background:linear-gradient(180deg,#eef6fb,#f8fbfd);color:#10233f;display:flex;align-items:center;justify-content:center;padding:24px}.wrap{width:min(460px,100%)}.brand{text-align:center;margin-bottom:20px}.brand img{width:min(320px,100%);height:auto}.brand p{margin:7px 0 0;color:#64798d}.card{background:#fff;border:1px solid #d7e6ef;border-radius:20px;padding:28px;box-shadow:0 14px 40px rgba(16,35,63,.10)}h2{margin:0 0 8px;font-size:24px}.sub{color:#6b8094;margin-bottom:22px;font-size:14px}.field{margin-bottom:14px}label{display:block;margin-bottom:7px;font-size:13px;font-weight:700;color:#496176}input{width:100%;padding:13px 14px;border:1px solid #cfdfe9;border-radius:11px;background:#fafdff;color:#10233f;font-size:15px;outline:none}input:focus{border-color:#18a6a6;box-shadow:0 0 0 3px rgba(24,166,166,.12)}button{width:100%;border:0;border-radius:11px;padding:13px 16px;background:linear-gradient(135deg,#0f6fa6,#18a6a6);color:#fff;font-weight:800;font-size:15px;cursor:pointer;margin-top:5px}button:disabled{opacity:.6;cursor:not-allowed}#error{min-height:20px;margin-top:13px;color:#a13a33;font-size:13px;text-align:center}.foot{text-align:center;color:#7b8fa1;font-size:12px;margin-top:18px}@media(max-width:520px){.card{padding:22px}.brand img{width:270px}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><h1>NOVAIRE</h1><p>NSR-1 Smart Response</p></div>
+  <div class="brand"><img src="/baseera-logo.svg" alt="BASEERA Digital Solutions"><p>NSR-1 Smart Response</p></div>
   <div class="card">
     <h2>بوابة العميل</h2>
     <div class="sub">سجّل الدخول لعرض مؤشرات الأداء والاستخدام.</div>
@@ -19,7 +19,7 @@
     <button id="loginBtn">دخول</button>
     <div id="error"></div>
   </div>
-  <div class="foot">NOVAIRE Digital — NSR-1</div>
+  <div class="foot">BASEERA Digital Solutions — NSR-1</div>
 </div>
 <script>
 const slug=new URLSearchParams(location.search).get('client');
