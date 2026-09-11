@@ -24,7 +24,7 @@ const FAQ=[
   {k:['حذف المحادثات','المحادثات المخزنة'],a:'يمكنك تنزيل سجل المحادثات بصيغة Excel، ويوجد خيار لحذف جميع المحادثات المخزنة بعد تأكيد العملية.'},
   {k:['اسئلة غير مجابة','الأسئلة غير المجابة'],a:'تظهر الأسئلة التي لم يجد المساعد لها إجابة موثوقة في لوحة العميل. بعد اعتماد الإجابة الصحيحة تختفي من القائمة وتضاف إلى معرفة المساعد.'},
   {k:['طلب اتصال','التواصل','التحدث مع مسؤول'],a:'يمكنك تسجيل طلب تواصل من المساعد أو من لوحة العميل. الطلبات الجديدة وقيد التنفيذ تظهر في اللوحة حتى يتم إكمالها أو إغلاقها.'},
-  {k:['الدفع','البطاقة','الفاتورة'],a:'بيانات البطاقة لا تُخزن داخل NOVAIRE، بل يعالجها مزود الدفع المعتمد. عند تفعيل الدفع يمكن إدارة البطاقة والفواتير والتجديد من صفحة إدارة الباقة.'},
+  {k:['الدفع','البطاقة','الفاتورة'],a:'بيانات البطاقة لا تُخزن داخل BASEERA، بل يعالجها مزود الدفع المعتمد. عند تفعيل الدفع يمكن إدارة البطاقة والفواتير والتجديد من صفحة إدارة الباقة.'},
   {k:['اللغة','العربي','الانجليزي','الإنجليزي'],a:'يدعم NSR-1 العربية والإنجليزية وفق إعدادات العميل والمعرفة المضافة للمساعد.'}
 ];
 function answerFor(message){const q=norm(message);for(const item of FAQ){if(item.k.some(k=>q.includes(norm(k))))return item.a;}return '';}
@@ -56,6 +56,6 @@ module.exports=async function handler(req,res){
     const answer=answerFor(message);
     const request=await saveRequest(client.id,message,answer);
     if(answer)return res.status(200).json({success:true,resolved:true,request_id:request.id,answer});
-    return res.status(200).json({success:true,resolved:false,escalated:true,request_id:request.id,answer:'لم أجد إجابة موثوقة لهذا الاستفسار. تم تحويل رسالتك إلى إدارة NOVAIRE، وسيظهر الرد هنا عند اعتماده.'});
+    return res.status(200).json({success:true,resolved:false,escalated:true,request_id:request.id,answer:'لم أجد إجابة موثوقة لهذا الاستفسار. تم تحويل رسالتك إلى إدارة BASEERA، وسيظهر الرد هنا عند اعتماده.'});
   }catch(error){safeErrorLog('SUPPORT_CLIENT_ERROR',error);return res.status(500).json({success:false,error:'تعذر تنفيذ طلب الدعم.'});}
 };
