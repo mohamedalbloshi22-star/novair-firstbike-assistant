@@ -69,6 +69,9 @@ function normalizeState(rows) {
 }
 
 async function loginRpc(name, body) {
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    throw new Error("Admin login distributed rate limit is not configured");
+  }
   const response = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${name}`, {
     method: "POST",
     headers: {
@@ -176,10 +179,6 @@ module.exports = async function handler(req, res) {
   if (action === "logout") {
     clearSessionCookie(res);
     return res.status(200).json({ success: true, authenticated: false });
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return res.status(500).json({ success: false, error: "Missing rate limit configuration" });
   }
 
   const key = attemptKey(req);
