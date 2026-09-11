@@ -10,6 +10,7 @@ const SESSION_HOURS = 8;
 const MAX_FAILED_ATTEMPTS = 5;
 const ATTEMPT_WINDOW_SECONDS = 15 * 60;
 const LOCKOUT_SECONDS = 15 * 60;
+const localAttempts = new Map();
 
 function sign(value) {
   return crypto.createHmac("sha256", ADMIN_SESSION_SECRET).update(value).digest("hex");
@@ -41,7 +42,9 @@ function getCookie(req, name) {
   const raw = req.headers.cookie || "";
   for (const item of raw.split(";")) {
     const [key, ...rest] = item.trim().split("=");
-    if (key === name) return decodeURIComponent(rest.join("="));
+    if (key === name) {
+      try { return decodeURIComponent(rest.join("=")); } catch { return ""; }
+    }
   }
   return "";
 }
@@ -80,24 +83,72 @@ async function loginRpc(name, body) {
   return text ? JSON.parse(text) : null;
 }
 
+function getLocalAttemptState(key) {
+  const now = Date.now();
+  const state = localAttempts.get(key);
+  if (!state) return null;
+  if (state.lockedUntil && state.lockedUntil <= now) {
+    localAttempts.delete(key);
+    return null;
+  }
+  if (!state.lockedUntil && state.windowStartedAt + ATTEMPT_WINDOW_SECONDS * 1000 <= now) {
+    localAttempts.delete(key);
+    return null;
+  }
+  return { count: state.count, lockedUntil: state.lockedUntil || 0 };
+}
+
+function recordLocalFailedAttempt(key) {
+  const now = Date.now();
+  const current = getLocalAttemptState(key);
+  const count = Number(current?.count || 0) + 1;
+  const lockedUntil = count >= MAX_FAILED_ATTEMPTS ? now + LOCKOUT_SECONDS * 1000 : 0;
+  const previous = localAttempts.get(key);
+  localAttempts.set(key, {
+    count,
+    windowStartedAt: previous?.windowStartedAt || now,
+    lockedUntil
+  });
+  return { count, lockedUntil };
+}
+
+function clearLocalFailedAttempts(key) {
+  localAttempts.delete(key);
+}
+
 async function getAttemptState(key) {
-  return normalizeState(await loginRpc("nsr_get_login_state", {
-    p_key: key,
-    p_window_seconds: ATTEMPT_WINDOW_SECONDS
-  }));
+  try {
+    return normalizeState(await loginRpc("nsr_get_login_state", {
+      p_key: key,
+      p_window_seconds: ATTEMPT_WINDOW_SECONDS
+    }));
+  } catch (error) {
+    safeErrorLog('ADMIN_AUTH_DISTRIBUTED_LIMITER_UNAVAILABLE', error);
+    return getLocalAttemptState(key);
+  }
 }
 
 async function recordFailedAttempt(key) {
-  return normalizeState(await loginRpc("nsr_record_login_failure", {
-    p_key: key,
-    p_max_attempts: MAX_FAILED_ATTEMPTS,
-    p_window_seconds: ATTEMPT_WINDOW_SECONDS,
-    p_lock_seconds: LOCKOUT_SECONDS
-  }));
+  try {
+    return normalizeState(await loginRpc("nsr_record_login_failure", {
+      p_key: key,
+      p_max_attempts: MAX_FAILED_ATTEMPTS,
+      p_window_seconds: ATTEMPT_WINDOW_SECONDS,
+      p_lock_seconds: LOCKOUT_SECONDS
+    }));
+  } catch (error) {
+    safeErrorLog('ADMIN_AUTH_DISTRIBUTED_LIMITER_UNAVAILABLE', error);
+    return recordLocalFailedAttempt(key);
+  }
 }
 
 async function clearFailedAttempts(key) {
-  await loginRpc("nsr_clear_login_failures", { p_key: key });
+  clearLocalFailedAttempts(key);
+  try {
+    await loginRpc("nsr_clear_login_failures", { p_key: key });
+  } catch (error) {
+    safeErrorLog('ADMIN_AUTH_DISTRIBUTED_LIMITER_UNAVAILABLE', error);
+  }
 }
 
 function setSessionCookie(res, token) {
@@ -132,36 +183,30 @@ module.exports = async function handler(req, res) {
   }
 
   const key = attemptKey(req);
+  const state = await getAttemptState(key);
+  const now = Date.now();
 
-  try {
-    const state = await getAttemptState(key);
-    const now = Date.now();
+  if (state?.lockedUntil && now < state.lockedUntil) {
+    res.setHeader("Retry-After", String(Math.max(1, Math.ceil((state.lockedUntil - now) / 1000))));
+    return res.status(429).json({ success: false, error: "Too many login attempts. Try again later." });
+  }
 
-    if (state?.lockedUntil && now < state.lockedUntil) {
-      res.setHeader("Retry-After", String(Math.max(1, Math.ceil((state.lockedUntil - now) / 1000))));
+  const password = String(body.password || "");
+  const correct = Buffer.from(password);
+  const expected = Buffer.from(ADMIN_PASSWORD);
+  const valid = correct.length === expected.length && crypto.timingSafeEqual(correct, expected);
+
+  if (!valid) {
+    const failed = await recordFailedAttempt(key);
+    if (failed?.lockedUntil && Date.now() < failed.lockedUntil) {
+      res.setHeader("Retry-After", String(Math.max(1, Math.ceil((failed.lockedUntil - Date.now()) / 1000))));
       return res.status(429).json({ success: false, error: "Too many login attempts. Try again later." });
     }
-
-    const password = String(body.password || "");
-    const correct = Buffer.from(password);
-    const expected = Buffer.from(ADMIN_PASSWORD);
-    const valid = correct.length === expected.length && crypto.timingSafeEqual(correct, expected);
-
-    if (!valid) {
-      const failed = await recordFailedAttempt(key);
-      if (failed?.lockedUntil && Date.now() < failed.lockedUntil) {
-        res.setHeader("Retry-After", String(Math.max(1, Math.ceil((failed.lockedUntil - Date.now()) / 1000))));
-        return res.status(429).json({ success: false, error: "Too many login attempts. Try again later." });
-      }
-      return res.status(401).json({ success: false, error: "Unauthorized" });
-    }
-
-    await clearFailedAttempts(key);
-    const token = createSession();
-    setSessionCookie(res, token);
-    return res.status(200).json({ success: true, authenticated: true });
-  } catch (error) {
-    safeErrorLog('ADMIN_AUTH_RATE_LIMIT_ERROR', error);
-    return res.status(503).json({ success: false, error: "Login service temporarily unavailable" });
+    return res.status(401).json({ success: false, error: "Unauthorized" });
   }
+
+  await clearFailedAttempts(key);
+  const token = createSession();
+  setSessionCookie(res, token);
+  return res.status(200).json({ success: true, authenticated: true });
 };
