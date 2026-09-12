@@ -9,6 +9,12 @@ node_modules/
 *.key
 *.p12
 *.pfx
+*_PASSWORD
+*_PASSWORD.*
+*_SECRET
+*_SECRET.*
+*_TOKEN
+*_TOKEN.*
 
 # Vercel local metadata
 .vercel/
