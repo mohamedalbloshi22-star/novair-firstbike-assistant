@@ -1,0 +1,26 @@
+name: BSR1 Rollback After Verification Harness Failure
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-rollback-after-verification-harness-failure.yml]
+permissions:
+  contents: read
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Roll back production traffic to previous deployment
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+          PREVIOUS_PRODUCTION_ID: dpl_CJqyieoFDfiAjvjaUMfaEXKRVv6H
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,urllib.request
+          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; prev=os.environ['PREVIOUS_PRODUCTION_ID']
+          req=urllib.request.Request(f'https://api.vercel.com/v1/projects/{pid}/rollback/{prev}?teamId={tid}&description=BSR1_verification_harness_failure',data=b'{}',headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'},method='POST')
+          with urllib.request.urlopen(req,timeout=30) as r: print('ROLLBACK_HTTP_STATUS='+str(r.status))
+          PY
