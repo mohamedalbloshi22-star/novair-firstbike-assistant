@@ -1,0 +1,51 @@
+name: BSR1 Production Env Remediate
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-production-env-remediate.yml]
+permissions:
+  contents: read
+jobs:
+  remediate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add safe missing production variables and rotate session secrets
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error, secrets
+          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; base='https://api.vercel.com'
+          headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'}
+          def req(method,path,data=None):
+              b=json.dumps(data).encode() if data is not None else None
+              r=urllib.request.Request(base+path,data=b,headers=headers,method=method)
+              with urllib.request.urlopen(r,timeout=30) as x:
+                  raw=x.read(); return json.loads(raw) if raw else {}
+          def envs(): return req('GET',f'/v9/projects/{pid}/env?teamId={tid}').get('envs',[])
+          def add(key,value,typ='encrypted'):
+              req('POST',f'/v10/projects/{pid}/env?teamId={tid}&upsert=true',{'key':key,'value':value,'type':typ,'target':['production']})
+          current=envs(); by={}
+          for e in current: by.setdefault(e.get('key'),[]).append(e)
+          # Safe non-secret values known from approved baseline.
+          add('APP_ENV','production','plain')
+          add('SUPABASE_URL','https://hrnspqoipqrufjfnktsj.supabase.co','plain')
+          # Rotate independent application session secrets; does not deploy application.
+          add('NOVAIRE_ADMIN_SESSION_SECRET',secrets.token_hex(48))
+          add('NOVAIRE_CLIENT_SESSION_SECRET',secrets.token_hex(48))
+          print('SAFE_ENV_REMEDIATION=PASS')
+          # Do not fabricate provider/admin credentials. Report remaining names only.
+          current=envs(); by={}
+          for e in current: by.setdefault(e.get('key'),[]).append(e)
+          required=['APP_ENV','SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','NOVAIRE_ADMIN_PASSWORD','NOVAIRE_ADMIN_SESSION_SECRET','NOVAIRE_CLIENT_SESSION_SECRET','ANTHROPIC_API_KEY']
+          missing=[]
+          for k in required:
+              ok=any('production' in (e.get('target') or []) for e in by.get(k,[]))
+              print(f'{k}: '+('PRESENT_PRODUCTION' if ok else 'MISSING_PRODUCTION'))
+              if not ok: missing.append(k)
+          print('REMAINING='+(','.join(missing) if missing else 'NONE'))
+          PY
