@@ -30,4 +30,6 @@ jobs:
                   print(f'{key}_{i}_TYPE='+str(e.get('type')))
                   print(f'{key}_{i}_TARGETS='+','.join(e.get('target') or []))
                   print(f'{key}_{i}_GIT_BRANCH='+str(e.get('gitBranch')))
+                  print(f'{key}_{i}_CREATED_AT='+str(e.get('createdAt')))
+                  print(f'{key}_{i}_UPDATED_AT='+str(e.get('updatedAt')))
           PY
