@@ -1,0 +1,31 @@
+name: BSR1 Approved Production Deploy
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-production-deploy.yml]
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy exact approved main commit to Vercel Production
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+          DEPLOY_SHA: 56469162818c7a356f4ed594be4607725c01b61a
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request, sys
+          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; sha=os.environ['DEPLOY_SHA']
+          body={'name':'novaire-nsr-01','project':pid,'target':'production','gitSource':{'type':'github','ref':'main','sha':sha}}
+          req=urllib.request.Request(f'https://api.vercel.com/v13/deployments?teamId={tid}',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'},method='POST')
+          with urllib.request.urlopen(req,timeout=60) as r: d=json.load(r)
+          print('DEPLOYMENT_ID='+str(d.get('id','')))
+          print('DEPLOYMENT_URL='+str(d.get('url','')))
+          print('READY_STATE='+str(d.get('readyState','')))
+          if not d.get('id'): sys.exit(3)
+          PY
