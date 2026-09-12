@@ -1,0 +1,61 @@
+name: BSR1 Production Readiness Audit
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-production-readiness-audit.yml]
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Audit Vercel production configuration safely
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+        run: |
+          set -euo pipefail
+          test -n "$VERCEL_TOKEN" || { echo 'VERCEL_TOKEN_PRESENT=false'; exit 2; }
+          echo 'VERCEL_TOKEN_PRESENT=true'
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.parse, sys
+          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']
+          base='https://api.vercel.com'
+          headers={'Authorization':'Bearer '+token}
+          def get(path):
+              req=urllib.request.Request(base+path, headers=headers)
+              with urllib.request.urlopen(req, timeout=30) as r: return json.load(r)
+          envs=get(f'/v9/projects/{pid}/env?teamId={tid}').get('envs',[])
+          required=['APP_ENV','SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','NOVAIRE_ADMIN_PASSWORD','NOVAIRE_ADMIN_SESSION_SECRET','NOVAIRE_CLIENT_SESSION_SECRET','ANTHROPIC_API_KEY']
+          optional=['RESEND_API_KEY','NOVAIRE_NOTIFICATION_FROM','STRIPE_SECRET_KEY','STRIPE_WEBHOOK_SECRET','APP_URL']
+          by={}
+          for e in envs:
+              by.setdefault(e.get('key'),[]).append(e)
+          print('PRODUCTION_ENV_AUDIT')
+          missing=[]
+          for key in required:
+              rows=by.get(key,[])
+              prod=any('production' in (r.get('target') or []) for r in rows)
+              print(f'{key}: '+('PRESENT_PRODUCTION' if prod else 'MISSING_PRODUCTION'))
+              if not prod: missing.append(key)
+          for key in optional:
+              rows=by.get(key,[])
+              prod=any('production' in (r.get('target') or []) for r in rows)
+              print(f'{key}: '+('PRESENT_PRODUCTION' if prod else 'NOT_CONFIGURED_PRODUCTION'))
+          # APP_ENV value is safe/non-secret and required to equal production.
+          app=[r for r in by.get('APP_ENV',[]) if 'production' in (r.get('target') or [])]
+          if app:
+              eid=app[0].get('id')
+              try:
+                  detail=get(f'/v9/projects/{pid}/env/{eid}?teamId={tid}')
+                  val=detail.get('value')
+                  print('APP_ENV_VALUE: '+('production' if val=='production' else 'INVALID'))
+                  if val!='production': missing.append('APP_ENV_VALUE')
+              except Exception:
+                  print('APP_ENV_VALUE: UNVERIFIED')
+                  missing.append('APP_ENV_VALUE_UNVERIFIED')
+          print('REQUIRED_ENV_STATUS: '+('PASS' if not missing else 'FAIL'))
+          if missing: print('MISSING_OR_INVALID: '+','.join(missing))
+          PY
