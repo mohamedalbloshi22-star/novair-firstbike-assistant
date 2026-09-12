@@ -15,7 +15,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
           TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
-          DEPLOYMENT_ID: dpl_66hWD5H2igu7R8FXJ3Rm4FpYhLBc
+          DEPLOYMENT_ID: dpl_EjwXLbQw9o1VnE2efgvYnrYfEg8p
         run: |
           set -euo pipefail
           python3 - <<'PY'
@@ -25,5 +25,5 @@ jobs:
           try:
               with urllib.request.urlopen(req,timeout=30) as r: print('PROMOTE_HTTP_STATUS='+str(r.status))
           except urllib.error.HTTPError as e:
-              print('PROMOTE_HTTP_ERROR='+str(e.code)); print(e.read().decode('utf-8','replace')); raise
+              print('PROMOTE_HTTP_ERROR='+str(e.code)); raise
           PY
