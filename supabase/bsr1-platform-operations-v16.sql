@@ -29,6 +29,8 @@ $$;
 revoke all on function public.bsr_platform_metrics() from public, anon, authenticated;
 grant execute on function public.bsr_platform_metrics() to service_role;
 
+alter function public.bsr_audit_immutable() set search_path = public, pg_temp;
+
 update public.nsr_plans
 set name = case code
   when 'essential' then 'BSR-1 Essential'
