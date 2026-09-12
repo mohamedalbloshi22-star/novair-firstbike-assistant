@@ -1,4 +1,4 @@
-# Operational retrigger only — no product code change
+# Operational deployment of approved baseline + env-trim hotfix only
 name: BSR1 Approved Production Deploy
 on:
   push:
@@ -10,20 +10,21 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy exact approved main commit to Vercel Production
+      - name: Deploy approved baseline with env-trim hotfix to Vercel Production
         shell: bash
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
           TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
-          DEPLOY_SHA: 56469162818c7a356f4ed594be4607725c01b61a
+          DEPLOY_SHA: 8f8a9475f74e87dd4ea42a396b369267b6ed7b57
+          DEPLOY_REF: bsr1-prod-hotfix-env-trim
           GITHUB_REPO_ID: '1352042337'
         run: |
           set -euo pipefail
           python3 - <<'PY'
           import json, os, urllib.request, urllib.error, sys
-          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; sha=os.environ['DEPLOY_SHA']; repo_id=int(os.environ['GITHUB_REPO_ID'])
-          body={'name':'novaire-nsr-01','project':pid,'target':'production','gitSource':{'type':'github','repoId':repo_id,'ref':'main','sha':sha}}
+          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; sha=os.environ['DEPLOY_SHA']; ref=os.environ['DEPLOY_REF']; repo_id=int(os.environ['GITHUB_REPO_ID'])
+          body={'name':'novaire-nsr-01','project':pid,'target':'production','gitSource':{'type':'github','repoId':repo_id,'ref':ref,'sha':sha}}
           req=urllib.request.Request(f'https://api.vercel.com/v13/deployments?forceNew=1&teamId={tid}',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'},method='POST')
           try:
               with urllib.request.urlopen(req,timeout=60) as r: d=json.load(r)
