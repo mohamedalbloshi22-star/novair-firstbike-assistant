@@ -1,0 +1,24 @@
+name: Check Vercel automation credential
+
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/check-vercel-token.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check token presence only
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+        run: |
+          if [ -n "$VERCEL_TOKEN" ]; then
+            echo "VERCEL_TOKEN_PRESENT=true"
+          else
+            echo "VERCEL_TOKEN_PRESENT=false"
+          fi
