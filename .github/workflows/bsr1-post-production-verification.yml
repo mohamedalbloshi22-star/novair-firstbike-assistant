@@ -9,30 +9,89 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify admin production authentication secret
+      - name: Verify complete production journey with rollback guard
         shell: bash
         env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           ADMIN_PASSWORD: ${{ secrets.BSR1_PROD_ADMIN_PASSWORD }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+          PREVIOUS_PRODUCTION_ID: dpl_CJqyieoFDfiAjvjaUMfaEXKRVv6H
           BASE_URL: https://novaire-nsr-01.vercel.app
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import os,json,urllib.request,urllib.error,http.cookiejar
-          pw=os.environ.get('ADMIN_PASSWORD','')
-          if not pw: raise SystemExit('BSR1_PROD_ADMIN_PASSWORD is unavailable to this workflow')
-          cj=http.cookiejar.CookieJar(); op=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
-          def call(path,method='GET',body=None):
-              req=urllib.request.Request(os.environ['BASE_URL']+path,data=(json.dumps(body).encode() if body is not None else None),headers={'Content-Type':'application/json'},method=method)
+          import os,json,urllib.request,urllib.error,http.cookiejar,time
+          token=os.environ['VERCEL_TOKEN']; admin_pw=os.environ.get('ADMIN_PASSWORD',''); pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; prev=os.environ['PREVIOUS_PRODUCTION_ID']; base=os.environ['BASE_URL']
+          if not admin_pw: raise SystemExit('BSR1_PROD_ADMIN_PASSWORD unavailable')
+          def opener():
+              cj=http.cookiejar.CookieJar(); return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+          def call(op,path,method='GET',body=None):
+              req=urllib.request.Request(base+path,data=(json.dumps(body).encode() if body is not None else None),headers={'Content-Type':'application/json'},method=method)
               try:
-                  with op.open(req,timeout=30) as r:return r.status,r.read().decode()
-              except urllib.error.HTTPError as e:return e.code,e.read().decode()
-          st,tx=call('/api/admin-auth','POST',{'password':pw})
-          assert st==200 and json.loads(tx).get('authenticated') is True,('admin_login',st)
-          st,tx=call('/api/admin-auth')
-          assert st==200 and json.loads(tx).get('authenticated') is True,('admin_session',st)
-          st,tx=call('/api/admin-auth','POST',{'action':'logout'})
-          assert st==200 and json.loads(tx).get('authenticated') is False,('admin_logout',st)
-          print('ADMIN_LOGIN=PASS')
-          print('ADMIN_SESSION=PASS')
-          print('ADMIN_LOGOUT=PASS')
+                  with op.open(req,timeout=60) as r: return r.status,r.read().decode()
+              except urllib.error.HTTPError as e: return e.code,e.read().decode()
+          def okjson(st,tx,label,expected=(200,201)):
+              if st not in expected: raise AssertionError((label,st,tx[:400]))
+              try:return json.loads(tx)
+              except: raise AssertionError((label,'invalid_json',tx[:400]))
+          def post(op,path,body,label,expected=(200,201)):
+              st,tx=call(op,path,'POST',body); return okjson(st,tx,label,expected)
+          stamp=str(int(time.time()))
+          sluga='prod-smoke-a-'+stamp; slugb='prod-smoke-b-'+stamp
+          print('TEST_SLUG_A='+sluga); print('TEST_SLUG_B='+slugb)
+          admin=opener(); ca=opener(); cb=opener()
+          results=[]
+          try:
+              # Login / Admin
+              d=post(admin,'/api/admin-auth',{'password':admin_pw},'admin_login'); assert d.get('authenticated') is True; results.append('LOGIN=PASS')
+              st,tx=call(admin,'/api/admin-auth'); d=okjson(st,tx,'admin_session'); assert d.get('authenticated') is True; results.append('ADMIN=PASS')
+              # Create two internal synthetic tenants
+              a=post(admin,'/api/platform-operations',{'action':'create_client','name':'BASEERA PROD SMOKE A','slug':sluga,'plan_code':'essential'},'create_a');
+              b=post(admin,'/api/platform-operations',{'action':'create_client','name':'BASEERA PROD SMOKE B','slug':slugb,'plan_code':'essential'},'create_b');
+              aid=a['client']['id']; bid=b['client']['id']; pwa=a['temporary_password']; pwb=b['temporary_password']
+              # Knowledge + technical pass + synthetic activation path
+              for slug,cid in [(sluga,aid),(slugb,bid)]:
+                  q='ما هو رمز اختبار بصيرة؟'; ans='رمز اختبار بصيرة هو BASEERA-OK.'
+                  post(admin,'/api/knowledge-admin',{'action':'create','client_slug':slug,'question':q,'answer':ans,'language':'ar'},'knowledge_'+slug)
+                  post(admin,'/api/platform-operations',{'action':'mark_test_result','client_id':cid,'passed':True},'mark_test_'+slug)
+                  post(admin,'/api/platform-operations',{'action':'submit_approval','client_id':cid},'submit_'+slug)
+                  post(admin,'/api/platform-operations',{'action':'decide_approval','client_id':cid,'decision':'approved','note':'Internal production verification tenant only'},'approve_'+slug)
+                  post(admin,'/api/platform-operations',{'action':'activate','client_id':cid},'activate_'+slug)
+              # Client access
+              d=post(ca,'/api/client-auth',{'client_slug':sluga,'password':pwa},'client_a_login'); assert d.get('authenticated') is True
+              d=post(cb,'/api/client-auth',{'client_slug':slugb,'password':pwb},'client_b_login'); assert d.get('authenticated') is True; results.append('CLIENT_ACCESS=PASS')
+              # Tenant isolation: query-string substitution must not escape session tenant
+              st,tx=call(ca,'/api/dashboard?client_slug='+slugb); d=okjson(st,tx,'dashboard_isolation'); assert d.get('client',{}).get('slug')==sluga
+              marker='TENANT_B_ONLY_'+stamp
+              d=post(cb,'/api/support-client',{'message':marker},'support_b_marker'); assert d.get('success')
+              st,tx=call(ca,'/api/support-client'); da=okjson(st,tx,'support_a_list'); assert marker not in tx
+              st,tx=call(cb,'/api/support-client'); db=okjson(st,tx,'support_b_list'); assert marker in tx; results.append('TENANT_ISOLATION=PASS')
+              # Assistant
+              chat={'client_slug':sluga,'session_id':'prod-smoke-'+stamp,'language':'ar','messages':[{'role':'user','content':'ما هو رمز اختبار بصيرة؟'}]}
+              st,tx=call(ca,'/api/chat','POST',chat)
+              if st!=200 or not tx.strip() or '"type":"error"' in tx: raise AssertionError(('assistant',st,tx[:500]))
+              results.append('ASSISTANT=PASS')
+              # Usage
+              d=post(ca,'/api/client-auth',{'action':'billing_status'},'usage'); assert d.get('success') and d.get('usage') is not None; results.append('USAGE=PASS')
+              # Support
+              d=post(ca,'/api/support-client',{'message':'ما هو الحد الشهري؟'},'support_a'); assert d.get('success'); results.append('SUPPORT=PASS')
+              # Audit
+              d=post(admin,'/api/platform-operations',{'action':'overview'},'overview')
+              audit=d.get('audit',[])
+              assert any(x.get('client_id')==aid and x.get('action')=='CLIENT_TENANT_CREATED' for x in audit)
+              assert any(x.get('client_id')==aid and x.get('action')=='CLIENT_ACTIVATED' for x in audit)
+              assert any(x.get('client_id')==bid and x.get('action')=='CLIENT_TENANT_CREATED' for x in audit)
+              results.append('AUDIT=PASS')
+              # Logout
+              d=post(ca,'/api/client-auth',{'action':'logout'},'client_logout'); assert d.get('authenticated') is False
+              d=post(admin,'/api/admin-auth',{'action':'logout'},'admin_logout'); assert d.get('authenticated') is False; results.append('LOGOUT=PASS')
+              print('\n'.join(results)); print('POST_DEPLOY_STATUS=PASS')
+          except Exception as e:
+              print('POST_DEPLOY_STATUS=FAIL'); print('FAILURE='+repr(e))
+              rb=urllib.request.Request(f'https://api.vercel.com/v1/projects/{pid}/rollback/{prev}?teamId={tid}&description=BSR1_post_deploy_verification_failed',data=b'{}',headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'},method='POST')
+              try:
+                  with urllib.request.urlopen(rb,timeout=30) as r: print('ROLLBACK_STATUS='+str(r.status))
+              except Exception as re: print('ROLLBACK_ERROR='+repr(re))
+              raise
           PY
