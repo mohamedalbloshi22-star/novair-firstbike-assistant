@@ -16,14 +16,21 @@ jobs:
           PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
           TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
           DEPLOY_SHA: 56469162818c7a356f4ed594be4607725c01b61a
+          GITHUB_REPO_ID: '1352042337'
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import json, os, urllib.request, sys
-          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; sha=os.environ['DEPLOY_SHA']
-          body={'name':'novaire-nsr-01','project':pid,'target':'production','gitSource':{'type':'github','ref':'main','sha':sha}}
-          req=urllib.request.Request(f'https://api.vercel.com/v13/deployments?teamId={tid}',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'},method='POST')
-          with urllib.request.urlopen(req,timeout=60) as r: d=json.load(r)
+          import json, os, urllib.request, urllib.error, sys
+          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; sha=os.environ['DEPLOY_SHA']; repo_id=int(os.environ['GITHUB_REPO_ID'])
+          body={'name':'novaire-nsr-01','project':pid,'target':'production','gitSource':{'type':'github','repoId':repo_id,'ref':'main','sha':sha}}
+          req=urllib.request.Request(f'https://api.vercel.com/v13/deployments?forceNew=1&teamId={tid}',data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'},method='POST')
+          try:
+              with urllib.request.urlopen(req,timeout=60) as r: d=json.load(r)
+          except urllib.error.HTTPError as e:
+              detail=e.read().decode('utf-8','replace')
+              print('VERCEL_DEPLOY_HTTP_ERROR='+str(e.code))
+              print('VERCEL_DEPLOY_ERROR_BODY='+detail)
+              raise
           print('DEPLOYMENT_ID='+str(d.get('id','')))
           print('DEPLOYMENT_URL='+str(d.get('url','')))
           print('READY_STATE='+str(d.get('readyState','')))
