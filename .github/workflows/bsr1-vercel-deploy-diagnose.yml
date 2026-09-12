@@ -1,0 +1,30 @@
+name: BSR1 Vercel Deploy Diagnose
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-vercel-deploy-diagnose.yml]
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect Vercel project git linkage without deploying
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']
+          req=urllib.request.Request(f'https://api.vercel.com/v9/projects/{pid}?teamId={tid}',headers={'Authorization':'Bearer '+token})
+          with urllib.request.urlopen(req,timeout=30) as r: d=json.load(r)
+          link=d.get('link') or {}
+          safe={k:link.get(k) for k in ['type','repo','repoId','org','gitCredentialId','productionBranch'] if k in link}
+          print('LINK='+json.dumps(safe,separators=(',',':')))
+          print('PROJECT_NAME='+str(d.get('name')))
+          print('ROOT_DIRECTORY='+str(d.get('rootDirectory')))
+          PY
