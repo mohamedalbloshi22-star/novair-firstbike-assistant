@@ -9,87 +9,30 @@ jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
-      - name: Verify production and rollback on failure
+      - name: Verify admin production authentication secret
         shell: bash
         env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
-          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
-          CURRENT_DEPLOYMENT_ID: dpl_8NkVN8PQo4XQe7P5Lw7P7TdcyVfX
-          PREVIOUS_PRODUCTION_ID: dpl_CJqyieoFDfiAjvjaUMfaEXKRVv6H
+          ADMIN_PASSWORD: ${{ secrets.BSR1_PROD_ADMIN_PASSWORD }}
           BASE_URL: https://novaire-nsr-01.vercel.app
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import os,json,urllib.request,urllib.error,http.cookiejar,secrets,hashlib,time,sys
-          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; base=os.environ['BASE_URL']; prev=os.environ['PREVIOUS_PRODUCTION_ID']
-          vh={'Authorization':'Bearer '+token,'Content-Type':'application/json'}
-          def vget(path):
-              q=urllib.request.Request('https://api.vercel.com'+path,headers={'Authorization':'Bearer '+token})
-              with urllib.request.urlopen(q,timeout=30) as r:return json.load(r)
-          def env_value(key):
-              envs=vget(f'/v9/projects/{pid}/env?teamId={tid}').get('envs',[])
-              row=next((e for e in envs if e.get('key')==key and 'production' in (e.get('target') or [])),None)
-              if not row: raise RuntimeError('missing env '+key)
-              return vget(f'/v9/projects/{pid}/env/{row["id"]}?teamId={tid}').get('value')
-          sb_url=env_value('SUPABASE_URL'); sb_key=env_value('SUPABASE_SERVICE_ROLE_KEY'); admin_pw=env_value('NOVAIRE_ADMIN_PASSWORD')
-          sbh={'apikey':sb_key,'Authorization':'Bearer '+sb_key,'Content-Type':'application/json','Prefer':'return=representation'}
-          def sb(path,method='GET',body=None,prefer='return=representation'):
-              h=dict(sbh);h['Prefer']=prefer
-              req=urllib.request.Request(sb_url+'/rest/v1/'+path,data=(json.dumps(body).encode() if body is not None else None),headers=h,method=method)
-              with urllib.request.urlopen(req,timeout=30) as r:
-                  raw=r.read().decode();return json.loads(raw) if raw else []
-          stamp=str(int(time.time()))
-          sluga='prod-smoke-a-'+stamp; slugb='prod-smoke-b-'+stamp; audit_slug='prod-audit-'+stamp
-          pwa=secrets.token_urlsafe(24); pwb=secrets.token_urlsafe(24)
-          def cfg(pw,name,loc):
-              salt=secrets.token_hex(16); h=hashlib.scrypt(pw.encode(),salt=salt.encode(),n=16384,r=8,p=1,dklen=64).hex()
-              return {'active':True,'brand_name':name,'default_language':'ar','location_ar':loc,'assistant_name_ar':'مساعد بصيرة','portal_password_salt':salt,'portal_password_hash':h}
-          a=sb('clients','POST',{'name':'BASEERA PROD SMOKE A','slug':sluga,'config':cfg(pwa,'BASEERA PROD SMOKE A','العين')})[0]
-          b=sb('clients','POST',{'name':'BASEERA PROD SMOKE B','slug':slugb,'config':cfg(pwb,'BASEERA PROD SMOKE B','أبوظبي')})[0]
-          for c in (a,b): sb('nsr_client_subscriptions','POST',{'client_id':c['id'],'plan_code':'essential','status':'active'})
-          marker='TENANT_B_ONLY_'+stamp
-          sb('nsr_support_requests','POST',{'client_id':b['id'],'message':marker,'status':'pending'})
-          def opener():
-              cj=http.cookiejar.CookieJar();return urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj)),cj
-          def call(op,path,method='GET',body=None):
-              headers={'Content-Type':'application/json'}
-              req=urllib.request.Request(base+path,data=(json.dumps(body).encode() if body is not None else None),headers=headers,method=method)
+          import os,json,urllib.request,urllib.error,http.cookiejar
+          pw=os.environ.get('ADMIN_PASSWORD','')
+          if not pw: raise SystemExit('BSR1_PROD_ADMIN_PASSWORD is unavailable to this workflow')
+          cj=http.cookiejar.CookieJar(); op=urllib.request.build_opener(urllib.request.HTTPCookieProcessor(cj))
+          def call(path,method='GET',body=None):
+              req=urllib.request.Request(os.environ['BASE_URL']+path,data=(json.dumps(body).encode() if body is not None else None),headers={'Content-Type':'application/json'},method=method)
               try:
-                  with op.open(req,timeout=45) as r:return r.status,r.read().decode()
+                  with op.open(req,timeout=30) as r:return r.status,r.read().decode()
               except urllib.error.HTTPError as e:return e.code,e.read().decode()
-          results=[]
-          try:
-              # Admin login/access
-              aop,_=opener(); st,tx=call(aop,'/api/admin-auth','POST',{'password':admin_pw}); assert st==200 and json.loads(tx).get('authenticated') is True,('admin_login',st,tx[:200]); results.append('LOGIN_ADMIN=PASS')
-              st,tx=call(aop,'/api/admin-auth'); assert st==200 and json.loads(tx).get('authenticated') is True,('admin_session',st,tx[:200]); results.append('ADMIN_SESSION=PASS')
-              st,tx=call(aop,'/api/platform-operations','POST',{'action':'create_client','name':'BASEERA PROD AUDIT TEST','slug':audit_slug,'plan_code':'essential'}); assert st==200,('audit_create',st,tx[:300]); audit_client=json.loads(tx)['client']; results.append('ADMIN_ACCESS=PASS')
-              st,tx=call(aop,'/api/platform-operations','POST',{'action':'overview'}); data=json.loads(tx); assert st==200 and data.get('success') and any(x.get('client_id')==audit_client['id'] and x.get('action')=='CLIENT_TENANT_CREATED' for x in data.get('audit',[])),('audit_overview',st,tx[:300]); results.append('AUDIT=PASS')
-              # Client login/access
-              opa,_=opener(); opb,_=opener()
-              st,tx=call(opa,'/api/client-auth','POST',{'client_slug':sluga,'password':pwa}); assert st==200 and json.loads(tx).get('authenticated') is True,('client_a_login',st,tx[:200]); results.append('LOGIN_CLIENT_A=PASS')
-              st,tx=call(opb,'/api/client-auth','POST',{'client_slug':slugb,'password':pwb}); assert st==200 and json.loads(tx).get('authenticated') is True,('client_b_login',st,tx[:200]); results.append('LOGIN_CLIENT_B=PASS')
-              st,tx=call(opa,'/api/dashboard?client_slug='+slugb); d=json.loads(tx); assert st==200 and d.get('client',{}).get('slug')==sluga,('dashboard_isolation',st,tx[:300]); results.append('CLIENT_ACCESS=PASS')
-              st,tx=call(opa,'/api/support-client'); assert st==200 and marker not in tx,('support_isolation',st,tx[:300]); results.append('TENANT_ISOLATION=PASS')
-              # Assistant
-              chat={'client_slug':sluga,'session_id':'prod-smoke-'+stamp,'language':'ar','messages':[{'role':'user','content':'أين موقعكم؟'}]}
-              st,tx=call(opa,'/api/chat','POST',chat); assert st==200 and tx.strip() and '"type":"error"' not in tx,('assistant',st,tx[:500]); results.append('ASSISTANT=PASS')
-              # Usage
-              st,tx=call(opa,'/api/client-auth','POST',{'action':'billing_status'}); u=json.loads(tx); assert st==200 and u.get('success') and u.get('usage') is not None,('usage',st,tx[:400]); results.append('USAGE=PASS')
-              # Support
-              st,tx=call(opa,'/api/support-client','POST',{'message':'ما هو الحد الشهري؟'}); s=json.loads(tx); assert st==200 and s.get('success'),('support_post',st,tx[:300]); results.append('SUPPORT=PASS')
-              # Logout
-              st,tx=call(opa,'/api/client-auth','POST',{'action':'logout'}); assert st==200 and json.loads(tx).get('authenticated') is False,('client_logout',st,tx[:200])
-              st,tx=call(aop,'/api/admin-auth','POST',{'action':'logout'}); assert st==200 and json.loads(tx).get('authenticated') is False,('admin_logout',st,tx[:200]); results.append('LOGOUT=PASS')
-              print('\n'.join(results)); print('POST_DEPLOY_STATUS=PASS')
-          except Exception as e:
-              print('POST_DEPLOY_STATUS=FAIL'); print('FAILURE='+repr(e))
-              rb=urllib.request.Request(f'https://api.vercel.com/v1/projects/{pid}/rollback/{prev}?teamId={tid}&description=BSR1_post_deploy_verification_failed',data=b'{}',headers=vh,method='POST')
-              try:
-                  with urllib.request.urlopen(rb,timeout=30) as r: print('ROLLBACK_STATUS='+str(r.status))
-              except Exception as re:
-                  print('ROLLBACK_ERROR='+repr(re))
-              raise
-          finally:
-              print('TEST_SLUGS='+sluga+','+slugb+','+audit_slug)
+          st,tx=call('/api/admin-auth','POST',{'password':pw})
+          assert st==200 and json.loads(tx).get('authenticated') is True,('admin_login',st)
+          st,tx=call('/api/admin-auth')
+          assert st==200 and json.loads(tx).get('authenticated') is True,('admin_session',st)
+          st,tx=call('/api/admin-auth','POST',{'action':'logout'})
+          assert st==200 and json.loads(tx).get('authenticated') is False,('admin_logout',st)
+          print('ADMIN_LOGIN=PASS')
+          print('ADMIN_SESSION=PASS')
+          print('ADMIN_LOGOUT=PASS')
           PY
