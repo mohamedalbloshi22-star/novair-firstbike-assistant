@@ -1,0 +1,46 @@
+name: BSR1 Final Verification
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-final-verification.yml]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify Vercel production environment names and safe values
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request, sys
+          token=os.environ['VERCEL_TOKEN']; pid=os.environ['PROJECT_ID']; tid=os.environ['TEAM_ID']; base='https://api.vercel.com'
+          headers={'Authorization':'Bearer '+token}
+          def get(path):
+              req=urllib.request.Request(base+path,headers=headers)
+              with urllib.request.urlopen(req,timeout=30) as r: return json.load(r)
+          envs=get(f'/v9/projects/{pid}/env?teamId={tid}').get('envs',[])
+          by={}
+          for e in envs: by.setdefault(e.get('key'),[]).append(e)
+          required=['APP_ENV','SUPABASE_URL','SUPABASE_SERVICE_ROLE_KEY','NOVAIRE_ADMIN_PASSWORD','NOVAIRE_ADMIN_SESSION_SECRET','NOVAIRE_CLIENT_SESSION_SECRET','ANTHROPIC_API_KEY']
+          missing=[]
+          for k in required:
+              ok=any('production' in (e.get('target') or []) for e in by.get(k,[]))
+              print(f'{k}: '+('PRESENT_PRODUCTION' if ok else 'MISSING_PRODUCTION'))
+              if not ok: missing.append(k)
+          # Safe value validation only for non-secret vars.
+          for k,expected in [('APP_ENV','production'),('SUPABASE_URL','https://hrnspqoipqrufjfnktsj.supabase.co')]:
+              rows=[e for e in by.get(k,[]) if 'production' in (e.get('target') or [])]
+              if rows:
+                  d=get(f'/v9/projects/{pid}/env/{rows[0]["id"]}?teamId={tid}')
+                  actual=d.get('value')
+                  print(f'{k}_VALUE: '+('PASS' if actual==expected else 'FAIL'))
+                  if actual!=expected: missing.append(k+'_VALUE')
+          print('FINAL_ENV_STATUS: '+('PASS' if not missing else 'FAIL'))
+          if missing: print('BLOCKERS='+','.join(missing)); sys.exit(3)
+          PY
