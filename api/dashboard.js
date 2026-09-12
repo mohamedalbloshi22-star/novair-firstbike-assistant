@@ -16,23 +16,23 @@ const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 
 async function supabaseRequest(path) {
-
-  const response = await fetch(
-    `${SUPABASE_URL}/rest/v1/${path}`,
-    {
-      method: "GET",
-
-      headers: {
-        apikey: SUPABASE_KEY,
-
-        Authorization:
-          `Bearer ${SUPABASE_KEY}`,
-
-        "Content-Type":
-          "application/json"
+  let response;
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    response = await fetch(
+      `${SUPABASE_URL}/rest/v1/${path}`,
+      {
+        method: "GET",
+        headers: {
+          apikey: SUPABASE_KEY,
+          Authorization: `Bearer ${SUPABASE_KEY}`,
+          "Content-Type": "application/json"
+        },
+        signal: AbortSignal.timeout(10000)
       }
-    }
-  );
+    );
+    if (response.status !== 502 && response.status !== 503 && response.status !== 504) break;
+    if (attempt < 2) await new Promise(resolve => setTimeout(resolve, 250 * (attempt + 1)));
+  }
 
   const text =
     await response.text();
