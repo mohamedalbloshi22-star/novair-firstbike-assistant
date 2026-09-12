@@ -1,3 +1,4 @@
+# Operational promotion only — no product code change
 name: BSR1 Promote Approved Production
 on:
   push:
@@ -15,7 +16,7 @@ jobs:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
           TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
-          DEPLOYMENT_ID: dpl_EjwXLbQw9o1VnE2efgvYnrYfEg8p
+          DEPLOYMENT_ID: dpl_rHgEgiyCkzqrFJ893UAdS6q41krh
         run: |
           set -euo pipefail
           python3 - <<'PY'
