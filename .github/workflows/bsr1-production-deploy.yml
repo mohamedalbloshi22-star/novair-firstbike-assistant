@@ -1,3 +1,4 @@
+# Operational retrigger only — no product code change
 name: BSR1 Approved Production Deploy
 on:
   push:
