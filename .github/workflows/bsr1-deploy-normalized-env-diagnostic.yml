@@ -1,0 +1,31 @@
+name: BSR1 Deploy Normalized Env Diagnostic
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-deploy-normalized-env-diagnostic.yml]
+permissions:
+  contents: read
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy diagnostic SHA to Vercel Production
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+          DEPLOY_SHA: d6d6853bb8443b327d0592626a243a7e6ff3be83
+          DEPLOY_REF: bsr1-prod-hotfix-env-trim
+          GITHUB_REPO_ID: '1352042337'
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+          body={'name':'novaire-nsr-01','project':os.environ['PROJECT_ID'],'target':'production','gitSource':{'type':'github','repoId':int(os.environ['GITHUB_REPO_ID']),'ref':os.environ['DEPLOY_REF'],'sha':os.environ['DEPLOY_SHA']}}
+          req=urllib.request.Request(f"https://api.vercel.com/v13/deployments?forceNew=1&teamId={os.environ['TEAM_ID']}",data=json.dumps(body).encode(),headers={'Authorization':'Bearer '+os.environ['VERCEL_TOKEN'],'Content-Type':'application/json'},method='POST')
+          with urllib.request.urlopen(req,timeout=60) as r: d=json.load(r)
+          print('DEPLOYMENT_ID='+d['id'])
+          print('DEPLOYMENT_URL='+d['url'])
+          print('READY_STATE='+str(d.get('readyState')))
+          PY
