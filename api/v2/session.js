@@ -2,6 +2,10 @@ const { COOKIE, createSession, securityHeaders } = require('../../lib/v2/securit
 
 module.exports = async function handler(req, res) {
   securityHeaders(res);
+  if (req.method === 'DELETE') {
+    res.setHeader('Set-Cookie', `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=0`);
+    return res.status(200).json({ authenticated: false });
+  }
   if (req.method !== 'POST') return res.status(405).json({ error: 'METHOD_NOT_ALLOWED' });
   const expected = process.env.BSR1_V2_PREVIEW_ACCESS_CODE;
   if (!expected || String(req.body?.accessCode || '') !== expected) {

@@ -1,15 +1,10 @@
-<!doctype html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>BSR-1 V2 | بصيرة</title><link rel="stylesheet" href="/v2/style.css">
-</head>
-<body>
-  <aside><img src="/baseera-logo.svg" alt="بصيرة"><nav><a class="active">نظرة عامة</a><a>المساعد الذكي</a><a>قاعدة المعرفة</a><a>جهات الاتصال</a><a>طلبات الدعم</a><a>الاستخدام</a></nav></aside>
-  <main>
-    <header><div><small>BASEERA DIGITAL SOLUTIONS</small><h1>لوحة تحكم BSR-1</h1></div><span class="badge">بيئة تجريبية معزولة</span></header>
-    <section class="hero"><div><p>مرحبًا بك في النسخة النظيفة V2</p><h2>خدمة العملاء بوضوح، من مكان واحد.</h2></div><button id="check">فحص الجاهزية</button></section>
-    <section class="cards"><article><b>0</b><span>محادثات اليوم</span></article><article><b>0</b><span>طلبات مفتوحة</span></article><article><b>0%</b><span>استخدام الخطة</span></article><article><b>آمن</b><span>عزل المستأجر</span></article></section>
-    <section class="panel"><div><h3>حالة النظام</h3><p id="status">جاهز للفحص داخل Preview فقط.</p></div><div class="dot"></div></section>
-  </main><script src="/v2/app.js" defer></script>
-</body></html>
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BSR-1 V2 | بصيرة</title><link rel="stylesheet" href="/v2/style.css"></head><body>
+<section id="login" class="login"><form id="loginForm" class="auth-card"><img src="/baseera-logo.svg" alt="بصيرة"><small>BSR-1 CLEAN BUILD V2</small><h1>الدخول إلى بيئة المعاينة</h1><label>رمز الوصول<input id="accessCode" type="password" required></label><label>نوع العرض<select id="loginRole"><option value="client_admin">لوحة العميل</option><option value="founder">لوحة المؤسس</option></select></label><button>دخول آمن</button><p id="loginError" class="error" role="alert"></p></form></section>
+<div id="app" class="app hidden"><aside><img src="/baseera-logo.svg" alt="بصيرة"><nav id="nav"><button data-view="dashboard" class="active">نظرة عامة</button><button data-view="assistant">المساعد</button><button data-view="knowledge">قاعدة المعرفة</button><button data-view="support">الدعم</button><button data-view="settings">لوحة العميل</button><button data-view="admin" class="founder-only">تحكم المؤسس</button></nav><button id="logout" class="ghost">تسجيل الخروج</button></aside><main><header><div><small>BASEERA DIGITAL SOLUTIONS</small><h1 id="pageTitle">نظرة عامة</h1></div><span class="badge">Preview معزول</span></header><div id="notice" class="notice hidden" role="status"></div>
+<section id="dashboard" class="view"><div class="hero"><div><p>مرحبًا بك في BSR-1</p><h2>خدمة العملاء بوضوح، من مكان واحد.</h2></div><button data-go="assistant">ابدأ محادثة</button></div><div id="metrics" class="cards"></div><div class="panel"><div><h3>حالة النظام</h3><p>جميع الوظائف تعمل ضمن Preview المعزول فقط.</p></div><span class="dot"></span></div></section>
+<section id="assistant" class="view hidden"><div class="section-head"><div><h2>المساعد</h2><p>إجابات فورية من قاعدة معرفة العميل.</p></div></div><div id="chat" class="chat"><div class="message assistant">مرحبًا، كيف يمكنني مساعدتك؟</div></div><form id="chatForm" class="composer"><input id="question" required maxlength="500" placeholder="اكتب سؤال العميل…"><button>إرسال</button></form></section>
+<section id="knowledge" class="view hidden"><div class="section-head"><div><h2>قاعدة المعرفة</h2><p>المصدر المعتمد لإجابات المساعد.</p></div><button id="addKnowledge">إضافة محتوى</button></div><div id="knowledgeList" class="list"></div></section>
+<section id="support" class="view hidden"><div class="section-head"><div><h2>طلبات الدعم</h2><p>تتبّع الطلبات وحالتها.</p></div><button id="addSupport">طلب جديد</button></div><div id="supportList" class="list"></div></section>
+<section id="settings" class="view hidden"><div class="section-head"><div><h2>لوحة تحكم العميل</h2><p>إعدادات الهوية والمساعد.</p></div></div><form id="settingsForm" class="form-card"><label>اسم النشاط<input name="businessName" maxlength="120" required></label><label>رسالة الترحيب<textarea name="welcomeMessage" maxlength="500" required></textarea></label><label>لغة المساعد<select name="language"><option value="ar">العربية</option><option value="en">English</option></select></label><button>حفظ التغييرات</button></form></section>
+<section id="admin" class="view hidden"><div class="section-head"><div><h2>تحكم المؤسس</h2><p>مؤشرات التشغيل الأساسية دون إجراءات إنتاجية.</p></div></div><div id="adminMetrics" class="cards"></div><div id="tenantList" class="list"></div></section>
+</main></div><dialog id="modal"><form id="modalForm"><h3 id="modalTitle"></h3><div id="modalFields"></div><div class="actions"><button type="button" id="modalCancel" class="ghost">إلغاء</button><button>حفظ</button></div></form></dialog><script src="/v2/app.js" defer></script></body></html>
