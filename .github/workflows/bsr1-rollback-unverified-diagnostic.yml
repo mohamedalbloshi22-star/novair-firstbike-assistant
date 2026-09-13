@@ -1,0 +1,25 @@
+name: BSR1 Rollback Unverified Diagnostic
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-rollback-unverified-diagnostic.yml]
+permissions:
+  contents: read
+jobs:
+  rollback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Roll back to previous safe production deployment
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+          PREVIOUS_PRODUCTION_ID: dpl_CJqyieoFDfiAjvjaUMfaEXKRVv6H
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,urllib.request
+          req=urllib.request.Request(f"https://api.vercel.com/v1/projects/{os.environ['PROJECT_ID']}/rollback/{os.environ['PREVIOUS_PRODUCTION_ID']}?teamId={os.environ['TEAM_ID']}&description=BSR1_unverified_diagnostic_rollback",data=b'{}',headers={'Authorization':'Bearer '+os.environ['VERCEL_TOKEN'],'Content-Type':'application/json'},method='POST')
+          with urllib.request.urlopen(req,timeout=30) as r: print('ROLLBACK_STATUS='+str(r.status))
+          PY
