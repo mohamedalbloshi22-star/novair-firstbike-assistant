@@ -5,6 +5,6 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "test": "node --test test/*.test.js",
-    "check": "node --check api/v2/health.js && node --check api/v2/session.js && node --check api/v2/tenant-data.js && node --check lib/v2/security.js"
+    "check": "node --check api/v2/health.js && node --check api/v2/session.js && node --check api/v2/tenant-data.js && node --check api/v2/product.js && node --check lib/v2/security.js && node --check v2/app.js"
   }
 }
