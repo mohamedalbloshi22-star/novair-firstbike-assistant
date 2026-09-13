@@ -1,0 +1,25 @@
+name: BSR1 Promote Normalized Env Diagnostic
+on:
+  push:
+    branches: [main]
+    paths: [.github/workflows/bsr1-promote-normalized-env-diagnostic.yml]
+permissions:
+  contents: read
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Promote diagnostic deployment
+        shell: bash
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          PROJECT_ID: prj_ACQC3PWsJuPZ1lELmsKql0iVf9hc
+          TEAM_ID: team_wNsChKTb2m3lG5H9DWEBktDu
+          DEPLOYMENT_ID: dpl_d36V8a3JRhhjpfHKS59GjaBou3hM
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import os,urllib.request
+          req=urllib.request.Request(f"https://api.vercel.com/v10/projects/{os.environ['PROJECT_ID']}/promote/{os.environ['DEPLOYMENT_ID']}?teamId={os.environ['TEAM_ID']}",data=b'{}',headers={'Authorization':'Bearer '+os.environ['VERCEL_TOKEN'],'Content-Type':'application/json'},method='POST')
+          with urllib.request.urlopen(req,timeout=30) as r: print('PROMOTE_HTTP_STATUS='+str(r.status))
+          PY
