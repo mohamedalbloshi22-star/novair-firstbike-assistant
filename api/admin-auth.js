@@ -3,8 +3,8 @@ const { safeErrorLog } = require('../lib/nsr-safe-log');
 
 const ADMIN_PASSWORD = process.env.NOVAIRE_ADMIN_PASSWORD;
 const ADMIN_SESSION_SECRET = process.env.NOVAIRE_ADMIN_SESSION_SECRET || ADMIN_PASSWORD;
-const SUPABASE_URL = process.env.SUPABASE_URL;
-const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const SUPABASE_URL = String(process.env.SUPABASE_URL || '').trim();
+const SUPABASE_KEY = String(process.env.SUPABASE_SERVICE_ROLE_KEY || '').trim().replace(/^["']|["']$/g, '').replace(/\s+/g, '');
 const COOKIE_NAME = "novaire_admin_session";
 const SESSION_HOURS = 8;
 const MAX_FAILED_ATTEMPTS = 5;
