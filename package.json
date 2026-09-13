@@ -1,8 +1,10 @@
 {
-  "name": "novair-firstbike-assistant",
-  "version": "1.0.0",
+  "name": "baseera-bsr1-clean-v2",
+  "version": "2.0.0-preview",
   "private": true,
-  "dependencies": {
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "test": "node --test test/*.test.js",
+    "check": "node --check api/v2/health.js && node --check api/v2/session.js && node --check api/v2/tenant-data.js && node --check lib/v2/security.js"
   }
 }
