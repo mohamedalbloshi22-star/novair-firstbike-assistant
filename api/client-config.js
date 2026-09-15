@@ -19,46 +19,23 @@ async function getClient(slug) {
       }
     }
   );
-
   const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(text || "Supabase request failed");
-  }
-
+  if (!response.ok) throw new Error(text || "Supabase request failed");
   const rows = text ? JSON.parse(text) : [];
-
   return rows[0] || null;
 }
 
 module.exports = async function handler(req, res) {
-  if (req.method !== "GET") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_KEY) {
-    return res.status(500).json({ error: "Missing Supabase configuration" });
-  }
-
+  if (req.method !== "GET") return res.status(405).json({ error: "Method not allowed" });
+  if (!SUPABASE_URL || !SUPABASE_KEY) return res.status(500).json({ error: "Missing Supabase configuration" });
   const slug = String(req.query.client || "").trim().toLowerCase();
-
-  if (!safeSlug(slug)) {
-    return res.status(400).json({ error: "Invalid client" });
-  }
-
+  if (!safeSlug(slug)) return res.status(400).json({ error: "Invalid client" });
   try {
     const client = await getClient(slug);
-
-    if (!client) {
-      return res.status(404).json({ error: "Client not found" });
-    }
-
+    if (!client) return res.status(404).json({ error: "Client not found" });
     const config = client.config || {};
-
-    if (config.active === false) {
-      return res.status(404).json({ error: "Client inactive" });
-    }
-
+    if (config.active === false) return res.status(404).json({ error: "Client inactive" });
+    const primaryColor = /^#[0-9a-fA-F]{6}$/.test(String(config.primary_color || "")) ? config.primary_color : "#1769e0";
     const publicConfig = {
       slug: client.slug,
       name: client.name,
@@ -66,26 +43,33 @@ module.exports = async function handler(req, res) {
       logo_url: config.logo_url || "",
       assistant_name_ar: config.assistant_name_ar || "مساعد بصيرة",
       assistant_name_en: config.assistant_name_en || "BASEERA Assistant",
+      welcome_message_ar: config.welcome_message_ar || "مرحبًا، كيف أستطيع مساعدتك؟",
+      welcome_message_en: config.welcome_message_en || "Hello, how can I help you?",
+      primary_color: primaryColor,
       business_type_ar: config.business_type_ar || "",
       business_type_en: config.business_type_en || "",
       location_ar: config.location_ar || "",
       location_en: config.location_en || "",
       working_hours_ar: config.working_hours_ar || "",
       working_hours_en: config.working_hours_en || "",
+      contact_phone: config.contact_phone || "",
+      website_url: config.website_url || "",
+      social_instagram: config.social_instagram || "",
+      social_facebook: config.social_facebook || "",
+      social_tiktok: config.social_tiktok || "",
+      social_linkedin: config.social_linkedin || "",
       currency: config.currency || "AED",
       rental_prices: Array.isArray(config.rental_prices) ? config.rental_prices : [],
       services_ar: Array.isArray(config.services_ar) ? config.services_ar : [],
       services_en: Array.isArray(config.services_en) ? config.services_en : [],
       notes_ar: config.notes_ar || "",
       notes_en: config.notes_en || "",
-      default_language: config.default_language || "ar",
+      default_language: config.default_language === "en" ? "en" : "ar",
       novaire_public_email: NOVAIRE_PUBLIC_EMAIL,
       active: config.active !== false
     };
-
     res.setHeader("Cache-Control", "no-store");
     return res.status(200).json({ success: true, client: publicConfig });
-
   } catch (error) {
     safeErrorLog('CLIENT_CONFIG_ERROR', error, { client_slug: slug });
     return res.status(500).json({ success: false, error: "Unable to load client configuration" });
